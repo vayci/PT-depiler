@@ -405,7 +405,7 @@ export default class BittorrentSite {
         query = isNaN(parseInt(query)) ? 0 : parseInt(query);
       }
     }
-
+    console.log("获取字段值：" + query + " " + elementQuery.text);
     return query;
   }
 

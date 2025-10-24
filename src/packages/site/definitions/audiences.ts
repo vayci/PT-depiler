@@ -160,6 +160,14 @@ export const siteMetadata: ISiteMetadata = {
         selector: ["td.rowhead:contains('爆米花') + td, td.rowhead:contains('Karma Points') + td"],
         filters: [{ name: "parseNumber" }],
       },
+      inviteStatus: {
+        selector: ["td#outer  td.embedded > table tr:first > td"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
     },
   },
 

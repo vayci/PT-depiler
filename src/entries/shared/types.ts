@@ -43,6 +43,7 @@ export interface IPtppUserInfo {
   lastUpdateTime?: number; // 最后更新时间
   lastUpdateStatus?: "needLogin" | "notSupported" | "unknown" | "success"; // 最后更新状态  EUserDataRequestStatus
   invites?: number; // 邀请数量
+  inviteStatus: string; // 邀请状态
   avatar?: string; // 头像
   isLogged?: boolean; // 是否已登录
   isLoading?: boolean; // 正在加载

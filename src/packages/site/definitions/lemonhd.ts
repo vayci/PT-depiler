@@ -32,6 +32,14 @@ export const siteMetadata: ISiteMetadata = {
         selector: ["td.rowhead:contains('当前做种') + td"],
         filters: [{ name: "parseSize" }],
       },
+      inviteStatus: {
+        selector: ["td#outer > table table:eq(0) td"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
     },
   },
 

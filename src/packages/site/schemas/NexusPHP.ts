@@ -480,7 +480,10 @@ export const SchemaMetadata: Pick<
         ],
         filters: [{ name: "parseNumber" }],
       },
-
+      inviteStatus: {
+        selector: ["form[action*='invite.php'] > input"],
+        attr: "value",
+      },
       /**
        * 如果指定 seeding 和 seedingSize，则会尝试从 "/userdetails.php?id=$user.id$" 页面获取，
        * 否则将使用方法 parseUserInfoForSeedingStatus 进行获取
@@ -517,6 +520,11 @@ export const SchemaMetadata: Pick<
       {
         requestConfig: { url: "/mybonus.php", responseType: "document" },
         fields: ["bonusPerHour", "seedingBonusPerHour"],
+      },
+      {
+        requestConfig: { url: "/invite.php", responseType: "document" },
+        assertion: { id: "params.id" },
+        fields: ["inviteStatus"],
       },
     ],
   },
@@ -599,7 +607,7 @@ export default class NexusPHP extends PrivateSite {
 
   public override async getUserInfoResult(lastUserInfo: Partial<IUserInfo> = {}): Promise<IUserInfo> {
     let flushUserInfo = await super.getUserInfoResult(lastUserInfo);
-
+    console.log("flushUserInfo after super:", flushUserInfo);
     // 导入用户做种信息
     if (
       flushUserInfo.status === EResultParseStatus.success &&

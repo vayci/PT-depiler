@@ -184,6 +184,14 @@ export const siteMetadata: ISiteMetadata = {
         selector: ["table[width='800'] > tbody > tr:contains('合计') > td:last-of-type"],
         filters: [{ name: "split", args: ["/", 0] }, { name: "parseNumber" }],
       },
+      inviteStatus: {
+        selector: ["td#outer  td.embedded > table tr:first > td"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
     },
   },
 

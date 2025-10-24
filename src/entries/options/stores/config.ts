@@ -103,6 +103,7 @@ export const useConfigStore = defineStore("config", {
           "seeding",
           "seedingSize",
           "bonus",
+          "inviteStatus",
           "joinTime",
           "updateAt",
           "action",

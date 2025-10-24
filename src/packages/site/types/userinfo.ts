@@ -86,6 +86,7 @@ export interface IUserInfo extends Omit<IImplicitUserInfo, "interval"> {
 
   messageCount?: number; // 消息数量
   invites?: number; // 邀请数量
+  inviteStatus?: string; // 邀请状态
   avatar?: string; // 头像
 
   // 此处仅对变化项进行覆写，其他项不再累述

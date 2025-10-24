@@ -287,6 +287,14 @@ export const siteMetadata: ISiteMetadata = {
         selector: ["td.rowfollow > a[href*='torrents.php?option-torrents=8']"],
         filters: [{ name: "parseNumber" }],
       },
+      inviteStatus: {
+        selector: ["td#outer > table table:eq(0) td"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
     },
   },
 

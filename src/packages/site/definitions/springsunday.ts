@@ -321,6 +321,14 @@ export const siteMetadata: ISiteMetadata = {
         ...SchemaMetadata.userInfo!.selectors!.messageCount,
         selector: ["a[href*='messages.php'] > b[style*='background: darkorange']"],
       },
+      inviteStatus: {
+        selector: ["div#outer p:first"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
     },
   },
   levelRequirements: [

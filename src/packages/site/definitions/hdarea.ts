@@ -138,6 +138,21 @@ export const siteMetadata: ISiteMetadata = {
     },
   },
 
+  userInfo: {
+    ...SchemaMetadata.userInfo!,
+    selectors: {
+      ...SchemaMetadata.userInfo!.selectors!,
+      inviteStatus: {
+        selector: ["td#outer > table table:eq(1) table td"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
+    },
+  },
+
   levelRequirements: [
     {
       id: 0,

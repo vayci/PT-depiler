@@ -247,6 +247,11 @@ export const siteMetadata: ISiteMetadata = {
         requestConfig: { url: "/mybonus.php", responseType: "document" },
         fields: ["bonusPerHour"],
       },
+      {
+        requestConfig: { url: "/invite.php", responseType: "document" },
+        assertion: { id: "params.uuid" },
+        fields: ["inviteStatus"],
+      },
     ],
   },
   levelRequirements: [
