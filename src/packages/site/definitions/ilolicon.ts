@@ -218,11 +218,16 @@ export const siteMetadata: ISiteMetadata = {
         attr: "href",
         filters: [{ name: "querystring", args: ["uuid"] }],
       },
+      origin_id: {
+        selector: ["a[href*='invite.php']:first"],
+        attr: "href",
+        filters: [{ name: "querystring", args: ["id"] }],
+      },
     },
     process: [
       {
         requestConfig: { url: "/index.php", responseType: "document" },
-        fields: ["id", "name"],
+        fields: ["id", "name", "origin_id"],
       },
       {
         requestConfig: { url: "/userdetails.php", responseType: "document" },
@@ -249,7 +254,7 @@ export const siteMetadata: ISiteMetadata = {
       },
       {
         requestConfig: { url: "/invite.php", responseType: "document" },
-        assertion: { id: "params.uuid" },
+        assertion: { origin_id: "params.id" },
         fields: ["inviteStatus"],
       },
     ],
