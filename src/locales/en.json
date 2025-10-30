@@ -235,6 +235,7 @@
       "updateAtFormatAsAlive": "Display update At as Relative Time",
       "showIntervalAsDate": "Display level requirement time as date format",
       "simplifyBonusNumbers": "Simplify Bonus Numbers",
+      "showBonusNeededInterval": "Show estimated bonus time in level requirements",
       "multiOpen": "Open in batch",
       "viewTimeline": "Timeline",
       "viewStatistic": "Data Chart",
@@ -527,7 +528,8 @@
     "export": "Export",
     "table": {
       "enable": "Enabled ?",
-      "default": "Default ?"
+      "default": "Default ?",
+      "autoGenerate": "Auto Generate"
     },
     "edit": {
       "title": "Customize @:SetSearchSolution.solution",
