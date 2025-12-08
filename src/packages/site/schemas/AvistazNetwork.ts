@@ -1,7 +1,6 @@
 import { type AxiosRequestConfig, type AxiosResponse } from "axios";
 import urlJoin from "url-join";
 import Sizzle from "sizzle";
-import { set } from "es-toolkit/compat";
 
 import PrivateSite from "./AbstractPrivateSite";
 
@@ -29,24 +28,9 @@ interface AuthFailResp {
 type AvzNetAuthResp = AuthSuccessResp | AuthFailResp;
 
 const commonListSelectors: TSchemaMetadataListSelectors = {
-  id: {
-    selector: "div.mb-1 a[href*='/torrent/']",
-    attr: "href",
-    filters: [
-      (href: string) => {
-        const torrentIdMatch = href.match(/\/torrent\/(\d+)/);
-        if (torrentIdMatch && torrentIdMatch[1]) {
-          return torrentIdMatch[1];
-        }
-        return undefined;
-      },
-    ],
-  },
-  title: { selector: "div.mb-1 a[href*='/torrent/']" },
   subTitle: { text: "" },
-  url: { selector: "div.mb-1 a[href*='/torrent/']", attr: "href" },
   comments: { text: "N/A" },
-  category: { selector: ".category-icon[data-original-title]", attr: "data-original-title" }, //category过于动态，抓取失败
+  category: { selector: "i[data-original-title]", attr: "data-original-title" },
 };
 
 export interface IAvzNetRawTorrent {
@@ -81,11 +65,63 @@ export interface IAvzNetRawTorrent {
     imdb: string;
     tmdb: string;
     tvdb: string;
+    [key: string]: any;
   };
   images: string[];
   description: string;
   [key: string]: any;
 }
+
+// 种子列表页
+export const listTorrentPageMetadata = {
+  urlPattern: ["/torrents"],
+  mergeSearchSelectors: false,
+  selectors: {
+    ...commonListSelectors,
+    rows: { selector: "#content-area > div.block > div > table:nth-child(3) > tbody > tr" },
+
+    id: {
+      selector: "div.torrent-file a[href*='/torrent/']",
+      attr: "href",
+      filters: [
+        (href: string) => {
+          const torrentIdMatch = href.match(/\/torrent\/(\d)/);
+          if (torrentIdMatch && torrentIdMatch[1]) {
+            return torrentIdMatch[1];
+          }
+          return undefined;
+        },
+      ],
+    },
+    title: { selector: "div.torrent-file a[href*='/torrent/']" },
+    url: { selector: "div.torrent-file a[href*='/torrent/']", attr: "href" },
+    link: { selector: "td:nth-child(3) a[href*='/download/torrent/']", attr: "href" },
+    // time显示为1 minute/1 hour，放弃获取
+    size: { selector: "td:nth-child(6)", filters: [{ name: "parseSize" }] },
+
+    seeders: { selector: "td:nth-child(7)" },
+    leechers: { selector: "td:nth-child(8)" },
+    completed: { selector: "td:nth-child(9)" },
+  },
+};
+
+// 下载历史页和HR页
+export const listHistoryPageMetadata = {
+  urlPattern: ["/profile/(.)/history"],
+  mergeSearchSelectors: false,
+  selectors: {
+    ...commonListSelectors,
+    rows: { selector: "div.card-body.p-2 > div.table-responsive > table > tbody > tr" },
+
+    title: { selector: "div.mb-1 a[title]", attr: "title" },
+    link: { selector: "div.float-right a[href*='/download/torrent/']", attr: "href" },
+    size: { selector: "span.text-yellow[data-original-title='File Size']", filters: [{ name: "parseSize" }] },
+
+    seeders: { selector: "span.text-green.mr-2[data-original-title='Seeders']" },
+    leechers: { selector: "span.text-red.mr-2[data-original-title='Leechers']" },
+    completed: { selector: "span.text-blue.mr-2[data-original-title='Completed']" },
+  },
+};
 
 export const SchemaMetadata: Pick<
   ISiteMetadata,
@@ -107,22 +143,28 @@ export const SchemaMetadata: Pick<
     advanceKeywordParams: {
       imdb: {
         requestConfigTransformer: ({ requestConfig: config }) => {
-          set(config!, "params.imdb", config!.params.search.replace("tt", ""));
-          delete config!.params.search;
+          if (config?.params?.search) {
+            config.params.imdb = config.params.search;
+            delete config.params.search;
+          }
           return config!;
         },
       },
       tvdb: {
         requestConfigTransformer: ({ requestConfig: config }) => {
-          set(config!, "params.tvdb", config!.params.search);
-          delete config!.params.search;
+          if (config?.params?.search) {
+            config.params.tvdb = config.params.search;
+            delete config.params.search;
+          }
           return config!;
         },
       },
       tmdb: {
         requestConfigTransformer: ({ requestConfig: config }) => {
-          set(config!, "params.tmdb", config!.params.search);
-          delete config!.params.search;
+          if (config?.params?.search) {
+            config.params.tmdb = config.params.search;
+            delete config.params.search;
+          }
           return config!;
         },
       },
@@ -160,47 +202,24 @@ export const SchemaMetadata: Pick<
     },
   },
 
-  list: [
-    // 种子列表页
-    {
-      urlPattern: ["/torrents"],
-      mergeSearchSelectors: false,
-      selectors: {
-        ...commonListSelectors,
-        rows: { selector: "#content-area > div.card.mt-2 > div.card-body.p-2 > div.table-responsive > table > tbody > tr" },
+  list: [listTorrentPageMetadata, listHistoryPageMetadata],
 
-        link: { selector: "div.align-top a[href*='/download/torrent/']", attr: "href" },
-        // time显示为1 minute/1 hour，放弃获取
-        size: { selector: "td:nth-child(5)", filters: [{ name: "parseSize" }] },
-
-        seeders: { selector: "td:nth-child(6)" },
-        leechers: { selector: "td:nth-child(7)" },
-        completed: { selector: "td:nth-child(8)" },
-
-        // ext_imdb: {
-        //   selector: "a[href^='/imdb/title'][href*='imdb=']",
-        //   filters: [{ name: "querystring", args: ["imdb"] }, { name: "extImdbId" }],
-        // },
+  detail: {
+    urlPattern: ["/torrent/"],
+    selectors: {
+      id: {
+        selector: ":self",
+        elementProcess: (t) => {
+          const e = t.URL,
+            r = e.match(/\/detail\/(\d+)/);
+          return r ? r[1] : e;
+        },
       },
+      title: { selector: "table.table tr:contains('Title') td:nth-child(2)" },
+      link: { selector: "a.btn-primary[href$='.torrent']", attr: "href" },
     },
-    // 下载历史页和HR页
-    {
-      urlPattern: ["/profile/(.+)/history"],
-      mergeSearchSelectors: false,
-      selectors: {
-        ...commonListSelectors,
-        rows: { selector: "div.card-body.p-2 > div.table-responsive > table > tbody > tr" },
+  },
 
-        link: { selector: "div.float-right a[href*='/download/torrent/']", attr: "href" },
-        size: { selector: "span.text-yellow[data-original-title='File Size']", filters: [{ "name": "parseSize" }] },
-
-        seeders: { selector: "span.text-green.mr-2[data-original-title='Seeders']" },
-        leechers: { selector: "span.text-red.mr-2[data-original-title='Leechers']" },
-        completed: { selector: "span.text-blue.mr-2[data-original-title='Completed']" },
-      },
-    },
-  ],
-  
   userInfo: {
     pickLast: ["name"],
     selectors: {

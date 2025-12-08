@@ -83,6 +83,7 @@ export const useConfigStore = defineStore("config", {
       applyTheme: false,
       defaultOpenSpeedDial: false,
       stackedButtons: false,
+      fadeEnterStyle: false,
 
       doubleConfirmAction: true,
       dragLinkOnSpeedDial: true,
@@ -221,6 +222,7 @@ export const useConfigStore = defineStore("config", {
       showSocialInformation: true,
       socialInformationSearchOnNewTab: true,
       uploadAtFormatAsAlive: false,
+      limitTorrentTitleTdWidth: false,
     },
 
     userInfo: {
@@ -249,10 +251,13 @@ export const useConfigStore = defineStore("config", {
     },
 
     searchEntity: {
-      saveLastFilter: true,
       queueConcurrency: 8,
-      treatTTQueryAsImdbSearch: true,
+
       allowSingleSiteSearch: false,
+      treatTTQueryAsImdbSearch: true,
+
+      saveLastFilter: true,
+      forceImdbIdMatchFilter: true,
       quickSiteFilter: true,
     },
 

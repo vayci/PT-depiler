@@ -238,8 +238,30 @@ export const SchemaMetadata: Pick<
           return time as number;
         },
       },
-      ext_douban: { selector: ["a[href*='douban.com']"], attr: "href", filters: [{ name: "extDoubanId" }] },
-      ext_imdb: { selector: ["a[href*='imdb.com']"], attr: "href", filters: [{ name: "extImdbId" }] },
+      ext_douban: {
+        selector: ["span[data-doubanid]", "a[href*='douban.com']"],
+        elementProcess: (element: HTMLAnchorElement | HTMLSpanElement) => {
+          if (element.tagName.toLowerCase() === "span") {
+            return element.dataset.doubanid || "";
+          } else if (element.tagName.toLowerCase() === "a") {
+            return (element as HTMLAnchorElement).getAttribute("href") || "";
+          }
+          return "";
+        },
+        filters: [{ name: "extDoubanId" }],
+      },
+      ext_imdb: {
+        selector: ["span[data-imdbid]", "a[href*='imdb.com']"],
+        elementProcess: (element: HTMLAnchorElement | HTMLSpanElement) => {
+          if (element.tagName.toLowerCase() === "span") {
+            return element.dataset.imdbid || "";
+          } else if (element.tagName.toLowerCase() === "a") {
+            return (element as HTMLAnchorElement).getAttribute("href") || "";
+          }
+          return "";
+        },
+        filters: [{ name: "extImdbId" }],
+      },
       tags: [
         { name: "H&R", selector: "img.hitandrun", color: "black" },
         { name: "Free", selector: "img.pro_free", color: "blue" },
@@ -481,6 +503,14 @@ export const SchemaMetadata: Pick<
         ],
         filters: [{ name: "parseNumber" }],
       },
+      lastAccessAt: {
+        selector: [
+          "td.rowhead:contains('最近动向') + td",
+          "td.rowhead:contains('最近動向') + td",
+          "td.rowhead:contains('Last Action') + td",
+        ],
+        filters: [{ name: "split", args: ["(", 0] }, { name: "parseTime" }],
+      },
       inviteStatus: {
         selector: ["form[action*='invite.php'] > input"],
         attr: "value",
@@ -516,6 +546,7 @@ export const SchemaMetadata: Pick<
           "seedingSize",
           "hnrUnsatisfied",
           "hnrPreWarning",
+          "lastAccessAt",
         ],
       },
       {
@@ -542,6 +573,10 @@ export default class NexusPHP extends PrivateSite {
       size: ["img.size"], // 大小
       time: ["img.time"], // 发布时间 （仅生成 selector， 后面会覆盖）
     } as Record<keyof ITorrent, string[]>;
+  }
+
+  protected get customTagsLocaterSelector(): string {
+    return "table.torrentname";
   }
 
   public override async transformSearchPage(
@@ -597,13 +632,9 @@ export default class NexusPHP extends PrivateSite {
         }
       });
     }
-    let transformedData = await super.transformSearchPage(doc, { keywords, searchEntry, requestConfig });
-    if (requestConfig?.params?.search_area === 4) {
-      transformedData = transformedData.filter((item) => !item.ext_imdb || item.ext_imdb === keywords);
-    }
 
     // !!! 其他一些比较难处理的，我们把他 hack 到 parseWholeTorrentFromRow 中 !!!
-    return transformedData;
+    return await super.transformSearchPage(doc, { keywords, searchEntry, requestConfig });
   }
 
   public override async getUserInfoResult(lastUserInfo: Partial<IUserInfo> = {}): Promise<IUserInfo> {
@@ -721,7 +752,10 @@ export default class NexusPHP extends PrivateSite {
   ): Partial<ITorrent> {
     super.parseTorrentRowForTags(torrent, row, searchConfig);
 
-    const customTags = row.querySelectorAll("span[style*='background-color'][style*='color'][title]");
+    // 新版 NPHP 支持自定义的tag
+    const customTags = row.querySelectorAll(
+      `${this.customTagsLocaterSelector} span[style*='background-color'][style*='color'][title]`,
+    );
     if (customTags.length > 0) {
       const tags: ITorrentTag[] = torrent.tags || [];
       customTags.forEach((element) => {

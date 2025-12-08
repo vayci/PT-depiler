@@ -223,8 +223,21 @@ function openOptions() {
 
 <template>
   <v-theme-provider :theme="configStore.contentScript.applyTheme ? configStore.uiTheme : ''">
-    <div ref="el" :style="style" style="position: fixed; z-index: 9999999">
-      <v-speed-dial v-model="openSpeedDial" :close-on-content-click="false" no-click-animation persistent>
+    <div
+      ref="el"
+      :style="style"
+      style="position: fixed; z-index: 9999999"
+      :class="{
+        'ptd-fade-enter': configStore.contentScript.fadeEnterStyle,
+      }"
+    >
+      <v-speed-dial
+        v-model="openSpeedDial"
+        :close-on-content-click="false"
+        disable-initial-focus
+        no-click-animation
+        persistent
+      >
         <template v-slot:activator="{ props: activatorProps }">
           <v-fab
             v-bind="activatorProps"
@@ -236,7 +249,7 @@ function openOptions() {
             @dragleave.prevent="isDragging = false"
             v-on="dropAction"
           >
-            <v-avatar :image="ptdIcon" rounded="0" :class="{ 'ptd-fab-loading': isDragging }" />
+            <v-avatar :class="{ 'ptd-fab-loading': isDragging }" :image="ptdIcon" color="transparent" rounded="0" />
           </v-fab>
         </template>
 

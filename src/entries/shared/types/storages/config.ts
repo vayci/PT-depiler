@@ -55,6 +55,7 @@ export interface IConfigPiniaStorageSchema {
     applyTheme: boolean; // 是否响应主题样式
     defaultOpenSpeedDial: boolean; // 是否默认打开按钮
     stackedButtons: boolean; // 是否使用堆叠按钮
+    fadeEnterStyle: boolean; // 是否启用淡入效果（即默认半透明，当鼠标移入时不透明）
 
     doubleConfirmAction: boolean; // 进行批量操作时，是否需要二步确认（避免误操作）
     dragLinkOnSpeedDial: boolean; // 是否允许拖拽链接到 SpeedDial 上
@@ -159,6 +160,8 @@ export interface IConfigPiniaStorageSchema {
     socialInformationSearchOnNewTab: boolean;
     // 是否使用 time_alive(过去时间) 来展示，如果不使用，则使用 time_added(发生时间) 来展示，默认不使用
     uploadAtFormatAsAlive: boolean;
+    // 是否限制种子标题列的最大宽度，防止过长导致表格布局混乱
+    limitTorrentTitleTdWidth: boolean;
   };
 
   userInfo: {
@@ -197,14 +200,18 @@ export interface IConfigPiniaStorageSchema {
   };
 
   searchEntity: {
-    // 是否保存上一次使用的筛选词
-    saveLastFilter: boolean;
     // 搜索时的最大并发数
     queueConcurrency: number;
-    // 是否将 tt\d{7,8} 的搜索词视为 IMDb 搜索
-    treatTTQueryAsImdbSearch: boolean;
+
     // 是否允许单站点搜索
     allowSingleSiteSearch: boolean;
+    // 是否将 tt\d{7,8} 的搜索词视为 IMDb 搜索
+    treatTTQueryAsImdbSearch: boolean;
+
+    // 是否保存上一次使用的筛选词
+    saveLastFilter: boolean;
+    // 当搜索词为 imdb 时，且站点搜索结果返回 imdbId 时，滤去 imdb 不匹配的结果
+    forceImdbIdMatchFilter: boolean;
     // 是否启用快速站点过滤功能
     quickSiteFilter: boolean;
   };

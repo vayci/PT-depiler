@@ -22,8 +22,8 @@ export function parse(query: string | number | undefined): string {
       return imdbUrlMatch[1] as string;
     }
 
-    if (/tt(\d+)/.test(query)) {
-      return query;
+    if (/^tt(\d+)/.test(query)) {
+      query = query.replace(/^tt(\d+)/, "$1");
     }
 
     // 如果是纯数字的字符串，则补齐并返回

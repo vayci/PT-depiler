@@ -199,7 +199,7 @@ export const siteMetadata: ISiteMetadata = {
         ],
       },
       seeding: {
-        selector: ["a:has(img[alt='Torrents seeding'])"],
+        selector: ["a[href='/torrents.php?option-torrents=3']"],
         filters: [{ name: "parseNumber" }],
       },
       seedingSize: {
@@ -250,6 +250,7 @@ export const siteMetadata: ISiteMetadata = {
           "hnrUnsatisfied",
           "hnrPreWarning",
           "bonusPerHour", // 使用我们自定义的 selector 和 filter
+          "lastAccessAt",
         ],
       },
     ],

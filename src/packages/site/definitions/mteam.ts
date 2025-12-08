@@ -180,6 +180,7 @@ export const siteMetadata: ISiteMetadata = {
       name: "類別（综合）",
       key: "categories_normal",
       keyPath: "data",
+      notes: "请先设置分类入口为“综合”！请勿与 成人 区类别同时选择！",
       options: siteCategory.filter((item) => item.type === "normal"),
       cross: { mode: "brackets", key: "categories" },
     },
@@ -187,6 +188,7 @@ export const siteMetadata: ISiteMetadata = {
       name: "類別（成人）",
       key: "categories_adult",
       keyPath: "data",
+      notes: "请先设置分类入口为“成人”！请勿与 综合 区类别同时选择！",
       options: siteCategory.filter((item) => item.type === "adult"),
       cross: { mode: "brackets", key: "categories" },
     },
@@ -371,6 +373,7 @@ export const siteMetadata: ISiteMetadata = {
           levelId: { selector: "data.role", filters: [{ name: "parseNumber" }] },
           bonus: { selector: "data.memberCount.bonus", filters: [{ name: "parseNumber" }] },
           inviteStatus: { selector: "data.limitInvites", filters: [{ name: "parseNumber" }] },
+          lastAccessAt: { selector: "data.memberStatus.lastBrowse", filters: [{ name: "parseTime" }] },
         },
       },
       {
@@ -471,7 +474,14 @@ export const siteMetadata: ISiteMetadata = {
           return match ? match[1] : url;
         },
       },
-      title: { selector: "h2.title > span.align-middle" },
+      title: {
+        selector: ["h2 > span.align-middle", "title"],
+        filters: [
+          // 当回落到 title 中替换掉两侧的无关内容
+          { name: "replace", args: ['M-Team - TP :: 種子詳情 "', ""] },
+          { name: "replace", args: ['" - Powered by mTorrent', ""] },
+        ],
+      },
       link: { text: "" },
     },
   },

@@ -257,6 +257,8 @@
       "invites": "邀请数",
       "inviteStatus": "邀请状态",
       "joinTime": "入站时间",
+      "lastAccessAt": "最近访问时间",
+      "lastAccessDurationNote": "已经 {0} 天未访问了",
       "updateAt": "更新时间",
       "action": {
         "viewHistoryData": "查看历史数据",
@@ -325,7 +327,7 @@
       },
       "alert": {
         "enterKeyword": "请输入搜索关键词开始搜索",
-        "statusButton": "搜索情况",
+        "searchStatus": "搜索情况",
         "paused": "搜索暂停中…",
         "searching": "搜索中…",
         "searchProgress": "已接收 {0} 条结果，搜索仍在进行……",
@@ -350,7 +352,8 @@
       "showTorrentSubtitle": "显示种子副标题",
       "showSocialInformation": "显示媒体评价信息",
       "socialInformationSearchOnNewTab": "媒体评价信息搜索在新标签页中打开",
-      "uploadAtFormatAsAlive": "上传时间显示为相对时间"
+      "uploadAtFormatAsAlive": "上传时间显示为相对时间",
+      "limitTorrentTitleTdWidth": "限制种子标题宽度"
     },
     "siteFilter": {
       "all": "全部站点"
@@ -409,6 +412,7 @@
       "siteSearchConfig": "站点搜索配置",
       "siteQueueConcurrency": "请求队列长度",
       "saveLastSearchFilter": "保存上一次使用的搜索筛选词",
+      "forceImdbIdMatchFilter": "使用 IMDb 搜索时，在搜索结果中滤去站点返回的IMDb号不匹配的结果",
       "quickSiteFilter": "直接显示站点筛选栏",
       "mediaServerSearchConfig": "媒体服务器搜索配置",
       "mediaQueueConcurrency": "请求队列长度",

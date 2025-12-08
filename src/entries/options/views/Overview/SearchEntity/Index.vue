@@ -46,7 +46,9 @@ const fullTableHeader = computed(
         key: "title",
         align: "start",
         minWidth: "30rem",
-        ...(display.smAndDown.value ? { maxWidth: "32vw" } : {}),
+        ...(configStore.searchEntifyControl.limitTorrentTitleTdWidth || display.smAndDown.value
+          ? { maxWidth: "32vw" }
+          : {}),
         props: { disabled: true },
       },
       { title: t("SearchEntity.index.table.category"), key: "category", align: "center" },
@@ -160,9 +162,6 @@ function cancelSearchQueue() {
         {{ t("SearchEntity.index.alert.enterKeyword") }}
       </template>
       <template v-else>
-        <v-btn class="mr-2" color="primary" size="small" @click="showSearchStatusDialog = true">
-          {{ t("SearchEntity.index.alert.statusButton") }}
-        </v-btn>
         <template v-if="runtimeStore.search.isSearching">
           <template v-if="isSearchingParsed">
             {{ t("SearchEntity.index.alert.paused") }}
@@ -196,9 +195,15 @@ function cancelSearchQueue() {
         </template>
 
         <v-spacer />
-        <v-divider vertical class="mx-2" />
 
-        <div id="ptd-search-entity-status">
+        <v-btn
+          id="ptd-search-entity-status"
+          :title="t('SearchEntity.index.alert.searchStatus')"
+          class="mr-2"
+          color="primary"
+          size="small"
+          @click="showSearchStatusDialog = true"
+        >
           <template v-if="searchPlanStatus.success > 0">
             <v-icon size="x-small" class="mr-1" icon="mdi-check" />{{ searchPlanStatus.success }}
           </template>
@@ -208,7 +213,7 @@ function cancelSearchQueue() {
           <template v-if="searchPlanStatus.queued > 0">
             <v-icon size="x-small" color="blue-grey" class="mr-1" icon="mdi-clock" />{{ searchPlanStatus.queued }}
           </template>
-        </div>
+        </v-btn>
       </template>
     </v-alert-title>
   </v-alert>
