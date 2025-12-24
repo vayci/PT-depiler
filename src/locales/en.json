@@ -214,8 +214,8 @@
   },
   "MyData": {
     "index": {
-      "flushSelectSite": "Flush selected",
-      "flushCancel": "Flush canceled",
+      "flushSelectSite": "Refresh selected",
+      "flushCancel": "Refresh canceled",
       "joinTimeFormat": "Display join time",
       "joinTimeFormatOptions": {
         "alive": "Relative Time",
@@ -262,7 +262,7 @@
       "updateAt": "Updated At",
       "action": {
         "viewHistoryData": "View History Data",
-        "flushData": "Flush Data"
+        "flushData": "Refresh Data"
       }
     },
     "HistoryDataView": {
@@ -413,6 +413,7 @@
       "siteQueueConcurrency": "Request Queue Concurrency",
       "saveLastSearchFilter": "Save last used search filter",
       "forceImdbIdMatchFilter": "When searching by IMDb, filter out results whose IMDb ID returned by the site does not match",
+      "autoDetectOfficialGroupFromTitle": "Auto Detect Official Tag From Torrent Title",
       "quickSiteFilter": "Quick Site Filter In Search Page",
       "mediaServerSearchConfig": "Media Server Search Configuration",
       "mediaQueueConcurrency": "Request Queue Concurrency",
@@ -514,6 +515,8 @@
           "example": "Example"
         },
         "replaceNote": {
+          "torrentTitle": "The title of torrent",
+          "torrentSubTitle": "The subtitle of torrent",
           "torrentSite": "The Site ID of torrent",
           "torrentSiteName": "The Site name of torrent",
           "searchKeyword": "Search Keywords",
@@ -586,9 +589,9 @@
       "uploadSpeedLimitHint": "Set upload speed limit (MB/s) when pushing torrents to downloader, 0 or empty means unlimited"
     },
     "index": {
-      "flushFaviconFinish": "The selected site favicon has been flushed successfully!",
+      "flushFaviconFinish": "The selected site favicon has been refreshed successfully!",
       "table": {
-        "flushFavicon": "Flush Site Favicon"
+        "flushFavicon": "Refresh Site Favicon"
       },
       "settingNote": [
         "Only the configured site will display the plugin icon and the corresponding function;",

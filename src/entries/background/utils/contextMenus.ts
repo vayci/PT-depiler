@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { format as dateFormat } from "date-fns";
 
-import { CAddTorrentOptions } from "@ptd/downloader";
+import { type CAddTorrentOptions } from "@ptd/downloader";
 import { getHostFromUrl } from "@ptd/site/utils/html.ts"; // 这里不能使用 @ptd/site 的主入口，会导致 sw 无法加载
 import { type ITorrent } from "@ptd/site/types/torrent.ts";
 
@@ -87,7 +87,7 @@ async function downloadLinkPush(
   }
 
   // 发送下载请求
-  sendMessage("downloadTorrentToDownloader", {
+  sendMessage("downloadTorrent", {
     torrent, // 组装包含标题、URL和站点信息的种子对象
     downloaderId: downloader.id,
     addTorrentOptions: {
@@ -265,6 +265,16 @@ async function initContextMenus(tab: chrome.tabs.Tab) {
         },
       });
 
+      // 在 contextMenus 环境下，很多动态参数无法获取，因此要在生成的菜单栏中滤去
+      const EXCLUDE_FOLDER_KEYWORDS = [
+        "<...>", // chrome 在 service worker 环境下，无法使用 window.prompt 进行输入的文件夹
+        "$search:", // 不存在search相关参数
+        // 大概率也不可能存在下面和 torrent 相关的参数
+        "$torrent.title$",
+        "$torrent.subTitle$",
+        "$torrent.category$",
+      ];
+
       // 为每个下载器创建子菜单
       for (const downloader of downloaders) {
         const downloaderPushSubMenuId = addContextMenu({
@@ -279,10 +289,7 @@ async function initContextMenus(tab: chrome.tabs.Tab) {
         });
 
         let suggestFolders = (downloader.suggestFolders ?? []).filter(
-          (f) =>
-            !f.includes("<...>") && // chrome 在 service worker 环境下，无法使用 window.prompt 进行输入的文件夹
-            !f.includes("$search:") && // 不存在search相关参数
-            !f.includes("$torrent.category$"), // 大概率也不可能存在和 torrent.category 相关的参数
+          (f) => !EXCLUDE_FOLDER_KEYWORDS.some((keywords) => f.includes(keywords)),
         );
 
         // 如果没有当前站点，则不显示 $torrent.site$

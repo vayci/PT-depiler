@@ -9,7 +9,7 @@ import { sendMessage } from "@/messages.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 
 import NavButton from "@/options/components/NavButton.vue";
-import SimpleTorrentTitleTd from "@/content-script/app/components/SimpleTorrentTitleTd.vue";
+import TorrentTitleTd from "@/options/components/TorrentTitleTd.vue";
 
 const showDialog = defineModel<boolean>();
 
@@ -46,7 +46,7 @@ const localDownloadMultiStatus = ref<boolean>(false);
 async function handleLocalDownloadMulti() {
   localDownloadMultiStatus.value = true;
   for (const torrent of selectedTorrents.value) {
-    await sendMessage("downloadTorrentToLocalFile", { torrent });
+    await sendMessage("downloadTorrent", { torrent, downloaderId: "local" });
   }
   localDownloadMultiStatus.value = false;
 }
@@ -122,7 +122,7 @@ function enterDialog() {
           show-select
         >
           <template #item.title="{ item }">
-            <SimpleTorrentTitleTd :item="item" />
+            <TorrentTitleTd :item="item" :show-social="false" />
           </template>
 
           <!-- 种子大小 -->
