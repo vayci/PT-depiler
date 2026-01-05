@@ -133,6 +133,14 @@ export const siteMetadata: ISiteMetadata = {
         ],
         attr: "title",
       },
+      inviteStatus: {
+        selector: ["td#outer > div li.ml20 > a"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
     },
   },
 

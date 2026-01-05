@@ -257,6 +257,7 @@
       "userData": "Data",
       "trueUserData": "True Data",
       "invites": "Invites",
+      "inviteStatus": "Invite Status",
       "joinTime": "Join Time",
       "lastAccessAt": "Last Access At",
       "lastAccessDurationNote": "Not Access for {0} days",

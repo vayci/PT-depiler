@@ -178,7 +178,21 @@ export const siteMetadata: ISiteMetadata = {
         selector: genUserInfoSelector("community", "uploaded"),
         filters: [{ name: "parseNumber" }],
       },
+      inviteStatus: {
+        selector: ["ul#userinfo_major > li > strong > a[href*='user.php']"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
     },
+    process: [
+      {
+        requestConfig: { url: "/user.php?action=invite", responseType: "document" },
+        fields: ["inviteStatus"],
+      },
+    ],
   },
 
   levelRequirements: [

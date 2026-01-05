@@ -40,6 +40,14 @@ export const siteMetadata: ISiteMetadata = {
         ],
         filters: [{ name: "parseNumber" }],
       },
+      inviteStatus: {
+        selector: ["td#outer > table table:eq(0) td"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
     },
   },
 

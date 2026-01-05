@@ -39,7 +39,7 @@ const fullTableHeader = reactive([
     props: { disabled: true },
   },
   { title: t("MyData.table.username"), key: "name", align: "center" },
-  { title: t("MyData.table.levelName"), key: "levelName", align: "start", width: "15%" },
+  { title: t("MyData.table.levelName"), key: "levelName", align: "start", width: "2%" },
   // NOTE: 这里将key设为 uploaded, trueUploaded 而不是虚拟的 userData，可以让 v-data-table 使用 uploaded 的进行排序
   { title: t("MyData.table.userData"), key: "uploaded", align: "end" },
   { title: t("MyData.table.trueUserData"), key: "trueUploaded", align: "end" }, // 默认不显示
@@ -51,6 +51,7 @@ const fullTableHeader = reactive([
   { title: t("levelRequirement.bonus"), key: "bonus", align: "end" },
   { title: t("levelRequirement.bonusPerHour"), key: "bonusPerHour", align: "end" },
   { title: t("MyData.table.invites"), key: "invites", align: "end" }, // 默认不显示
+  { title: t("MyData.table.inviteStatus"), key: "inviteStatus", align: "end" },
   { title: t("MyData.table.joinTime"), key: "joinTime", align: "center" },
   { title: t("MyData.table.lastAccessAt"), key: "lastAccessAt", align: "center" }, // 默认不显示
   { title: t("MyData.table.updateAt"), key: "updateAt", align: "center" },
@@ -585,6 +586,10 @@ function viewStatistic() {
 
       <template #item.invites="{ item }">
         <span class="text-no-wrap">{{ typeof item.invites !== "undefined" ? item.invites : "-" }}</span>
+      </template>
+
+      <template #item.inviteStatus="{ item }">
+        <span class="text-no-wrap">{{ typeof item.inviteStatus !== "undefined" ? item.inviteStatus : "-" }}</span>
       </template>
 
       <!-- 入站时间 -->

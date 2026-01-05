@@ -247,6 +247,14 @@ export const siteMetadata: ISiteMetadata = {
         selector: ["td.rowhead.nowrap:contains('H&R'):first + td"],
         filters: [{ name: "split", args: ["/", 0] }, { name: "parseNumber" }],
       },
+      inviteStatus: {
+        selector: ["td#outer > table table:eq(1) td"],
+        filters: [
+          (query: string) => {
+            return query;
+          },
+        ],
+      },
     },
   },
 

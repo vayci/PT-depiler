@@ -201,6 +201,40 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
   },
+  userInfo: {
+    ...SchemaMetadata.userInfo!,
+    process: [
+      {
+        requestConfig: { url: "/index.php", responseType: "document" },
+        fields: ["id"],
+      },
+      {
+        requestConfig: { url: "/userdetails.php", responseType: "document" },
+        assertion: { id: "params.id" },
+        fields: [
+          "name",
+          "messageCount",
+          "uploaded",
+          "trueUploaded",
+          "downloaded",
+          "trueDownloaded",
+          "levelName",
+          "bonus",
+          "seedingBonus",
+          "joinTime",
+          "seeding",
+          "seedingSize",
+          "hnrUnsatisfied",
+          "hnrPreWarning",
+          "lastAccessAt",
+        ],
+      },
+      {
+        requestConfig: { url: "/mybonus.php", responseType: "document" },
+        fields: ["bonusPerHour", "seedingBonusPerHour"],
+      },
+    ],
+  },
   levelRequirements: [
     {
       id: 0,

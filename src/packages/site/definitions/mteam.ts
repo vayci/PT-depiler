@@ -374,6 +374,7 @@ export const siteMetadata: ISiteMetadata = {
           },
           levelId: { selector: "data.role", filters: [{ name: "parseNumber" }] },
           bonus: { selector: "data.memberCount.bonus", filters: [{ name: "parseNumber" }] },
+          inviteStatus: { selector: "data.limitInvites", filters: [{ name: "parseNumber" }] },
           lastAccessAt: { selector: "data.memberStatus.lastBrowse", filters: [{ name: "parseTime" }] },
         },
       },
