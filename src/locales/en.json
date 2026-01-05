@@ -71,6 +71,8 @@
     "searchPlanDefault": "Default",
     "omniboxSearch": "Search $2 in [ $1 ]",
     "contextMenuSearch": "Using PT Depiler to Search for \"%s\" related torrents",
+    "contextMenuSearchWithDouban": "Using PT Depiler to Search This Douban ID",
+    "contextMenuSearchWithIMDb": "Using PT Depiler to Search This IMDb ID",
     "contextMenuSearchInDefault": "Search in the default plan",
     "contextMenuSearchInSolution": "Search in the specified plan",
     "contextMenuSearchInSite": "Search in the specified site",
@@ -158,7 +160,7 @@
     "working": "Fetching...",
     "success": "Fetch Successful!",
     "parseError": "Parse Error!",
-    "passParse": "Not Enabled!",
+    "passParse": "Passed!",
     "CFBlocked": "Cloudflare Error!",
     "CFBlockedNotes": "It may be because the site has enabled CloudFlare's security protection, which makes it impossible to retrieve data. You can first try to manually access the site once to pass the verification. If that doesn't work, just wait for the site to recover on its own.",
     "needLogin": "Login Required!",
@@ -366,6 +368,18 @@
         "quarter": "Quarter",
         "year": "Year",
         "custom": "Custom"
+      }
+    },
+    "SearchStatusDialog": {
+      "title": "Search Status of [{0}]",
+      "successMsg": "Find {0} results in {0}s",
+      "statusMsg": {
+        "userCancel": "You Cancel this search",
+        "siteNotEnabled": "The site not enabled",
+        "searchEntityNotEnabled": "The search entry not enabled",
+        "noEmptyKeywords": "Empty keywords not supported",
+        "noNonLatin": "Non-Latin characters not supported",
+        "noAdvanceParams": "Advance parameter not supported"
       }
     }
   },

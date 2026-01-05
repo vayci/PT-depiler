@@ -1,5 +1,6 @@
 import type { ISiteMetadata, ISearchEntryRequestConfig, ISearchResult } from "../types.ts";
 import PrivateSite from "../schemas/AbstractPrivateSite.ts";
+import { buildCategoryOptionsFromDict } from "../utils.ts";
 
 const categoryMapXXX: Record<number, string> = {
   15: "XXX Movies",
@@ -65,20 +66,20 @@ export const siteMetadata: ISiteMetadata = {
 
   urls: ["uggcf://fcrrqncc.vb/"],
 
-  formerHosts: ["icetorrent.org", "scenefz.me", "u-torrents.ro", "myxz.eu"],
+  legacyUrls: ["https://icetorrent.org/", "https://scenefz.me/", "https://u-torrents.ro/", "https://myxz.eu/"],
 
   // 这里除了 categories 其它均为自定义 key，需要在自定义站点方法中统一处理
   category: [
     {
       name: "Categories",
       key: "categories_normal",
-      options: Object.entries(categoryMapNormal).map(([value, name]) => ({ name, value })),
+      options: buildCategoryOptionsFromDict(categoryMapNormal),
       cross: { key: "categories", mode: "brackets" },
     },
     {
       name: "Categories (Adult)",
       key: "categories_xxx",
-      options: Object.entries(categoryMapXXX).map(([value, name]) => ({ name, value })),
+      options: buildCategoryOptionsFromDict(categoryMapXXX),
       cross: { mode: "custom" },
       generateRequestConfig: (selectedOptions) => {
         const params: Record<string, any> = { categories: [] };

@@ -44,7 +44,6 @@ export const siteMetadata: ISiteMetadata = {
   schema: "AvistazNetwork",
 
   urls: ["uggcf://nivfgnm.gb/"],
-  formerHosts: [""],
 
   collaborator: ["zdm9981"],
 
