@@ -6,7 +6,7 @@ import { ISiteMetadata, type ISiteUserConfig, type TSiteID } from "@ptd/site";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { getCanAddedSiteMetadata } from "./utils.ts";
 
-import SiteFavicon from "@/options/components/SiteFavicon.vue";
+import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import Editor from "./Editor.vue";
 
 import { REPO_URL } from "~/helper.ts";
@@ -55,6 +55,7 @@ async function saveSite() {
           <v-toolbar-title>{{ t("SetSite.add.title") }}</v-toolbar-title>
           <v-spacer />
           <v-btn
+            :title="t('layout.header.wiki')"
             :href="`${REPO_URL}/wiki/config-site`"
             color="success"
             icon="mdi-help-circle"

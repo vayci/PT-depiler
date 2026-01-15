@@ -10,7 +10,7 @@ import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useResetableRef } from "@/options/directives/useResetableRef.ts";
 
-import SiteFavicon from "@/options/components/SiteFavicon.vue";
+import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import CheckSwitchButton from "@/options/components/CheckSwitchButton.vue";
 
 import { getCanAddedSiteMetadata } from "./utils.ts";
@@ -154,7 +154,12 @@ async function dialogEnter() {
         <v-toolbar color="blue-grey-darken-2">
           <v-toolbar-title>{{ t("SetSite.oneClickImportDialog.title") }}</v-toolbar-title>
           <template #append>
-            <v-btn icon="mdi-close" @click="showDialog = false" :disabled="importStatus.isWorking" />
+            <v-btn
+              icon="mdi-close"
+              :title="t('common.dialog.close')"
+              @click="showDialog = false"
+              :disabled="importStatus.isWorking"
+            />
           </template>
         </v-toolbar>
       </v-card-title>

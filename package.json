@@ -57,7 +57,7 @@
     "jszip": "^3.10.1",
     "konva": "^10.0.12",
     "nanoid": "^5.1.6",
-    "p-queue": "^9.0.1",
+    "p-queue": "^9.1.0",
     "parse-torrent": "^11.0.19",
     "pinia": "^3.0.4",
     "pinia-plugin-state-persistence": "^1.11.0",
@@ -68,10 +68,10 @@
     "valid-filename": "^4.0.0",
     "vue": "^3.5.26",
     "vue-echarts": "^8.0.1",
-    "vue-i18n": "^11.2.7",
-    "vue-konva": "^3.2.6",
+    "vue-i18n": "^11.2.8",
+    "vue-konva": "^3.3.0",
     "vue-router": "^4.6.4",
-    "vuetify": "^3.11.5",
+    "vuetify": "^3.11.6",
     "webdav": "^5.8.0"
   },
   "devDependencies": {
@@ -80,7 +80,7 @@
     "@types/crypto-js": "^4.2.2",
     "@types/file-saver": "^2.0.7",
     "@types/git-rev-sync": "^2.0.2",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.0.6",
     "@types/parse-torrent": "^5.8.8",
     "@types/sizzle": "^2.3.10",
     "@vitejs/plugin-vue": "^5.2.4",
@@ -91,7 +91,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "sass": "^1.97.1",
+    "sass": "^1.97.2",
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "vite": "^6.4.1",
@@ -99,7 +99,7 @@
     "vite-plugin-vue-devtools": "^8.0.5",
     "vite-plugin-vuetify": "^2.1.2",
     "vite-plugin-web-extension": "4.4.3",
-    "vue-tsc": "^3.2.1"
+    "vue-tsc": "^3.2.2"
   },
   "prettier": {
     "printWidth": 120,

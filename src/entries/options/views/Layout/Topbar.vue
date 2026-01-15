@@ -9,7 +9,7 @@ import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 
 import { REPO_URL } from "~/helper";
-import SiteFavicon from "@/options/components/SiteFavicon.vue";
+import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import SiteName from "@/options/components/SiteName.vue";
 
 const route = useRoute();
@@ -100,7 +100,12 @@ watch(
     >
       <template #append>
         <!-- 搜索按键 -->
-        <v-btn :disabled="runtimeStore.search.isSearching" icon="mdi-magnify" @click="startSearchEntity" />
+        <v-btn
+          :disabled="runtimeStore.search.isSearching"
+          icon="mdi-magnify"
+          :title="t('common.search')"
+          @click="startSearchEntity"
+        />
       </template>
 
       <template #prepend-inner>
@@ -162,11 +167,7 @@ watch(
                       <template #prepend>
                         <SiteFavicon :site-id="siteMetadata.id" />
                       </template>
-                      <SiteName
-                        :class="['v-list-item-title', 'text-black', 'ml-2']"
-                        :site-id="siteMetadata.id"
-                        tag="span"
-                      />
+                      <SiteName :class="['v-list-item-title', 'ml-2']" :site-id="siteMetadata.id" tag="span" />
                     </v-list-item>
                   </template>
                 </v-list>
@@ -214,7 +215,7 @@ watch(
         <!-- 处于小屏幕，只显示点，btn以menu列表形式展示 -->
         <v-menu bottom left offset-y>
           <template #activator="{ props }">
-            <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" />
+            <v-btn :title="t('layout.header.expand')" v-bind="props" icon="mdi-dots-vertical" variant="text" />
           </template>
 
           <v-list>

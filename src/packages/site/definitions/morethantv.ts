@@ -50,6 +50,8 @@ export const siteMetadata: ISiteMetadata = {
     },
   ],
 
+  officialGroupPattern: [/-(TEPES|E\.N\.D|SMURF|hallowed|WDYM|PiRAMiDHEAD|VaLTiEL)/i],
+
   search: {
     skipNonLatinCharacters: true,
     keywordPath: "params.q",
@@ -65,6 +67,13 @@ export const siteMetadata: ISiteMetadata = {
       imdb: {
         requestConfigTransformer: ({ keywords, requestConfig }) => {
           requestConfig!.params.imdbid = keywords;
+          delete requestConfig!.params.q;
+          return requestConfig!;
+        },
+      },
+      tvmaze: {
+        requestConfigTransformer: ({ keywords, requestConfig }) => {
+          requestConfig!.params.tvmazeid = keywords;
           delete requestConfig!.params.q;
           return requestConfig!;
         },
@@ -89,6 +98,7 @@ export const siteMetadata: ISiteMetadata = {
       }, // <torznab:attr name="category" value="5040" />
       tags: [{ selector: '[name="downloadvolumefactor"][value="0"]', name: "Free", color: "blue" }],
       ext_imdb: { selector: "[name='imdbid']", attr: "value", filters: [{ name: "extImdbId" }] }, // <torznab:attr name="imdbid" value="1234567" />
+      ext_tvmaze: { selector: "[name='tvmazeid']", attr: "value" },
       // 使用 api 不返回 process 和 status
       // 如果走 torrents/browse?searchtext= 则没有 category
     },

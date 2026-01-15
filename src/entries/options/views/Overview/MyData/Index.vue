@@ -14,7 +14,7 @@ import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
 import { formatDate, formatSize, formatTimeAgo } from "@/options/utils.ts";
 
 import SiteName from "@/options/components/SiteName.vue";
-import SiteFavicon from "@/options/components/SiteFavicon.vue";
+import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import ResultParseStatus from "@/options/components/ResultParseStatus.vue";
 import NavButton from "@/options/components/NavButton.vue";
 import UserLevelRequirementsTd from "./UserLevelRequirementsTd.vue";
@@ -87,7 +87,7 @@ const {
   tableFilterFn,
   advanceFilterDictRef,
   updateTableFilterValueFn,
-  resetAdvanceFilterDictFn,
+  buildFilterDictFn,
   toggleKeywordStateFn,
 } = useTableCustomFilter<IUserInfoItem>({
   parseOptions: {
@@ -167,9 +167,8 @@ async function multiOpen() {
 async function multiFlush() {
   let flushSiteIds: TSiteID[] = tableSelected.value;
   if (flushSiteIds.length === 0) {
-    if (confirm("刷新全部站点用户信息？（未选择任何站点时，默认刷新全部站点）")) {
-      flushSiteIds = tableData.value.map((item) => item.site);
-    }
+    flushSiteIds = tableData.value.map((item) => item.site);
+    runtimeStore.showSnakebar("未选择任何站点，默认刷新全部站点", { color: "info" });
   }
 
   if (flushSiteIds.length > 0) {
@@ -331,7 +330,7 @@ function viewStatistic() {
           :label="t('common.search')"
           max-width="500"
           single-line
-          @click:clear="resetAdvanceFilterDictFn"
+          @click:clear="buildFilterDictFn('')"
         >
           <template #prepend-inner>
             <v-menu min-width="100">
@@ -347,7 +346,7 @@ function viewStatistic() {
                   :title="t('MyData.index.filter.todayNotUpdated')"
                   @click.stop="
                     () => {
-                      advanceFilterDictRef.updateAt.value = ['', formatDate(currentDate, 'yyyyMMdd')];
+                      advanceFilterDictRef.updateAt = ['', formatDate(currentDate, 'yyyyMMdd')];
                       updateTableFilterValueFn();
                     }
                   "
@@ -371,7 +370,7 @@ function viewStatistic() {
                   :title="t('MyData.index.filter.unreadMessage')"
                   @click.stop="
                     () => {
-                      advanceFilterDictRef.messageCount.value = [1, ' '];
+                      advanceFilterDictRef.messageCount = [1, ' '];
                       updateTableFilterValueFn();
                     }
                   "

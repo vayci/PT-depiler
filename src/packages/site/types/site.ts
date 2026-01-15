@@ -173,7 +173,11 @@ export interface ISiteMetadata {
      */
     excludeUrlPattern?: TPatterns;
 
-    mergeSearchSelectors?: boolean; // 是否合并 search.selectors 中的配置到此处的 selectors 中，默认为 true
+    /**
+     * 是否合并 search.selectors 中的配置到此处的 selectors 中，默认为 true
+     * 对使用 API 请求的站点，此处要显式声明为 false
+     */
+    mergeSearchSelectors?: boolean;
 
     /**
      * 对于种子列表页的解析配置，默认会使用 search.requestConfig.selectors 中的配置作为垫片
@@ -406,7 +410,7 @@ export interface ISiteUserConfig {
   // 在批量下载每个种子时，与（本站）上一个种子之间的间隔时间，单位为秒，如果不设置默认为 0
   downloadInterval?: number;
 
-  // 上传速度限制，单位为 MB/s，0 或不填时不限速，用于推送种子文件到下载器的时候，传递上传速度限制
+  // 上传速度限制，单位为 MiB/s，0 或不填时不限速，用于推送种子文件到下载器的时候，传递上传速度限制
   uploadSpeedLimit?: number;
 
   // 是否允许 content-script 访问该站点，默认为 true

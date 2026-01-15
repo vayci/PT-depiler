@@ -20,12 +20,14 @@ const clientConfig = ref<IDownloaderMetadata>();
 const clientMetadata = ref<TorrentClientMetaData>();
 const expansionPanelOpen = ref<string>("note");
 
+// [key (for i18n), value, example]
 const pathReplaceMap: [string, string, string][] = [
-  // [key (for i18n), value, example]
+  // 在 torrent 相关字段中，因为对应的 title subTitle 为对应 torrent 的字段，所以这里用 . 来分隔
   ["torrentTitle", "$torrent.title$", "/volume1/$torrent.title$ -> /volume1/TorrentTitle"],
   ["torrentSubTitle", "$torrent.subTitle$", "/volume1/$torrent.subTitle$ -> /volume1/TorrentSubTitle"],
   ["torrentSite", "$torrent.site$", "/volume1/$torrent.site$/music -> /volume1/opencd/music"],
   ["torrentSiteName", "$torrent.siteName$", "/volume1/$torrent.siteName$/music -> /volume1/OpenCD/music"],
+  // 而在 search, date 等字段中，则是全局字段，所以用 : 来分隔
   ["searchKeyword", "$search:keyword$", "/volume1/$search:keyword$/music -> /volume1/keyword/music"],
   ["searchPlan", "$search:plan$", "/volume1/$search:plan$/music -> /volume1/all/music"],
   ["dateYear", "$date:YYYY$", "/volume1/$date:YYYY$/music -> /volume1/2019/music"],
@@ -115,7 +117,7 @@ function saveClientConfig() {
           color="blue-grey-darken-2"
         >
           <template #append>
-            <v-btn icon="mdi-close" @click="showDialog = false" />
+            <v-btn icon="mdi-close" :title="t('common.dialog.close')" @click="showDialog = false" />
           </template>
         </v-toolbar>
       </v-card-title>
@@ -151,7 +153,13 @@ function saveClientConfig() {
                       variant="text"
                       @click="loadClientFolders"
                     />
-                    <v-btn color="red" icon="$clear" variant="text" @click="suggestFolderInput = ''" />
+                    <v-btn
+                      :title="t('SetDownloader.PathAndTag.downloadPath.clear')"
+                      color="red"
+                      icon="$clear"
+                      variant="text"
+                      @click="suggestFolderInput = ''"
+                    />
                   </div>
                 </template>
                 <template #details>
@@ -191,7 +199,13 @@ function saveClientConfig() {
                       variant="text"
                       @click="loadClientLabels"
                     />
-                    <v-btn color="red" icon="$clear" variant="text" @click="suggestTagInput = ''" />
+                    <v-btn
+                      :title="t('SetDownloader.PathAndTag.tags.clear')"
+                      color="red"
+                      icon="$clear"
+                      variant="text"
+                      @click="suggestTagInput = ''"
+                    />
                   </div>
                 </template>
                 <template #details>

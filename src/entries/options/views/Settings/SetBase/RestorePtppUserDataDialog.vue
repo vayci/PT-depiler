@@ -21,7 +21,7 @@ import { useConfigStore } from "@/options/stores/config.ts";
 import type { IPtppDumpUserInfo, IPtppUserInfo, TUserInfoStorageSchema } from "@/shared/types.ts";
 
 import SiteName from "@/options/components/SiteName.vue";
-import SiteFavicon from "@/options/components/SiteFavicon.vue";
+import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import CheckSwitchButton from "@/options/components/CheckSwitchButton.vue";
 
 const showDialog = defineModel<boolean>();
@@ -246,7 +246,7 @@ async function entryDialog() {
         <v-toolbar color="blue-grey-darken-2">
           <v-toolbar-title>恢复 PT-Plugin-Plus 的用户历史数据信息</v-toolbar-title>
           <template #append>
-            <v-btn icon="mdi-close" @click="showDialog = false" />
+            <v-btn icon="mdi-close" :title="t('common.dialog.close')" @click="showDialog = false" />
           </template>
         </v-toolbar>
       </v-card-title>

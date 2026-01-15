@@ -9,7 +9,7 @@ import { formatDate } from "@/options/utils.ts";
 import { useConfigStore } from "@/options/stores/config.ts";
 import type { ITorrentDownloadMetadata, TTorrentDownloadKey } from "@/shared/types.ts";
 
-import SiteFavicon from "@/options/components/SiteFavicon.vue";
+import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import SiteName from "@/options/components/SiteName.vue";
 import TorrentTitleTd from "@/options/components/TorrentTitleTd.vue";
 import DeleteDialog from "@/options/components/DeleteDialog.vue";
@@ -191,6 +191,7 @@ onMounted(() => {
         <template #item.action="{ item }">
           <v-btn-group class="table-action" density="compact" variant="plain">
             <v-btn
+              :title="t('DownloadHistory.reDownload')"
               color="primary"
               icon="mdi-tray-arrow-down"
               size="small"
@@ -216,10 +217,7 @@ onMounted(() => {
     @re-download-complete="() => throttleLoadDownloadHistory()"
   />
 
-  <AdvanceFilterGenerateDialog
-    v-model="showAdvanceFilterDialog"
-    @update:table-filter="(v) => (tableWaitFilterRef = v)"
-  />
+  <AdvanceFilterGenerateDialog v-model="showAdvanceFilterDialog" />
 
   <DeleteDialog
     v-model="showDeleteDialog"

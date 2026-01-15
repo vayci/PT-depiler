@@ -57,6 +57,13 @@ async function updateStoredDownloaderConfigByDefault(type: string) {
 
 async function saveStoredDownloaderConfig() {
   await metadataStore.addDownloader(storedDownloaderConfig.value as IDownloaderMetadata);
+
+  // 如果只有一个下载器，则将这个下载器设为默认下载器
+  if (metadataStore.getDownloaders.length === 1) {
+    metadataStore.defaultDownloader = { id: storedDownloaderConfig.value.id!, folder: "", tags: "" };
+    metadataStore.$save();
+  }
+
   showDialog.value = false;
 }
 </script>
@@ -69,6 +76,7 @@ async function saveStoredDownloaderConfig() {
           <v-toolbar-title>{{ t("SetDownloader.add.title") }}</v-toolbar-title>
           <v-spacer />
           <v-btn
+            :title="t('layout.header.wiki')"
             :href="`${REPO_URL}/wiki/config-download-client`"
             color="success"
             icon="mdi-help-circle"

@@ -15,7 +15,7 @@ import AddDialog from "./AddDialog.vue";
 import EditDialog from "./EditDialog.vue";
 import EditSearchEntryList from "./EditSearchEntryList.vue";
 import OneClickImportDialog from "./OneClickImportDialog.vue";
-import SiteFavicon from "@/options/components/SiteFavicon.vue";
+import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import DeleteDialog from "@/options/components/DeleteDialog.vue";
 import NavButton from "@/options/components/NavButton.vue";
 
@@ -72,7 +72,7 @@ const {
   tableFilterFn,
   advanceFilterDictRef,
   toggleKeywordStateFn,
-  resetAdvanceFilterDictFn,
+  buildFilterDictFn,
   updateTableFilterValueFn,
 } = useTableCustomFilter<ISiteTableItem>({
   parseOptions: {
@@ -157,12 +157,12 @@ async function flushSiteFavicon(siteId: TSiteID | TSiteID[]) {
           label="Search"
           max-width="500"
           single-line
-          @click:clear="resetAdvanceFilterDictFn"
+          @click:clear="buildFilterDictFn('')"
         >
           <template #prepend-inner>
             <v-menu min-width="100">
               <template v-slot:activator="{ props }">
-                <v-icon icon="mdi-filter" v-bind="props" variant="plain" @click="resetAdvanceFilterDictFn" />
+                <v-icon icon="mdi-filter" v-bind="props" variant="plain" @click="buildFilterDictFn('')" />
               </template>
               <v-list class="pa-0">
                 <v-list-item v-for="keyword in booleanUserConfigKeywords" :key="keyword">
@@ -305,7 +305,12 @@ async function flushSiteFavicon(siteId: TSiteID | TSiteID[]) {
           />
 
           <!-- 默认站点搜索入口编辑（只有配置了 siteMetadata.searchEntry 的站点才支持该设置） -->
-          <v-btn :disabled="item.metadata.isDead || !item.metadata.searchEntry" class="v-btn--icon" size="small">
+          <v-btn
+            :title="t('SetSite.index.table.searchEntries')"
+            :disabled="item.metadata.isDead || !item.metadata.searchEntry"
+            class="v-btn--icon"
+            size="small"
+          >
             <v-icon icon="mdi-magnify"></v-icon>
             <v-menu :close-on-content-click="false" activator="parent">
               <EditSearchEntryList :item="item" />

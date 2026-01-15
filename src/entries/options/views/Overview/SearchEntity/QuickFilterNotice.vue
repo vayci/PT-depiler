@@ -1,26 +1,47 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify/framework";
 
 import { useConfigStore } from "@/options/stores/config.ts";
 import { formatSize } from "@/options/utils.ts";
+import type { ISearchResultTorrent } from "@/shared/types/storages/runtime.ts";
+
 import { tableCustomFilter } from "./utils/filter.ts";
 
 import SiteName from "@/options/components/SiteName.vue";
-import SiteFavicon from "@/options/components/SiteFavicon.vue";
+import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 
-const { selectedTorrentsInfo } = defineProps<{
-  selectedTorrentsInfo: { count: number; totalSize: number };
+const { selectedTorrents } = defineProps<{
+  selectedTorrents: ISearchResultTorrent[];
 }>();
 
 const { t } = useI18n();
 const configStore = useConfigStore();
 const display = useDisplay();
 
-const { advanceFilterDictRef, updateTableFilterValueFn } = tableCustomFilter;
+const { advanceFilterDictRef, advanceItemPropsRef, updateTableFilterValueFn } = tableCustomFilter;
 
 const selectedSite = ref<string>("");
+
+// 优化后的选中种子信息计算：直接基于选中对象计算
+const selectedTorrentsInfo = computed(() => {
+  const selectedObjects = selectedTorrents;
+  const count = selectedObjects.length;
+
+  // 如果没有选中任何项，直接返回
+  if (count === 0) {
+    return { count: 0, totalSize: 0 };
+  }
+
+  // 直接计算选中对象的总大小，避免遍历查找
+  const totalSize = selectedObjects.reduce((sum, torrent) => sum + (torrent.size || 0), 0);
+
+  return {
+    count,
+    totalSize,
+  };
+});
 
 function clearSiteFilter() {
   selectedSite.value = ""; // 清除站点过滤器
@@ -43,7 +64,8 @@ function updateQuickSiteFilter() {
       <template v-if="configStore.searchEntity.quickSiteFilter">
         <!-- "全部"选项 -->
         <v-chip
-          class="limit_width"
+          class="chip_limit_width"
+          :class="{ chip_content_hidden_fix: display.smAndDown.value }"
           size="small"
           @click.stop="clearSiteFilter"
           variant="outlined"
@@ -54,18 +76,20 @@ function updateQuickSiteFilter() {
 
         <!-- 分站点选项 -->
         <v-chip-group
-          v-model="selectedSite"
           id="site-filter-chips"
-          mandatory
-          filter
-          color="primary"
-          variant="outlined"
+          v-model="selectedSite"
           :mobile="false"
+          color="primary"
+          filter
+          mandatory
+          scroll-to-active
+          show-arrows="always"
+          variant="outlined"
           @update:model-value="updateQuickSiteFilter"
         >
           <!-- 各站点选项 -->
           <v-chip
-            v-for="siteId in advanceFilterDictRef.site.all"
+            v-for="siteId in advanceItemPropsRef.site"
             :key="siteId"
             :value="siteId"
             size="small"
@@ -81,7 +105,7 @@ function updateQuickSiteFilter() {
 
       <!-- 选中种子信息条 -->
       <v-divider vertical inset class="mx-2" />
-      <v-chip class="my-2 limit_width" color="primary" size="small" variant="outlined">
+      <v-chip class="my-2 chip_limit_width" color="primary" size="small" variant="outlined">
         <v-icon icon="mdi-checkbox-marked-circle" start />
         {{
           display.smAndDown.value
@@ -96,8 +120,20 @@ function updateQuickSiteFilter() {
   </v-alert>
 </template>
 
-<style>
-.limit_width {
+<style lang="scss" scoped>
+.chip_limit_width {
   min-width: fit-content;
+}
+
+/**
+ * 在smAndDown环境下，全部站点的 chip 中 文字内容被隐藏，但是由于使用了 prepend-icon 来设置图标，所以此处通过 hack css 的方法
+ * 将 chip 整体变为圆形，并移除 icon 两侧的margin来居中
+ */
+.chip_content_hidden_fix {
+  padding: 0 5px !important; // 0 10px -> 0 5px
+
+  :deep(i.v-icon) {
+    margin: 0; // 0 4px -> 0
+  }
 }
 </style>

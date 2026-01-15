@@ -14,7 +14,7 @@ import type { ISearchSolution, ISearchSolutionMetadata, TSolutionKey } from "@/s
 import SolutionLabel from "./SolutionLabel.vue";
 import SiteCategoryPanel from "./SiteCategoryPanel.vue";
 import SiteName from "@/options/components/SiteName.vue";
-import SiteFavicon from "@/options/components/SiteFavicon.vue";
+import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 
 const showDialog = defineModel<boolean>();
 const solutionId = defineModel<TSolutionKey>("solutionId");
@@ -120,7 +120,7 @@ function dialogLeave() {
       <v-card-title class="pa-0">
         <v-toolbar :title="t('SetSearchSolution.edit.title')" color="blue-grey-darken-2">
           <template #append>
-            <v-btn icon="mdi-close" @click="showDialog = false" />
+            <v-btn icon="mdi-close" :title="t('common.dialog.close')" @click="showDialog = false" />
           </template>
         </v-toolbar>
       </v-card-title>

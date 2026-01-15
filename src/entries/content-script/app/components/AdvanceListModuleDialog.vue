@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, inject } from "vue";
+import { useI18n } from "vue-i18n";
 import { useWindowSize } from "@vueuse/core";
 import { ETorrentStatus, ITorrent } from "@ptd/site";
 import type { DataTableHeader } from "vuetify/lib/components/VDataTable/types";
@@ -7,9 +8,14 @@ import type { DataTableHeader } from "vuetify/lib/components/VDataTable/types";
 import { formatDate, formatSize } from "@/options/utils.ts";
 import { sendMessage } from "@/messages.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
+import { useMetadataStore } from "@/options/stores/metadata.ts";
+
+import type { IRemoteDownloadDialogData } from "../types.ts";
 
 import NavButton from "@/options/components/NavButton.vue";
 import TorrentTitleTd from "@/options/components/TorrentTitleTd.vue";
+
+const { t } = useI18n();
 
 const showDialog = defineModel<boolean>();
 
@@ -20,6 +26,7 @@ const { torrentItems } = defineProps<{
 }>();
 
 const runtimeStore = useRuntimeStore();
+const metadataStore = useMetadataStore();
 
 const tableHeaders = computed(
   () =>
@@ -71,10 +78,11 @@ async function handleLinkCopyMulti() {
   }
 }
 
-const remoteDownloadDialogData = inject<{ show: boolean; torrents: ITorrent[] }>("remoteDownloadDialogData")!;
+const remoteDownloadDialogData = inject<IRemoteDownloadDialogData>("remoteDownloadDialogData")!;
 
-function handleRemoteDownloadMulti() {
+function handleRemoteDownloadMulti(isDefaultSend = false) {
   remoteDownloadDialogData.torrents = selectedTorrents.value;
+  remoteDownloadDialogData.isDefaultSend = isDefaultSend;
   remoteDownloadDialogData.show = true;
 }
 
@@ -103,7 +111,7 @@ function enterDialog() {
         <v-toolbar color="blue-grey-darken-2">
           <v-toolbar-title> 为 {{ torrentItems.length }} 个种子自定义批量操作行为 </v-toolbar-title>
           <template #append>
-            <v-btn icon="mdi-close" @click="showDialog = false" />
+            <v-btn icon="mdi-close" :title="t('common.dialog.close')" @click="showDialog = false" />
           </template>
         </v-toolbar>
       </v-card-title>
@@ -166,9 +174,19 @@ function enterDialog() {
           :disabled="!hasSelectedTorrent"
           key="remote_download_multi"
           color="light-blue"
-          icon="mdi-tray-arrow-down"
+          icon="mdi-cloud-download"
           text="推送到..."
-          @click="handleRemoteDownloadMulti"
+          @click="() => handleRemoteDownloadMulti()"
+        />
+
+        <NavButton
+          v-if="metadataStore.defaultDownloader?.id"
+          key="remote_download_multi_default"
+          :disabled="!hasSelectedTorrent"
+          color="light-blue"
+          icon="mdi-download"
+          text="推送到默认下载器"
+          @click="() => handleRemoteDownloadMulti(true)"
         />
       </v-card-actions>
     </v-card>

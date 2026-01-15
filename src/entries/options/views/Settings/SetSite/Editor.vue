@@ -159,6 +159,7 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
                 {{ url }}
                 <v-spacer />
                 <v-btn
+                  :title="t('SetSite.common.open')"
                   :href="url"
                   color="info"
                   icon="mdi-arrow-top-right-bold-box-outline"
@@ -263,7 +264,7 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
         >
           <template #append>
             <v-btn variant="flat" @click="siteUserConfig.uploadSpeedLimit = 0">
-              {{ siteUserConfig.uploadSpeedLimit ?? 0 }} MB/s
+              {{ siteUserConfig.uploadSpeedLimit ?? 0 }} MiB/s
             </v-btn>
           </template>
         </v-slider>
