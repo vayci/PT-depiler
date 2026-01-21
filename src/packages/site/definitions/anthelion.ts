@@ -261,30 +261,13 @@ export const siteMetadata: ISiteMetadata = {
         ],
       },
       {
-        requestConfig: {
-          url: "/torrents.php",
-          responseType: "document",
-          params: {
-            type: "seeding",
-          },
-        },
+        requestConfig: { url: "/ajax.php", params: { action: "community_stats" }, responseType: "json" },
         assertion: { id: "params.userid" },
         fields: ["seeding"],
       },
     ],
     selectors: {
       ...SchemaMetadata!.userInfo!.selectors!,
-      id: { selector: "#nav_user a.username", attr: "href", filters: [{ name: "querystring", args: ["id"] }] },
-      name: { selector: "#nav_user a.username" },
-      messageCount: {
-        selector: "span.noty-notification",
-        filters: [
-          (query: string) => {
-            const match = query.match(/have (\d+|a) new/);
-            return match && match.length > 1 ? (match[1] == "a" ? 1 : parseInt(match[1])) : 0;
-          },
-        ],
-      },
       bonusPerHour: {
         selector: "h3.float_right",
         filters: [
@@ -294,10 +277,7 @@ export const siteMetadata: ISiteMetadata = {
           },
         ],
       },
-      uploaded: { selector: "li.tooltip:contains('Uploaded: ')", filters: [{ name: "parseSize" }] },
-      downloaded: { selector: "li.tooltip:contains('Downloaded: ')", filters: [{ name: "parseSize" }] },
       adoptions: { selector: "li:contains('Adopted: ') span" },
-      ratio: { selector: "li:contains('Ratio: ') span.tooltip", attr: "title", filters: [{ name: "parseNumber" }] },
       joinTime: {
         selector: "ul.stats li:contains('Joined:') span",
         attr: "title",
@@ -305,7 +285,7 @@ export const siteMetadata: ISiteMetadata = {
       },
       seedingSize: { selector: "li:contains('Seeding Size: ') span", filters: [{ name: "parseSize" }] },
       bonus: { selector: "a[href*='store.php']", filters: [{ name: "replace", args: [/,/g, ""] }] },
-      seeding: { selector: "#search_results", filters: [{ name: "parseNumber" }] },
+      seeding: { selector: "response.seeding", filters: [{ name: "parseNumber" }] },
     },
   },
 
