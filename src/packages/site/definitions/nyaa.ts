@@ -1,10 +1,9 @@
-
 import { type ISiteMetadata, type ITorrent } from "../types";
 import BittorrentSite from "../schemas/AbstractBittorrentSite";
 import { rot13 } from "../utils";
 
-const WORK_SAFE_URL = rot13("uggcf://alnn.fv/")
-const NON_WORK_SAFE_URL = rot13("uggcf://fhxrorv.alnn.fv/")
+const WORK_SAFE_URL = rot13("uggcf://alnn.fv/");
+const NON_WORK_SAFE_URL = rot13("uggcf://fhxrorv.alnn.fv/");
 
 export const siteMetadata: ISiteMetadata = {
   id: "nyaa",
@@ -98,6 +97,9 @@ export const siteMetadata: ISiteMetadata = {
       url: "/",
     },
     keywordPath: "params.q",
+    advanceKeywordParams: {
+      imdb: false,
+    },
     selectors: {
       rows: { selector: "table.torrent-list > tbody > tr" },
       id: {
@@ -118,7 +120,11 @@ export const siteMetadata: ISiteMetadata = {
       seeders: { selector: ["td:nth-child(6)"], filters: [{ name: "parseNumber" }] },
       leechers: { selector: ["td:nth-child(7)"], filters: [{ name: "parseNumber" }] },
       completed: { selector: ["td:nth-child(8)"], filters: [{ name: "parseNumber" }] },
-      comments: { selector: ["i.fa-comments-o"], filters: [{ name: "parseNumber" }] },
+      comments: {
+        // 评论数在评论链接文本里，图标元素本身没有数字
+        selector: ["a[href*='/view/'][href*='#comments']", "a[href*='/view/'][href*='#com-']"],
+        filters: [{ name: "parseNumber" }],
+      },
       category: {
         // 简洁显示分类的大类 Anime - AMV => Anime
         selector: ["img.category-icon"],
@@ -165,7 +171,6 @@ export const siteMetadata: ISiteMetadata = {
       link: { selector: ["a[href*='/download/']"], attr: "href" },
     },
   },
-
 };
 
 export default class Nyaa extends BittorrentSite {
@@ -178,4 +183,4 @@ export default class Nyaa extends BittorrentSite {
 
     return downloadLink;
   }
-};
+}

@@ -268,12 +268,12 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
       seedingSize: {
         selector: ["response.userstats.seedingSize"], // GazellePW
       },
+
+      // "/ajax.php?action=user&id=$user.id$"
       joinTime: {
         selector: ["response.stats.joinedDate"],
         filters: [{ name: "parseTime" }],
       },
-
-      // "/ajax.php?action=user&id=$user.id$"
       seeding: {
         selector: ["response.community.seeding"],
       },
@@ -366,10 +366,11 @@ export default class GazelleJSONAPI extends GazelleBase {
       tags.push({ name: "Neutral", color: "cyan" });
     }
 
+    const artistField = group.artist ? `${group.artist} - ` : "";
     return {
       site: this.metadata.id, // 补全种子的 site 属性
       id: torrent.torrentId,
-      title: `${group.artist} - ${extractContent(group.groupName)} [${group.groupYear}] [${group.releaseType}]`,
+      title: `${artistField}${extractContent(group.groupName)} [${group.groupYear}] [${group.releaseType}]`,
       subTitle:
         `${torrent.format} / ${torrent.encoding} / ${torrent.media}` +
         (torrent.hasLog ? ` / Log(${torrent.logScore})` : "") +
@@ -413,6 +414,11 @@ export default class GazelleJSONAPI extends GazelleBase {
     }
 
     return torrents;
+  }
+
+  public override async getTorrentDownloadLink(torrent: ITorrent): Promise<string> {
+    // 种子链接格式是 torrent.php?torrentid=123
+    return this.getTorrentDownloadLinkFactory("torrentid")(torrent);
   }
 
   public override async getUserInfoResult(lastUserInfo: Partial<IUserInfo> = {}): Promise<IUserInfo> {

@@ -152,6 +152,10 @@ export const siteMetadata: ISiteMetadata = {
         filters: [{ name: "parseNumber" }],
       },
     },
+    donorConfig: {
+      ...SchemaMetadata.userInfo!.donorConfig,
+      bonusPerHourMultiplier: 1, // selector 已能正确选中加倍后的时魔
+    },
   },
   levelRequirements: [
     {

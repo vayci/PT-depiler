@@ -46,9 +46,6 @@ export const siteMetadata: ISiteMetadata = {
         { name: "显示", value: 1 },
         { name: "不显示", value: 0 },
       ],
-      generateRequestConfig: (selectedOption) => ({
-        requestConfig: { params: { hentai: selectedOption, reorder: 1 } },
-      }),
     },
   ],
 
@@ -64,6 +61,7 @@ export const siteMetadata: ISiteMetadata = {
         hd: 1,
         multiaudio: 1,
         bonus: 1,
+        reorder: 1,
       },
     },
     advanceKeywordParams: {
@@ -72,11 +70,10 @@ export const siteMetadata: ISiteMetadata = {
     selectors: {
       rows: {
         selector: ".torrents tr.torrent, .torrents tr.torrent_alt",
-        filter: (rows: any): any => {
+        filter: (rows: HTMLElement[] | null): HTMLElement[] | null => {
           if (!Array.isArray(rows)) return rows;
           return rows.filter((row) => {
-            const rowEl = row as HTMLElement;
-            if (rowEl.classList.contains("torrent_alt") && rowEl.textContent === "Alternative versions: ") {
+            if (row.classList.contains("torrent_alt") && row.textContent === "Alternative versions: ") {
               return false;
             }
             return true;
@@ -88,10 +85,9 @@ export const siteMetadata: ISiteMetadata = {
       subTitle: { selector: "span.tags" },
       url: { selector: ".peers a", attr: "href" },
       category: {
+        text: "stub", // torrent_alt 行没有类别信息，会在后续方法处理
         selector: "span.torrent_icon",
         attr: "title",
-        // torrent_alt 行没有类别信息，会在后续方法处理
-        filters: [(query: string) => query || "stub"],
       },
       time: {
         selector: ":self",

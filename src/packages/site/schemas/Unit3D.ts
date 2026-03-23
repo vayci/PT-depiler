@@ -8,21 +8,64 @@ import {
   type ISiteMetadata,
   type IUserInfo,
   NeedLoginError,
-  ITorrent,
+  type ITorrent,
+  type ISearchInput,
+  type ITorrentTag,
+  type ISearchCategories,
 } from "../types";
 import { parseTimeToLiveToDate, parseValidTimeString } from "../utils";
 
+type TUserInfoTransKey =
+  | "id"
+  | "seedingSize"
+  | "joinTime"
+  | "averageSeedingTime"
+  | "invites"
+  | "ratio"
+  | "trueRatio"
+  | "lastAccessAt";
+
 /**
- * Trans Array
+ * Trans Map
  * Source: https://github.com/HDInnovations/UNIT3D-Community-Edition/commit/cb1efe0868caf771b9917c090a79b28b4e183b74
  */
-const idTrans: string[] = ["User ID", "用户 ID", "用ID", "用户ID"];
-const seedingSizeTrans: string[] = ["Seeding Size", "Seeding size", "做种体积", "做種體積"];
-const joinTimeTrans: string[] = ["Registration date", "注册日期", "註冊日期"];
-const averageSeedingTimeTrans: string[] = ["Average Seedtime", "Average seedtime", "平均做种时间", "平均做種時間"];
-const invitesTrans: string[] = ["Invites", "邀请", "邀請"];
-const ratioTrans: string[] = ["Ratio", "分享率", "比率"];
-const trueRatioTrans: string[] = ["Real Ratio", "真实分享率", "真實比率"];
+export const userInfoTrans: Record<TUserInfoTransKey, string[]> = {
+  id: ["User ID", "用户 ID", "用ID", "用户ID"],
+  seedingSize: ["Seeding Size", "Seeding size", "做种体积", "做種體積"],
+  joinTime: ["Registration date", "注册日期", "註冊日期"],
+  averageSeedingTime: ["Average Seedtime", "Average seedtime", "平均做种时间", "平均做種時間"],
+  invites: ["Invites", "邀请", "邀請"],
+  ratio: ["Ratio", "分享率", "比率"],
+  trueRatio: ["Real Ratio", "真实分享率", "真實比率"],
+  lastAccessAt: ["Last login", "Last Login", "上次登录时间", "上次登入"],
+};
+
+export const CategoryFree: ISearchCategories = {
+  name: "Buff",
+  key: "free",
+  options: [
+    { name: "0% Freeleech", value: 0 },
+    { name: "25% Free", value: 25 },
+    { name: "50% Free", value: 50 },
+    { name: "75% Free", value: 75 },
+    { name: "100% Free", value: 100 },
+    { name: "双倍上传", value: "doubleup" },
+    { name: "精选", value: "featured" },
+    { name: "Refundable", value: "refundable" },
+  ],
+  cross: { mode: "custom" },
+  generateRequestConfig: (selectedOptions) => {
+    const params: Record<string, any> = { free: [] };
+    (selectedOptions as Array<number | string>).forEach((value) => {
+      if (value === "doubleup" || value === "featured" || value === "refundable") {
+        params[value] = 1;
+      } else {
+        params.free.push(value);
+      }
+    });
+    return { requestConfig: { params } };
+  },
+};
 
 export const SchemaMetadata: Partial<ISiteMetadata> = {
   version: 0,
@@ -154,6 +197,7 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
       // /resources/views/torrent/results.blade.php#L213-L219
       comments: {
         selector: ['a[href*="#comments"]', "i.torrent-icons__comments"],
+        filters: [{ name: "parseNumber" }], // 空值返回 0
       },
 
       status: {
@@ -177,7 +221,7 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
         {
           name: "Free",
           selector:
-            "i.fa-star.text-gold, i.fa-globe, i[title*='100%'], span[title*='100%'], i.torrent-icons__featured, i[title*='Featured'], span[title*='feature'], i[data-original-title*='Featured'], i[data-original-title*='Free']",
+            "i.fa-star.text-gold, i.fa-globe, i.torrent-icons__freeleech.fa-star, i.torrent-icons__freeleech.fa-calendar-star, i[title*='100%'], span[title*='100%'], i.torrent-icons__featured, i[title*='Featured'], span[title*='feature'], i[data-original-title*='Featured'], i[data-original-title*='Free']",
           color: "blue",
         },
         {
@@ -294,7 +338,7 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
             }
           }
 
-          // 如果还是没有，那么我们尽力了，返回underfined
+          // 如果还是没有，那么我们尽力了，返回undefined
           return undefined;
         },
       },
@@ -342,7 +386,10 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
       },
       // "/users/$user.name$"
       id: {
-        selector: idTrans.map((x) => `td:contains('${x}') + td`),
+        selector: [
+          ...userInfoTrans.id.map((x) => `dt:contains('${x}') + dd`),
+          ...userInfoTrans.id.map((x) => `td:contains('${x}') + td`),
+        ],
         filters: [(query: string) => parseInt(query || "0")],
       },
       uploaded: {
@@ -355,8 +402,8 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
       },
       ratio: {
         selector: [
-          ...ratioTrans.map((x) => `td:contains('${x}') + td`),
-          ...ratioTrans.map((x) => `dt:contains('${x}') + dd`),
+          ...userInfoTrans.ratio.map((x) => `dt:contains('${x}') + dd`),
+          ...userInfoTrans.ratio.map((x) => `td:contains('${x}') + td`),
           "li.ratio-bar__ratio a:has( > i.fa-sync-alt)",
           "span:has( > i.fa-sync-alt)",
         ],
@@ -364,8 +411,8 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
       },
       trueRatio: {
         selector: [
-          ...trueRatioTrans.map((x) => `td:contains('${x}') + td`),
-          ...trueRatioTrans.map((x) => `dt:contains('${x}') + dd`),
+          ...userInfoTrans.trueRatio.map((x) => `dt:contains('${x}') + dd`),
+          ...userInfoTrans.trueRatio.map((x) => `td:contains('${x}') + td`),
         ],
         filters: [{ name: "parseNumber" }],
       },
@@ -384,16 +431,16 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
       seedingSize: {
         // table.table-condensed:first
         selector: [
-          ...seedingSizeTrans.map((x) => `td:contains('${x}') + td`),
-          ...seedingSizeTrans.map((x) => `dt:contains('${x}') + dd`),
+          ...userInfoTrans.seedingSize.map((x) => `dt:contains('${x}') + dd`),
+          ...userInfoTrans.seedingSize.map((x) => `td:contains('${x}') + td`),
         ],
         filters: [{ name: "parseSize" }],
       },
       averageSeedingTime: {
         // table.table-condensed:first
         selector: [
-          ...averageSeedingTimeTrans.map((x) => `td:contains('${x}') + td span.badge-user`),
-          ...averageSeedingTimeTrans.map((x) => `dt:contains('${x}') + dd`),
+          ...userInfoTrans.averageSeedingTime.map((x) => `dt:contains('${x}') + dd`),
+          ...userInfoTrans.averageSeedingTime.map((x) => `td:contains('${x}') + dd span.badge-user`),
         ],
         filters: [{ name: "parseDuration" }],
       },
@@ -411,23 +458,48 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
         elementProcess: () => 11, // 并不能直接知道还有多少个消息未读，所以置为11，会直接出线红点而不是具体数字
       },
       uploads: {
-        selector: [".badge-user .fa-upload + span", "li:has(i.fas.fa-upload) a[href*='/uploads']"],
-        filters: [{ name: "parseNumber" }],
+        selector: ["dl.key-value:has(a[href*='/uploads'])", ".badge-user .fa-upload + span"],
+        elementProcess: (el: Element) => {
+          if (!el.querySelector("a[href*='/uploads']")) {
+            return undefined;
+          }
+          let count = 0;
+          el.querySelectorAll("dt:has(a[href*='/uploads']) + dd").forEach((e) => {
+            count += Number(e.textContent.trim());
+          });
+          return count;
+        },
+        switchFilters: {
+          ".badge-user .fa-upload + span": [{ name: "parseNumber" }],
+        },
       },
       joinTime: {
-        selector: ["time.profile__registration", ...joinTimeTrans.map((x) => `div.content h4:contains('${x}')`)],
+        selector: [
+          "time.profile__registration",
+          ...userInfoTrans.joinTime.map((x) => `div.content h4:contains('${x}')`),
+        ],
         filters: [
           (query: string) => {
-            query = query.replace(RegExp(joinTimeTrans.join("|")), "");
+            query = query.replace(RegExp(userInfoTrans.joinTime.join("|")), "");
             query = query.replace(/^:+/g, "").trim();
             return parseValidTimeString(query, ["MMM dd yyyy, HH:mm:ss", "MMM dd yyyy", "yyyy-MM-dd"]);
           },
         ],
       },
+      lastAccessAt: {
+        selector: [
+          ...userInfoTrans.lastAccessAt.map((x) => `dt:contains('${x}') + dd time`),
+          ...userInfoTrans.lastAccessAt.map((x) => `td:contains('${x}') + td`),
+        ],
+        elementProcess: (el: Element) => {
+          const dateStr = el.getAttribute("title") ?? el.getAttribute("datetime");
+          return parseValidTimeString(dateStr || el.textContent.split("(")[0]);
+        },
+      },
       invites: {
         selector: [
-          ...invitesTrans.map((x) => `td:contains('${x}'):last + td`),
-          ...invitesTrans.map((x) => `dt:contains('${x}'):last + dd`),
+          ...userInfoTrans.invites.map((x) => `dt:contains('${x}'):last + dd`),
+          ...userInfoTrans.invites.map((x) => `td:contains('${x}'):last + td`),
         ],
         filters: [{ name: "parseNumber" }],
       },
@@ -441,6 +513,44 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
 };
 
 export default class Unit3D extends PrivateSite {
+  // 可能会出现匹配到多个优惠 tag 的情况（比如站免），二次处理以只保留最高优惠类型 tag
+  protected override parseTorrentRowForTags(
+    torrent: Partial<ITorrent>,
+    row: Element | Document | object,
+    searchConfig: ISearchInput,
+  ): Partial<ITorrent> {
+    const torrents = super.parseTorrentRowForTags(torrent, row, searchConfig);
+
+    const discountType: Record<string, number> = {
+      Free: 100,
+      "75%": 75,
+      "50%": 50,
+      "25%": 25,
+    };
+
+    if (Array.isArray(torrents.tags)) {
+      let maxDiscountTag: ITorrentTag | undefined;
+      let maxValue = -1;
+
+      for (const tag of torrents.tags) {
+        const value = discountType[tag.name];
+        if (value !== undefined && value > maxValue) {
+          maxValue = value;
+          maxDiscountTag = tag;
+        }
+      }
+
+      if (maxDiscountTag) {
+        torrents.tags = torrents.tags.filter((tag) => {
+          const isDiscount = tag.name in discountType;
+          return !isDiscount || tag.name === maxDiscountTag.name;
+        });
+      }
+    }
+
+    return torrents;
+  }
+
   public override async getUserInfoResult(lastUserInfo: Partial<IUserInfo> = {}): Promise<IUserInfo> {
     let flushUserInfo: IUserInfo = {
       status: EResultParseStatus.unknownError,

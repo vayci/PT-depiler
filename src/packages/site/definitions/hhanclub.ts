@@ -19,7 +19,7 @@ export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "hhanclub",
   name: "憨憨",
-  aka: ["憨憨"],
+  aka: ["HHanClub"],
   tags: ["电影", "电视剧"],
   timezoneOffset: "+0800",
 
@@ -28,7 +28,8 @@ export const siteMetadata: ISiteMetadata = {
   type: "private",
   schema: "NexusPHP",
 
-  urls: ["uggcf://uunapyho.gbc/"],
+  urls: ["uggcf://uunapyho.arg/"],
+  legacyUrls: ["uggcf://uunapyho.gbc/"],
 
   officialGroupPattern: [/HHWEB/i],
 
@@ -337,6 +338,7 @@ export const siteMetadata: ISiteMetadata = {
       seedingBonus: 1300000,
       downloaded: "1.5TB",
       ratio: 4.05,
+      isKept: true,
       privilege: "得到一个邀请名额。Ultimate User及以上用户会永远保留账号。",
     },
     {
@@ -346,6 +348,7 @@ export const siteMetadata: ISiteMetadata = {
       seedingBonus: 1500000,
       downloaded: "3TB",
       ratio: 4.55,
+      isKept: true,
       privilege: "得到两个邀请名额。",
     },
   ],

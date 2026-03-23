@@ -1,19 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { computedAsync } from "@vueuse/core";
 import { isEmpty } from "es-toolkit/compat";
 import { useDisplay } from "vuetify";
-import {
-  convertIsoDurationToDate,
-  getNextLevelUnMet,
-  guessUserLevelGroupType,
-  type IUserInfo,
-  type TLevelGroupType,
-} from "@ptd/site";
+import { getNextLevelUnMet, guessUserLevelGroupType, type IUserInfo, type TLevelGroupType } from "@ptd/site";
 
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useConfigStore } from "@/options/stores/config.ts";
-import { formatDate } from "@/options/utils.ts";
 
 import UserLevelsComponent from "./UserLevelsComponent.vue";
 import UserNextLevelUnMet from "@/options/views/Overview/MyData/UserNextLevelUnMet.vue";
@@ -22,15 +16,18 @@ const { userInfo } = defineProps<{
   userInfo: IUserInfo;
 }>();
 
-const currentTime = +new Date();
-
 const display = useDisplay();
+const { t } = useI18n();
 const configStore = useConfigStore();
 const metadataStore = useMetadataStore();
 
 const userLevelRequirements = computedAsync(() => {
   return metadataStore.getSiteMergedMetadata(userInfo.site, "levelRequirements", []);
 }, []);
+
+const userInfoMetadata = computedAsync(() => {
+  return metadataStore.getSiteMergedMetadata(userInfo.site, "userInfo");
+}, undefined);
 
 const matchedLevelRequirements = computed(() => {
   return userLevelRequirements.value?.find((r) => r.id === userInfo.levelId);
@@ -44,9 +41,9 @@ const levelName = computed(() => {
   return matchedLevelRequirements.value?.name ?? userInfo.levelName;
 });
 
-const nextLevelUnMet = computedAsync(() => getNextLevelUnMet(userInfo, userLevelRequirements.value!), {});
+const nextLevelUnMet = computed(() => getNextLevelUnMet(userInfo, userLevelRequirements.value!));
 
-const userLevelGroupType = computedAsync(() => {
+const userLevelGroupType = computed(() => {
   // 首先尝试从 matchedLevelRequirements 中找到对应的等级组
   if (matchedLevelRequirements.value?.groupType) {
     return matchedLevelRequirements.value.groupType;
@@ -54,7 +51,26 @@ const userLevelGroupType = computedAsync(() => {
 
   // 如果还是没有，则考虑从用户等级名中猜测
   return guessUserLevelGroupType(userInfo.levelName ?? "user");
-}, "user");
+});
+
+const isDonorAccountKept = computed(() => {
+  return userInfo.isDonor === true && userInfoMetadata.value?.donorConfig?.isAccountKept === true;
+});
+
+const currentUserLevelColor = computed(() => {
+  switch (userLevelGroupType.value) {
+    case "vip":
+      return "green";
+    case "manager":
+      return "indigo";
+    case "user": {
+      if (matchedLevelRequirements.value?.isKept || isDonorAccountKept.value) return "light-blue"; // 保号用户
+      return "";
+    }
+    default:
+      return "";
+  }
+});
 
 const userLevelGroupIconMap: Record<TLevelGroupType, string> = {
   user: "mdi-account-hard-hat",
@@ -80,8 +96,8 @@ const userLevelGroupIcon = computed(() => {
     >
       <template v-slot:activator="{ props }">
         <span v-bind="props">
-          <v-icon :icon="userLevelGroupIcon" size="small"></v-icon>
-          {{ levelName }}
+          <v-icon :icon="userLevelGroupIcon" size="small" :color="currentUserLevelColor" class="mr-1" />
+          <span :class="`text-${currentUserLevelColor}`">{{ levelName }}</span>
           <v-icon
             v-if="
               configStore.myDataTableControl.showNextLevelInTable &&
@@ -92,8 +108,8 @@ const userLevelGroupIcon = computed(() => {
             color="green"
             size="small"
             class="ml-1"
-          ></v-icon
-          ><br />
+          />
+          <br />
           <template
             v-if="
               configStore.myDataTableControl.showNextLevelInTable &&
@@ -128,7 +144,9 @@ const userLevelGroupIcon = computed(() => {
                 </v-list-item>
               </template>
 
-              <v-list-subheader v-if="userLevelRequirements.length > 0"> 用户等级列表 </v-list-subheader>
+              <v-list-subheader v-if="userLevelRequirements.length > 0">{{
+                t("MyData.UserLevelRequirementsTd.levelList")
+              }}</v-list-subheader>
 
               <!-- 展示站点用户等级 -->
               <template v-for="userLevel in userLevelRequirements" :key="userLevel.id">

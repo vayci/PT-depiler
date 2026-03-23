@@ -6,11 +6,23 @@ import type {
   ITorrent,
   IUserInfo,
   TSiteID,
+  getFaviconMetadata,
 } from "@ptd/site";
 import type { ISocialInformation, TSupportSocialSite$1 } from "@ptd/social";
 import type { IMediaServerId, IMediaServerSearchOptions, IMediaServerSearchResult } from "@ptd/mediaServer";
-import type { getFaviconMetadata } from "@ptd/site";
 import type { IBackupData, IBackupFileInfo } from "@ptd/backupServer";
+import type { TorrentClientStatus } from "@ptd/downloader";
+
+// 可序列化的种子信息，用于辅种检测
+export interface ITorrentInfoForVerification {
+  infoHash: string;
+  name: string;
+  length: number;
+  files: Array<{
+    path: string;
+    length: number;
+  }>;
+}
 
 import type { TExtensionStorageKey, IExtensionStorageSchema } from "@/storage.ts";
 import {
@@ -26,6 +38,8 @@ import {
   IDownloadTorrentOption,
   IDownloadTorrentResult,
   AugmentedRequired,
+  IKeepUploadTask,
+  TKeepUploadTaskKey,
 } from "@/shared/types.ts";
 
 import { isDebug } from "~/helper.ts";
@@ -93,7 +107,10 @@ interface ProtocolMap extends TMessageMap {
 
   // 2.3 下载器、下载历史 ( utils/download )
   getDownloaderConfig(downloaderId: string): IDownloaderMetadata;
+  getDownloaderVersion(downloaderId: string): string;
+  getDownloaderStatus(downloaderId: string): TorrentClientStatus;
   getTorrentDownloadLink(torrent: ITorrent): string;
+  getTorrentInfoForVerification(torrent: ITorrent): ITorrentInfoForVerification;
 
   downloadTorrent(data: IDownloadTorrentOption): IDownloadTorrentResult;
 
@@ -120,6 +137,14 @@ interface ProtocolMap extends TMessageMap {
   deleteBackupHistory(data: { backupServerId: string; path: string }): boolean;
   restoreBackupData(data: { restoreData: IBackupData; restoreOptions?: IRestoreOptions }): boolean;
   getRemoteBackupData(data: { backupServerId: string; path: string; decryptKey?: string }): IBackupData;
+
+  // 2.7 辅种任务 ( utils/keepUploadTask )
+  getKeepUploadTasks(): IKeepUploadTask[];
+  getKeepUploadTaskById(taskId: TKeepUploadTaskKey): IKeepUploadTask;
+  createKeepUploadTask(task: IKeepUploadTask): void;
+  updateKeepUploadTask(task: IKeepUploadTask): void;
+  deleteKeepUploadTask(taskId: TKeepUploadTaskKey): void;
+  clearKeepUploadTasks(): void;
 }
 
 // 全局消息处理函数映射

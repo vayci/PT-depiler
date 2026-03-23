@@ -1,9 +1,9 @@
-import Sizzle from "sizzle";
-import Gazelle, { SchemaMetadata, extractSubTitle } from "../schemas/Gazelle.ts";
-import { ISiteMetadata, ITorrent, ISearchInput, ETorrentStatus } from "../types";
-import { definedFilters, buildCategoryOptionsFromList } from "../utils.ts";
+import Gazelle, { SchemaMetadata, GazelleUtils, commonPagesList, detailPageList } from "../schemas/Gazelle.ts";
+import { ISiteMetadata, ITorrent, ISearchInput, ETorrentStatus } from "../types.ts";
+import { buildCategoryOptionsFromList } from "../utils.ts";
 
-const tagKeywords = ["Freeleech", "Neutral", "Seeding", "Snatched", "Internal", "Pollen", "Reported"];
+const tagKeywords = ["Internal", "Pollen"];
+const extractTags = (tags: string) => GazelleUtils.extractTags(tags, tagKeywords);
 
 const antCategories = [
   { name: "Feature Film", class: "featurefilm", value: 1 },
@@ -19,58 +19,21 @@ const catClassMap = antCategories.reduce<Record<string, string>>((map, item) => 
 
 const categoryOptions = antCategories.map(({ name, value }) => ({ name, value }));
 
-const linkSelector = {
-  selector: "a[href*='torrents.php?action=download']:first",
-  attr: "href",
-};
-
-const commonDocumentSelectors = {
-  id: {
-    ...linkSelector,
-    filters: [{ name: "querystring", args: ["id"] }],
-  },
-  link: linkSelector,
-  url: {
-    ...linkSelector,
-    filters: [
-      (dlLink: string) => {
-        const tid = definedFilters.querystring(dlLink, ["id"]);
-        return `/torrents.php?torrentid=${tid}`;
-      },
-    ],
-  },
-  size: { selector: "> td.number_column.nobr" },
-};
-
 const detailPageSelectors = {
-  ...commonDocumentSelectors,
-  rows: { selector: "table.torrent_table > tbody > tr.torrent_row" },
-  title: { selector: "div.header > h2", filters: [{ name: "split", args: ["by", 0] }] },
-  subTitle: { selector: "a[data-toggle-target*='torrent']", filters: [extractSubTitle] },
-  completed: { selector: "td.number_column:nth-child(3)" },
-  seeders: { selector: "td.number_column:nth-child(4)" },
-  leechers: { selector: "td.number_column:nth-child(5)" },
+  ...detailPageList.selectors,
+  category: { text: "N/A" }, // 没有相关信息
   time: {
-    selector: "+ tr.torrentdetails span.time",
-    attr: "title",
-    filters: [{ name: "parseTime", args: ["MMM d yyyy, HH:mm 'UTC'"] }],
-  },
-  progress: {
-    selector: "a[data-toggle-target*='torrent']",
-    filters: [(query: string) => (query.includes("Seeding") ? 100 : null)],
-  },
-  status: {
-    selector: "a[data-toggle-target*='torrent']",
-    filters: [
-      (query: string) => {
-        if (query.includes("Seeding")) {
-          return ETorrentStatus.seeding;
-        } else if (query.includes("Snatched")) {
-          return ETorrentStatus.inactive;
-        }
-        return ETorrentStatus.unknown;
-      },
-    ],
+    ...detailPageList!.selectors!.time!,
+    selector: ["+ tr span.time[title]", "+ tr span.time"],
+    switchFilters: {
+      "+ tr span.time": [
+        (ts?: number) => {
+          const offsetMinutes = new Date().getTimezoneOffset();
+          const offsetMs = offsetMinutes * 60 * 1000;
+          return (ts ?? 0) + offsetMs;
+        },
+      ],
+    },
   },
 };
 
@@ -153,18 +116,18 @@ export const siteMetadata: ISiteMetadata = {
     },
     selectors: {
       ...SchemaMetadata.search!.selectors!,
-      ...commonDocumentSelectors,
       title: {
-        selector: "div.group_info:has(> a[href*='torrents.php?id='])",
-        elementProcess: (element: HTMLElement) => {
-          const cloneElement = element.cloneNode(true) as HTMLElement;
-          Sizzle("> :not(a[href*='torrents.php?id='])", cloneElement).forEach((e) => e.remove());
-          return cloneElement.innerText.trim();
-        },
+        ...SchemaMetadata.search!.selectors!.title!,
+        elementProcess: GazelleUtils.genTitleElementProcess({ extractTagsFunc: extractTags }),
       },
       subTitle: {
-        selector: "div.torrent_info:first",
-        filters: [(tags: string) => extractSubTitle(tags, tagKeywords)],
+        selector: [".tags", "> td:has(a[href*='torrents.php']) a:not(span a):last"],
+        switchFilters: {
+          // 对应单种行，直接返回 tags
+          ".tags": [],
+          // 对应组内种子，提取并返回种子属性
+          "> td:has(a[href*='torrents.php']) a:not(span a):last": [extractTags],
+        },
       },
       category: {
         text: "Other",
@@ -178,14 +141,6 @@ export const siteMetadata: ISiteMetadata = {
           },
         ],
       },
-      time: {
-        selector: "span.time[title]",
-        attr: "title",
-        filters: [{ name: "parseTime", args: ["MMM d yyyy, HH:mm 'UTC'"] }],
-      },
-      seeders: { selector: "> td:nth-child(6)" },
-      leechers: { selector: "> td:nth-child(8)" },
-      completed: { selector: "> td:nth-child(7)" },
       tags: [
         {
           name: "Free",
@@ -197,11 +152,11 @@ export const siteMetadata: ISiteMetadata = {
         },
       ],
       progress: {
-        selector: "div.torrent_info:first",
+        selector: ["div.torrent_info:first", "a[data-toggle-target*='torrent']"],
         filters: [(query: string) => (query.includes("Seeding") ? 100 : 0)],
       },
       status: {
-        selector: "div.torrent_info:first",
+        selector: ["div.torrent_info:first", "a[data-toggle-target*='torrent']"],
         filters: [
           (query: string) => {
             if (query.includes("Seeding")) {
@@ -220,10 +175,11 @@ export const siteMetadata: ISiteMetadata = {
 
   list: [
     {
-      urlPattern: ["/torrents.php"],
-      excludeUrlPattern: [/\/torrents\.php\?(?:.*&)?(id|torrentid)=\d+/, /searchstr=(?:tt)?\d+/],
+      ...commonPagesList,
+      urlPattern: [...commonPagesList.urlPattern!, "/artist\\.php\\?tmdb=\\d+"],
       selectors: {
         time: {
+          text: 0,
           selector: "span.time",
           filters: [
             { name: "parseTTL" },
@@ -236,6 +192,11 @@ export const siteMetadata: ISiteMetadata = {
         },
       },
     },
+    {
+      ...detailPageList,
+      selectors: detailPageSelectors,
+    },
+    // Top 10 不显示种子
   ],
 
   userInfo: {
@@ -367,39 +328,21 @@ export default class Anthelion extends Gazelle {
    * Anthelion 特性：直接搜索 IMDB 或 TMDB id 会直接跳转到详情（种子组）页面
    * 需要判断当前页面类型以选择对应的解析方式
    */
-  public override async transformSearchPage(doc: Document | any, searchConfig: ISearchInput): Promise<ITorrent[]> {
-    // 根据特定元素是否存在判断是否跳转了详情页
-    if (!(Sizzle(`${detailPageSelectors.title.selector} > span`, doc).length > 0)) {
-      return super.transformSearchPage(doc, searchConfig);
+  public override transformSearchPage(doc: Document, searchConfig: ISearchInput): Promise<ITorrent[]> {
+    if (!!doc.querySelector("div#covers")) {
+      searchConfig = {
+        ...searchConfig,
+        searchEntry: {
+          ...searchConfig.searchEntry!,
+          selectors: { ...searchConfig.searchEntry!.selectors!, ...detailPageSelectors },
+        },
+      };
     }
 
-    const torrents: ITorrent[] = [];
+    return super.transformSearchPage(doc, searchConfig);
+  }
 
-    // 需要提前从整个页面获取标题和 IMDB id
-    const title = this.getFieldData(doc, detailPageSelectors.title);
-    const imdbId = this.getFieldData(doc, searchConfig.searchEntry!.selectors!.ext_imdb!);
-
-    const trs = Sizzle(detailPageSelectors.rows.selector, doc);
-    const patchedSearchConfig = {
-      ...searchConfig,
-      searchEntry: {
-        ...searchConfig.searchEntry!,
-        selectors: detailPageSelectors,
-      },
-    };
-    for (const tr of trs) {
-      try {
-        const torrent = (await this.parseWholeTorrentFromRow(
-          { title, ext_imdb: imdbId },
-          tr,
-          patchedSearchConfig,
-        )) as ITorrent;
-        torrents.push(torrent);
-      } catch (e) {
-        console.debug(`[PTD] site '${this.name}' parseWholeTorrentFromRow Error:`, e, tr);
-      }
-    }
-
-    return torrents;
+  protected override getTorrentGroupInfo(group: HTMLTableRowElement, searchConfig: ISearchInput): Partial<ITorrent> {
+    return this.getFieldsData(group, searchConfig.searchEntry!.selectors!, ["title", "category", "ext_imdb"]);
   }
 }

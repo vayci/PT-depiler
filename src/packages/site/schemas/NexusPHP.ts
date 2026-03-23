@@ -6,6 +6,7 @@ import PrivateSite from "./AbstractPrivateSite";
 import {
   EResultParseStatus,
   ETorrentStatus,
+  type IElementQuery,
   type ISearchCategories,
   type ISearchInput,
   type ISiteMetadata,
@@ -22,11 +23,6 @@ import {
   parseValidTimeString,
   sizePattern,
 } from "../utils";
-
-const baseLinkQuery = {
-  selector: ['a[href*="download.php?id="]:has(> img[alt="download"])'],
-  attr: "href",
-};
 
 export const CategoryIncldead: ISearchCategories = {
   name: "显示断种/活种？",
@@ -66,7 +62,18 @@ export const CategoryInclbookmarked: ISearchCategories = {
   cross: false,
 };
 
-const baseTitleSelector = {
+export const baseUserIdSelector: string[] = [
+  /**
+   * 优先使用 #info_block 中的链接，因为部分站点可能会在其他位置放置一个指向其他用户详情页的链接，导致获取到其他用户的 id 和 name
+   * refs: https://github.com/xiaomlove/nexusphp/blob/3dae3aec8d8340d48f9bf544479aa4dac4456cb6/include/functions.php#L2706-L2710
+   */
+  "#info_block a[href*='userdetails.php'][href*='id=']:first",
+  // 原PTPP使用的选择器
+  "a[href*='userdetails.php'][class*='Name']:first",
+  "a[href*='userdetails.php']:first",
+];
+
+export const baseTitleQuery: IElementQuery = {
   selector: [
     "a[href^='details.php?id='][title]:has(b)",
     "a[href*='details.php?id='][href*='hit']",
@@ -74,6 +81,11 @@ const baseTitleSelector = {
     "a[href*='hit']:has(b)",
   ],
 };
+
+export const baseLinkQuery: IElementQuery = {
+  selector: ['a[href*="download.php?id="]:has(> img[alt="download"])'],
+  attr: "href",
+} as const;
 
 const parseProgressElement = (element: HTMLElement) => {
   const progressElement = element.parentElement?.querySelector("div");
@@ -166,19 +178,19 @@ export const SchemaMetadata: Pick<
         filters: [{ name: "querystring", args: ["id"] }],
       },
       title: {
-        ...baseTitleSelector,
+        ...baseTitleQuery,
         text: "",
         elementProcess: (element) => {
           return (element.getAttribute("title") || element.textContent || "").trim();
         },
       },
       subTitle: {
-        ...baseTitleSelector,
+        ...baseTitleQuery,
         text: "",
         elementProcess: subTitleRemoveExtraElement(["a, span, img"], true),
       },
       progress: {
-        ...baseTitleSelector,
+        ...baseTitleQuery,
         elementProcess: (element) => {
           const parsedProgress = parseProgressElement(element);
           if (!parsedProgress) return "0";
@@ -186,7 +198,7 @@ export const SchemaMetadata: Pick<
         },
       },
       status: {
-        ...baseTitleSelector,
+        ...baseTitleQuery,
         text: ETorrentStatus.unknown,
         elementProcess: (element) => {
           const parsedProgress = parseProgressElement(element);
@@ -332,14 +344,14 @@ export const SchemaMetadata: Pick<
     selectors: {
       // "page": "/index.php",
       id: {
-        selector: ["a[href*='userdetails.php'][class*='Name']:first", "a[href*='userdetails.php']:first"],
+        selector: baseUserIdSelector,
         attr: "href",
         filters: [{ name: "querystring", args: ["id"] }],
       },
 
       // "page": "/userdetails.php?id=$user.id$",
       name: {
-        selector: ["a[href*='userdetails.php'][class*='Name']:first", "a[href*='userdetails.php']:first"],
+        selector: baseUserIdSelector,
       },
       messageCount: {
         text: 0,
@@ -418,6 +430,11 @@ export const SchemaMetadata: Pick<
           "td.rowhead:contains('Class')  + td > img",
         ],
         attr: "title",
+      },
+      isDonor: {
+        text: false,
+        selector: ["h1:has(img[src^='pic/flag']) img[alt='Donor']"],
+        elementProcess: () => true,
       },
       bonus: {
         selector: [
@@ -548,6 +565,7 @@ export const SchemaMetadata: Pick<
           "hnrUnsatisfied",
           "hnrPreWarning",
           "lastAccessAt",
+          "isDonor",
         ],
       },
       {
@@ -560,6 +578,15 @@ export const SchemaMetadata: Pick<
         fields: ["inviteStatus"],
       },
     ],
+    /**
+     * donorConfig 配置捐赠者（黄星）的特殊权限
+     * - isAccountKept: false（NexusPHP 默认黄星不免疫不活跃）
+     * - bonusPerHourMultiplier: 2（NexusPHP 默认时魔 2 倍） 站点配置中，如果能直接使用 selector 选出正确的时魔，则此系数应设为 1
+     */
+    donorConfig: {
+      isAccountKept: false,
+      bonusPerHourMultiplier: 2,
+    },
   },
 };
 
@@ -656,6 +683,15 @@ export default class NexusPHP extends PrivateSite {
       flushUserInfo = (await this.parseUserInfoForUploads(flushUserInfo)) as IUserInfo;
     }
 
+    // 处理捐赠者的特殊配置
+    if (flushUserInfo.status === EResultParseStatus.success) {
+      const donorConfig = this.metadata.userInfo?.donorConfig;
+      if (flushUserInfo.isDonor === true && typeof flushUserInfo.bonusPerHour === "number") {
+        const bonusPerHourMultiplier = donorConfig?.bonusPerHourMultiplier ?? 1;
+        flushUserInfo.bonusPerHour *= bonusPerHourMultiplier;
+      }
+    }
+
     return flushUserInfo;
   }
 
@@ -684,7 +720,12 @@ export default class NexusPHP extends PrivateSite {
     let seedStatus = { seeding: 0, seedingSize: 0 };
     if (userSeedingRequestString && userSeedingRequestString?.includes("<table")) {
       const userSeedingDocument = createDocument(userSeedingRequestString);
-      const divSeeding = Sizzle("div > div:contains(' | ')", userSeedingDocument);
+      /**
+       * #1060 HUDBT 等站点可能存在 seeding table 中也有 "xx | xx" 的文本，但并非我们需要的做种和做种大小信息
+       * 所以需要找到和 table 平级的 div 中包含 " | " 的文本，才认为是我们需要的做种和做种大小信息
+       * https://github.com/xiaomlove/nexusphp/blob/09b785902f5da87de7fa45dd5409eee37f78bc89/public/getusertorrentlistajax.php#L357-L358
+       */
+      const divSeeding = Sizzle("div:has( ~ table) > div:contains(' | ')", userSeedingDocument);
       if (divSeeding.length > 0 && divSeeding[0].textContent) {
         const seedingText = divSeeding[0].textContent.split("|");
         seedStatus.seeding = definedFilters.parseNumber(seedingText[0]);
@@ -733,7 +774,7 @@ export default class NexusPHP extends PrivateSite {
     } else if (userUploadsRequestString && userUploadsRequestString?.includes("<table")) {
       // 未匹配到关键字，则从表格中解析
       const userUploadsDocument = createDocument(userUploadsRequestString);
-      const divSeeding = Sizzle("div > div:contains(' | ')", userUploadsDocument);
+      const divSeeding = Sizzle("div:has( ~ table) > div:contains(' | ')", userUploadsDocument);
       if (divSeeding.length > 0 && divSeeding[0].textContent) {
         const seedingText = divSeeding[0].textContent.split("|");
         flushUserInfo.uploads = definedFilters.parseNumber(seedingText[0]);

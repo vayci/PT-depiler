@@ -1,12 +1,13 @@
 import type { ISiteMetadata } from "../types";
-import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
+//import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
 
 export const siteMetadata: ISiteMetadata = {
-  ...SchemaMetadata,
+  //...SchemaMetadata,
   version: 1,
 
   id: "lemonhd",
   name: "LemonHD",
+  aka: ["柠檬不酸"],
   description: "柠檬不酸",
   tags: ["综合"],
   timezoneOffset: "+0800",
@@ -18,6 +19,10 @@ export const siteMetadata: ISiteMetadata = {
 
   urls: ["uggcf://yrzbauq.pyho/"],
 
+  // Dead at 2026-03-13, refs https://t.me/ilovelemonjuice/14888
+  isDead: true,
+
+  /*
   userInfo: {
     ...SchemaMetadata.userInfo!,
     selectors: {
@@ -50,6 +55,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
   },
+   */
 
   levelRequirements: [
     {
@@ -112,6 +118,7 @@ export const siteMetadata: ISiteMetadata = {
       interval: "P45W",
       downloaded: "8TB",
       ratio: 5.0,
+      isKept: true,
       privilege:
         "Ultimate User及以上用户会永远保留账号，但不等于不会被封禁。此等级以上（含）免除站点定期进行的数据增量考核。",
     },
@@ -121,6 +128,7 @@ export const siteMetadata: ISiteMetadata = {
       interval: "P65W",
       downloaded: "10TB",
       ratio: 5.5,
+      isKept: true,
       privilege:
         "被视为站点精英成员，免除站点数据增量考核，永久保留账号；可以直接发布种子；可以查看排行榜；可以在网站开放邀请期间发送邀请，管理员设置的特殊情况除外；",
     },

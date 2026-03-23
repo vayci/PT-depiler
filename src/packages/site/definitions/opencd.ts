@@ -352,6 +352,7 @@ export const siteMetadata: ISiteMetadata = {
       interval: "P25W",
       ratio: 3.5,
       alternative: [{ downloaded: "600GB" }, { uploads: 200 }],
+      isKept: true,
       privilege:
         "得到五个邀请名额；可以查看用户列表，可以查看其它用户的评论、帖子历史。贵嫔-正三品(Veteran User)及以上用户会永远保留账号。",
     },
@@ -362,6 +363,7 @@ export const siteMetadata: ISiteMetadata = {
       interval: "P25W",
       ratio: 4.0,
       alternative: [{ downloaded: "1TB" }, { uploads: 300 }],
+      isKept: true,
       privilege: "得到六个邀请名额；可以更新过期的外部信息。",
     },
     {
@@ -371,6 +373,7 @@ export const siteMetadata: ISiteMetadata = {
       interval: "P30W",
       ratio: 4.5,
       alternative: [{ downloaded: "2TB" }, { uploads: 450 }],
+      isKept: true,
       privilege: "得到七个邀请名额；查看种子文件的结构。",
     },
     {
@@ -380,6 +383,7 @@ export const siteMetadata: ISiteMetadata = {
       interval: "P30W",
       ratio: 5.0,
       alternative: [{ downloaded: "3TB" }, { uploads: 600 }],
+      isKept: true,
       privilege: "得到十个邀请名额。",
     },
     { id: 100, name: "貴賓(VIP)", groupType: "vip" },

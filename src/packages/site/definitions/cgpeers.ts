@@ -80,18 +80,6 @@ export const siteMetadata: ISiteMetadata = {
           "i.seeding-torrent": 100,
         },
       },
-      tags: [
-        {
-          name: "Free",
-          selector: "i.unlimited_leech",
-          color: "blue",
-        },
-        {
-          name: "2xUp",
-          selector: "span.icon[title*='DoubleSeed']",
-          color: "lime",
-        },
-      ],
     },
   },
 
@@ -99,12 +87,16 @@ export const siteMetadata: ISiteMetadata = {
     ...SchemaMetadata.userInfo!,
     selectors: {
       ...SchemaMetadata.userInfo!.selectors,
-      name: { selector: ["a#userDropdownTrigger"] },
+      name: {
+        selector: ["a#userDropdownTrigger", "span.user_name"],
+        switchFilters: { "span.user_name": [{ name: "split", args: ["\n", 0] }] },
+      },
       id: {
         selector: ["a[href^='/user.php?id=']"],
         attr: "href",
         filters: [{ name: "querystring", args: ["id"] }],
       },
+      messageCount: { selector: "a#userDropdownTrigger .user-notification-badge", filters: [{ name: "parseNumber" }] },
     },
   },
 

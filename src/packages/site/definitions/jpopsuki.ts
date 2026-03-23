@@ -1,6 +1,11 @@
-import Sizzle from "sizzle";
-import { ISiteMetadata, ITorrent, IUserInfo, ISearchInput, IParsedTorrentListPage } from "../types";
-import Gazelle, { SchemaMetadata } from "../schemas/Gazelle.ts";
+import { ISiteMetadata, ITorrent, IUserInfo, ISearchInput } from "../types";
+import Gazelle, {
+  SchemaMetadata,
+  GazelleUtils,
+  commonPagesList,
+  detailPageList,
+  top10PageList,
+} from "../schemas/Gazelle.ts";
 
 type boxName = "stats" | "community" | "personal";
 
@@ -29,33 +34,6 @@ const userInfoMap: Record<"en" | "ja", Record<boxName | keyof IUserInfo, string>
   },
 };
 
-const preTorrentListPageRegex = /torrents?.php.*[?&]id=/;
-const preTorrentListPageSelectors = {
-  rows: { selector: "tr.group_torrent" },
-  id: {
-    selector: "a[href*='torrents.php?action=download&id='][title='Download']",
-    attr: "href",
-    filters: [{ name: "querystring", args: ["id"] }],
-  },
-  title: {
-    selector: ":self",
-    elementProcess: (el: HTMLElement) => {
-      const bodyElement = el.closest("body");
-      if (bodyElement) {
-        const titleElement = bodyElement.querySelector("h2");
-        return titleElement ? titleElement.textContent?.trim() || "" : "";
-      }
-      return "";
-    },
-  },
-  subTitle: { selector: ["a[onclick]"], filters: [{ name: "replace", args: ["»", ""] }, { name: "trim" }] },
-  link: { selector: ["a[href*='torrents.php?action=download'][title='Download']"], attr: "href" },
-  size: { selector: ["td:nth-child(2)"], filters: [{ name: "parseSize" }] },
-  seeders: { selector: ["td:nth-child(4)"], filters: [{ name: "parseNumber" }] },
-  leechers: { selector: ["td:nth-child(5)"], filters: [{ name: "parseNumber" }] },
-  completed: { selector: ["td:nth-child(3)"], filters: [{ name: "parseNumber" }] },
-};
-
 function genUserInfoSelector(boxName: boxName, field: keyof IUserInfo): string[] {
   const failBack = userInfoMap.en[field]; // 默认使用英文，这样就可以减小重复字段了
   return Object.values(userInfoMap).map(
@@ -65,7 +43,7 @@ function genUserInfoSelector(boxName: boxName, field: keyof IUserInfo): string[]
 
 export const siteMetadata: ISiteMetadata = {
   ...SchemaMetadata,
-  version: 2,
+  version: 3,
   id: "jpopsuki",
   name: "JPopSuki",
   aka: ["JPS", "JPOP"],
@@ -96,25 +74,35 @@ export const siteMetadata: ISiteMetadata = {
     },
   ],
 
-  // FIXME 使用 disablegrouping: 1 参数，可以避免专辑行和单种行的分组
   search: {
     ...SchemaMetadata.search!,
+    keywordPath: "params.torrentname",
+    requestConfig: {
+      url: "/ajax.php",
+      params: {
+        section: "torrents",
+        action: "advanced",
+        disablegrouping: 1,
+      },
+    },
     advanceKeywordParams: {
       imdb: false,
     },
     selectors: {
       ...SchemaMetadata.search!.selectors!,
+      title: {
+        ...SchemaMetadata.search!.selectors!.title!,
+        // 有时候不显示 tags...
+        elementProcess: GazelleUtils.genTitleElementProcess({
+          tdSelector: "td:has(a[href*='torrents.php?id='][title])",
+        }),
+      },
       // Apr 01 2025, 15:12
-      time: { selector: "> td:eq(5)", attr: "title", filters: [{ name: "parseTime", args: ["MMM dd yyyy, HH:mm"] }] },
-      size: { selector: "> td:eq(6)" },
-      completed: { selector: "> td:eq(7)" },
-      seeders: { selector: "> td:eq(8)" },
-      leechers: { selector: "> td:eq(9)" },
       comments: {
         text: 0,
         selector: 'a[href*="#comments"][title="View Comments"]',
       },
-      category: { selector: "> td:eq(1) > a" },
+      category: { selector: "a[href*='filter_cat']" },
 
       link: {
         selector: "a[href*='torrents.php?action=download'][title='Download']",
@@ -126,8 +114,58 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   list: [
-    { urlPattern: [preTorrentListPageRegex], selectors: preTorrentListPageSelectors },
-    { urlPattern: ["torrents.php"], mergeSearchSelectors: true },
+    {
+      ...commonPagesList,
+    },
+    {
+      ...detailPageList,
+      selectors: {
+        ...detailPageList.selectors,
+        // 从整个页面获取
+        keywords: {
+          selector: "div > h2",
+          // [Album] Ayumi Hamasaki - Rock'n'Roll Circus [2010.04.14]
+          elementProcess: (el: HTMLElement) => {
+            const clone = el.cloneNode(true) as HTMLElement;
+            clone.querySelectorAll("a[href*='artist.php']").forEach((e) => e.remove());
+            const query = clone.innerText ?? clone.textContent;
+            const endBracket = query.indexOf("]");
+            const dash = query.indexOf("-", endBracket);
+            return query.slice(dash + 1).trim();
+          },
+        },
+        title: {
+          selector: "div > h2",
+          filters: [(query: string) => query.slice(query.indexOf("]") + 1)],
+        },
+        category: {
+          selector: "div > h2",
+          // 第一个 [...] 对应分类
+          filters: [(query: string) => query.match(/\[([^\]]+)\]/)?.[1] || ""],
+        },
+
+        time: {
+          // <span title="15 years, 8 months, 1 week ago">May 12 2010, 19:08</span>
+          selector: "+tr span[title]",
+          filters: [{ name: "parseTime" }],
+        },
+      },
+    },
+    // Top 10
+    {
+      ...top10PageList,
+      selectors: {
+        ...top10PageList.selectors,
+        rows: {
+          ...top10PageList.selectors!.rows,
+          selector: "table.border tr:gt(0)",
+        },
+        size: { selector: ">td:eq(3)", filters: [{ name: "parseSize" }] },
+        completed: { selector: ">td:eq(4)", filters: [{ name: "parseNumber" }] },
+        seeders: { selector: ">td:eq(5)", filters: [{ name: "parseNumber" }] },
+        leechers: { selector: ">td:eq(6)", filters: [{ name: "parseNumber" }] },
+      },
+    },
   ],
 
   noLoginAssert: {
@@ -194,6 +232,7 @@ export const siteMetadata: ISiteMetadata = {
     {
       id: 1,
       name: "User",
+      isKept: true,
       privilege: "Can download/upload.",
     },
     {
@@ -203,6 +242,7 @@ export const siteMetadata: ISiteMetadata = {
       uploaded: "10GB",
       ratio: 0.7,
       downloaded: "1KB",
+      isKept: true,
       privilege:
         "Can use invites, notifications, set a forum signature, access the Top 10 and edit the Knowledge base.",
     },
@@ -214,6 +254,7 @@ export const siteMetadata: ISiteMetadata = {
       ratio: 1.05,
       downloaded: "1KB",
       uploads: 5,
+      isKept: true,
       privilege:
         "advanced Top 10, can view torrent snatched list, edit torrent's description, " +
         "original title and release date and access the advanced user search. " +
@@ -223,94 +264,31 @@ export const siteMetadata: ISiteMetadata = {
 };
 
 export default class Jpopsuki extends Gazelle {
-  public override async transformSearchPage(doc: Document, searchConfig: ISearchInput): Promise<ITorrent[]> {
-    const torrents: ITorrent[] = [];
-
-    const rows = Sizzle("table.torrent_table:last > tbody > tr:gt(0)", doc) as HTMLElement[];
-
-    let albumAttr: Partial<ITorrent> = {};
-    for (let i = 0; i < rows.length; i++) {
-      const tr = rows[i] as HTMLTableRowElement;
-
-      const titleAnother = Sizzle("a[href*='torrents.php?id=']:first", tr);
-      if (titleAnother.length === 0) {
-        continue;
-      }
-
-      // 检查 tr 的类型
-      let torrent = {} as ITorrent;
-      if (tr.classList.contains("group_redline")) {
-        // 专辑行，获取title信息
-        albumAttr = this.getFieldsData(tr, this.metadata.search!.selectors!, ["comments", "category"]);
-
-        // 移除掉其他无关元素后的作为专辑标题
-        const albumRow = Sizzle("> td:eq(3)", tr)[0].cloneNode(true) as HTMLElement;
-        Sizzle(">span, div.tags, a[title='View Comments']", albumRow).forEach((e) => e.remove());
-        albumAttr.title = albumRow.innerText.trim();
-        continue;
-      } else if (tr.classList.contains("group_torrent_redline")) {
-        // 专辑对应的不同格式行
-        // 补全前面的单元格，使后续的 selector 能正常生效
-        tr.insertCell(0);
-        tr.insertCell(0);
-        tr.insertCell(0);
-
-        torrent = { ...albumAttr, ...torrent } as ITorrent; // 传入专辑信息，并将格式信息作为 subTitle
-        torrent.subTitle = this.getFieldData(tr, {
-          selector: '> td:eq(3) > a[href*="torrents.php?id="]',
-        });
-      } else if (tr.classList.contains("torrent_redline") || tr.classList.contains("torrent")) {
-        // 单种行
-        const cloneTitleAnother = titleAnother[0].parentElement!.cloneNode(true) as HTMLElement;
-        Sizzle(">span, div.tags, a[title='View Comments']", cloneTitleAnother).forEach((e) => e.remove());
-        torrent.title = cloneTitleAnother.innerText.trim();
-      } else {
-        continue;
-      }
-
-      if (torrent.title) {
-        torrent.title = torrent.title
-          .replace(/\t+/g, " ")
-          .replace(/\(\d*\)$/, "")
-          .trim();
-      }
-
-      try {
-        torrents.push((await this.parseWholeTorrentFromRow(torrent, tr, searchConfig!)) as ITorrent);
-      } catch (e) {
-        console.warn(`Failed to parse torrent from row:`, e, tr);
-      }
-    }
-    return torrents;
+  protected override guessSearchFieldIndexConfig(): Record<string, string[]> {
+    const base = super.guessSearchFieldIndexConfig();
+    return {
+      time: ["a[href*='order_by=s3']", ...base.time], // 发布时间
+      size: ["a[href*='order_by=s4']", "strong:contains('サイズ')", ...base.size], // 大小
+      seeders: ["a[href*='order_by=s6']", ...base.seeders], // 做种数
+      leechers: ["a[href*='order_by=s7']", ...base.leechers], // 下载数
+      completed: ["a[href*='order_by=s5']", ...base.completed], // 完成数
+    } as Record<keyof ITorrent, string[]>;
   }
 
-  public override async transformListPage(doc: Document): Promise<IParsedTorrentListPage> {
-    const parsedListPageUrl = doc.URL || location.href; // 获取当前页面的 URL
+  protected override getTorrentGroupInfo(group: HTMLTableRowElement, searchConfig: ISearchInput): Partial<ITorrent> {
+    return this.getFieldsData(group, searchConfig.searchEntry!.selectors!, ["title", "comments", "category"]);
+  }
 
-    // 单个种子的特殊页面处理
-    if (preTorrentListPageRegex.test(parsedListPageUrl)) {
-      const retData = { keywords: "", torrents: [] } as IParsedTorrentListPage;
-      const searchConfig = {
-        searchEntry: { selectors: preTorrentListPageSelectors },
-        requestConfig: { url: parsedListPageUrl },
-      };
-
-      const trs = Sizzle(preTorrentListPageSelectors.rows.selector, doc);
-
-      for (const tr of trs) {
-        try {
-          const torrent = (await this.parseWholeTorrentFromRow({}, tr, searchConfig)) as ITorrent;
-          torrent.url ??= parsedListPageUrl;
-          retData.torrents.push(torrent);
-        } catch (e) {
-          console.debug(`[PTD] site '${this.name}' parseWholeTorrentFromRow Error:`, e, tr);
-        }
-      }
-
-      return retData;
-    }
-
-    // 其他情况仍交给 super.transformListPage 处理
-    return super.transformListPage(doc);
+  protected override async getUserTorrentList(
+    userId: number,
+    page: number = 1,
+    type: string = "seeding",
+  ): Promise<Document> {
+    const { data: TListDocument } = await this.request<Document>({
+      url: "/ajax.php",
+      params: { section: "torrents", userid: userId, page, type },
+      responseType: "document",
+    });
+    return TListDocument;
   }
 }

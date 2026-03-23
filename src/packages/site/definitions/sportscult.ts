@@ -1,5 +1,5 @@
 /**
- * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/hdtorrents.yml
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/sportscult.yml
  * @JackettIssue https://github.com/Jackett/Jackett/issues/1330
  */
 import type { ISiteMetadata, IUserInfo } from "../types.ts";
@@ -97,7 +97,11 @@ const categoryMap: Record<number, string> = {
   99: "Darts",
   100: "ESport",
   6: "European Soccer",
+  101: "EuroCup",
+  102: "Ultimate Diskk",
+  104: "WinterOlympicGames",
   52: "Field Hockey",
+  103: "Basketball Champions",
   58: "UFC",
   57: "NRL",
 };
@@ -246,6 +250,10 @@ export const siteMetadata: ISiteMetadata = {
           bonus: { selector: "td.green:contains('Bonus')", filters: [{ name: "parseNumber" }] },
           joinTime: {
             selector: "td.header:contains('Joined on') + td",
+            filters: [{ name: "parseTime", args: ["dd/MM/yyyy HH:mm:ss"] }],
+          },
+          lastAccessAt: {
+            selector: "td.header:contains('Last access') + td",
             filters: [{ name: "parseTime", args: ["dd/MM/yyyy HH:mm:ss"] }],
           },
           // FIXME 暂未实现 uploads

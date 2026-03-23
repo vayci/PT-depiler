@@ -3,7 +3,12 @@ import { stringify } from "urlencode";
 import { toMerged } from "es-toolkit";
 import { isEmpty } from "es-toolkit/compat";
 
-import { getDownloader, getRemoteTorrentFile, type CAddTorrentOptions } from "@ptd/downloader";
+import {
+  getDownloader,
+  getRemoteTorrentFile,
+  type CAddTorrentOptions,
+  type TorrentClientStatus,
+} from "@ptd/downloader";
 import type { ITorrent } from "@ptd/site";
 
 import { onMessage, sendMessage } from "@/messages.ts";
@@ -36,12 +41,60 @@ export async function getDownloaderConfig(downloaderId: string) {
 
 onMessage("getDownloaderConfig", async ({ data: downloaderId }) => await getDownloaderConfig(downloaderId));
 
+onMessage("getDownloaderVersion", async ({ data: downloaderId }) => {
+  let downloaderVersion = "unknown";
+
+  const downloaderConfig = await getDownloaderConfig(downloaderId);
+  if (downloaderConfig.id) {
+    const downloaderInstance = await getDownloader(downloaderConfig);
+    downloaderVersion = await downloaderInstance.getClientVersion();
+  }
+
+  return downloaderVersion;
+});
+
+onMessage("getDownloaderStatus", async ({ data: downloaderId }) => {
+  let downloaderStatus: TorrentClientStatus = { dlSpeed: 0, upSpeed: 0, dlData: 0, upData: 0 };
+
+  const downloaderConfig = await getDownloaderConfig(downloaderId);
+  if (downloaderConfig.id) {
+    const downloaderInstance = await getDownloader(downloaderConfig);
+    downloaderStatus = await downloaderInstance.getClientStatus();
+  }
+
+  return downloaderStatus;
+});
+
 export async function getTorrentDownloadLink(torrent: ITorrent) {
   const site = await getSiteInstance<"public">(torrent.site);
   return await site.getTorrentDownloadLink(torrent);
 }
 
 onMessage("getTorrentDownloadLink", async ({ data: torrent }) => await getTorrentDownloadLink(torrent));
+
+export async function getTorrentInfoForVerification(torrent: ITorrent) {
+  const downloadUrl = await getTorrentDownloadLink(torrent);
+  const siteInstance = await getSiteInstance<"public">(torrent.site);
+
+  const downloadRequestConfig = await siteInstance.getTorrentDownloadRequestConfig(torrent);
+  downloadRequestConfig.url = downloadUrl;
+  downloadRequestConfig.responseType = "arraybuffer";
+
+  const parsedTorrent = await getRemoteTorrentFile(downloadRequestConfig);
+
+  // 返回可序列化的种子信息
+  return {
+    infoHash: (parsedTorrent as unknown as { infoHash: string }).infoHash ?? "",
+    name: parsedTorrent.info.name ?? "unknown",
+    length: parsedTorrent.info.length ?? 0,
+    files: (parsedTorrent.info.files || []).map((f) => ({
+      path: f.path,
+      length: f.length,
+    })),
+  };
+}
+
+onMessage("getTorrentInfoForVerification", async ({ data: torrent }) => await getTorrentInfoForVerification(torrent));
 
 function buildDownloadHistory(downloadOption: IDownloadTorrentOption): ITorrentDownloadMetadata {
   const { torrent = {}, downloaderId = "local" } = downloadOption;

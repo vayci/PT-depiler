@@ -1,5 +1,5 @@
-import { ISearchCategoryOptions, type ISiteMetadata } from "../types";
-import { SchemaMetadata } from "../schemas/Luminance";
+import { ISearchCategoryOptions, type ISiteMetadata, type ITorrent } from "../types";
+import Luminance, { SchemaMetadata } from "../schemas/Luminance";
 
 const categories: ISearchCategoryOptions[] = [
   // Torznab Movie Categories
@@ -199,6 +199,7 @@ export const siteMetadata: ISiteMetadata = {
       uploaded: "3000GB",
       uploads: 500,
       posts: 25,
+      isKept: true,
       privilege:
         "Engineer Restricted forum; FREE Invites (Send a staff PM for us to credit your account); Immune from inactivity disablement",
     },
@@ -221,3 +222,10 @@ export const siteMetadata: ISiteMetadata = {
     { id: 211, name: "Tagger", groupType: "manager" },
   ],
 };
+
+export default class MoreThanTV extends Luminance {
+  public override async getTorrentDownloadLink(torrent: ITorrent): Promise<string> {
+    // 种子链接格式是 torrent.php?torrentid=123（有种子组）
+    return this.getTorrentDownloadLinkFactory("torrentid")(torrent);
+  }
+}

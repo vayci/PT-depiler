@@ -33,12 +33,12 @@ const currentDate = new Date();
 
 const fullTableHeader = reactive([
   {
-    title: t("MyData.table.site"),
+    title: t("common.site"),
     key: "siteUserConfig.sortIndex",
     align: "center",
     props: { disabled: true },
   },
-  { title: t("MyData.table.username"), key: "name", align: "center" },
+  { title: t("common.username"), key: "name", align: "center" },
   { title: t("MyData.table.levelName"), key: "levelName", align: "start", width: "2%" },
   // NOTE: 这里将key设为 uploaded, trueUploaded 而不是虚拟的 userData，可以让 v-data-table 使用 uploaded 的进行排序
   { title: t("MyData.table.userData"), key: "uploaded", align: "end" },
@@ -79,6 +79,7 @@ const filteredTableBooleanControlKeys = computed(() => {
 
 interface IUserInfoItem extends IUserInfo {
   siteUserConfig: ISiteUserConfig;
+  siteName: string;
 }
 
 const {
@@ -94,7 +95,7 @@ const {
     keywords: ["site", "status", "siteUserConfig.groups"],
     ranges: ["updateAt", "messageCount"],
   },
-  titleFields: ["site", "name", "siteUserConfig.merge.name"],
+  titleFields: ["site", "siteName", "name"],
   format: {
     status: "number",
   },
@@ -108,6 +109,16 @@ async function updateTableData() {
 
   for (const [siteId, siteUserConfig] of Object.entries(metadataStore.sites)) {
     const siteMeta = await metadataStore.getSiteMetadata(siteId);
+    const siteName = Array.from(
+      new Set(
+        [
+          siteMeta.name,
+          ...(siteMeta.aka ?? []),
+          metadataStore.siteNameMap?.[siteId],
+          siteUserConfig.merge?.name,
+        ].filter(Boolean),
+      ),
+    ).join("|$|");
 
     if (
       // 只显示私有站点的用户信息
@@ -127,6 +138,7 @@ async function updateTableData() {
       ...fixUserInfo(siteUserInfoData),
       site: siteId,
       siteUserConfig,
+      siteName,
       // 对 isDead 或者 isOffline 的站点不允许选择（ https://github.com/pt-plugins/PT-depiler/pull/140 ）
       selectable: !(siteMeta.isDead || siteUserConfig.isOffline),
 
@@ -168,13 +180,13 @@ async function multiFlush() {
   let flushSiteIds: TSiteID[] = tableSelected.value;
   if (flushSiteIds.length === 0) {
     flushSiteIds = tableData.value.map((item) => item.site);
-    runtimeStore.showSnakebar("未选择任何站点，默认刷新全部站点", { color: "info" });
+    runtimeStore.showSnakebar(t("MyData.index.noSiteSelectedRefreshAll"), { color: "info" });
   }
 
   if (flushSiteIds.length > 0) {
     flushSiteLastUserInfo(flushSiteIds);
   } else {
-    runtimeStore.showSnakebar("未选择任何站点，取消刷新", { color: "warning" });
+    runtimeStore.showSnakebar(t("MyData.index.noSiteSelectedCancelRefresh"), { color: "warning" });
   }
 }
 
@@ -597,7 +609,7 @@ function viewStatistic() {
           {{
             typeof item.joinTime !== "undefined"
               ? configStore.myDataTableControl.joinTimeFormat === "aliveWeek"
-                ? formatTimeAgo(item.joinTime, true)
+                ? formatTimeAgo(item.joinTime, { weekOnly: true })
                 : configStore.myDataTableControl.joinTimeFormat === "alive"
                   ? formatTimeAgo(item.joinTime)
                   : formatDate(item.joinTime, "yyyy-MM-dd")

@@ -7,6 +7,7 @@ export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "ptskit",
   name: "PTSkit",
+  aka: ["拾刻"],
   description: "短的是时间 长的是热爱",
   tags: ["短剧", "成人"],
   timezoneOffset: "+0800",
@@ -160,6 +161,7 @@ export const siteMetadata: ISiteMetadata = {
       downloaded: "750GB",
       seedingBonus: 400000,
       ratio: 3.05,
+      isKept: true,
       privilege: "得到三个邀请名额；可以查看其它用户的评论、帖子历史。Veteran User及以上用户会永远保留账号。",
     },
     {
@@ -169,6 +171,7 @@ export const siteMetadata: ISiteMetadata = {
       downloaded: "1TB",
       seedingBonus: 600000,
       ratio: 3.55,
+      isKept: true,
       privilege: "可以更新过期的外部信息；可以查看Extreme User论坛。",
     },
     {
@@ -178,6 +181,7 @@ export const siteMetadata: ISiteMetadata = {
       downloaded: "1.5TB",
       seedingBonus: 800000,
       ratio: 4.05,
+      isKept: true,
       privilege: "得到五个邀请名额。",
     },
     {
@@ -187,6 +191,7 @@ export const siteMetadata: ISiteMetadata = {
       downloaded: "3TB",
       seedingBonus: 1000000,
       ratio: 4.55,
+      isKept: true,
       privilege: "得到十个邀请名额。",
     },
   ],

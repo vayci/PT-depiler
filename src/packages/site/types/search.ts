@@ -121,7 +121,7 @@ export interface ISearchConfig extends IBaseSearchConfig {
      */
     rows?: {
       selector: string | ":self" | string[];
-      filter?: <T>(rows: T) => T;
+      filter?: (rows: any) => any;
       merge?: number;
     };
   } & {
@@ -253,7 +253,7 @@ export interface IElementQuery {
    * 特殊值：
    * - N/A 表示源站并没有提供该信息
    */
-  text?: string | number | "N/A";
+  text?: string | number | boolean | "N/A";
 
   /**
    * 如果selector为 string[]， 则会依次尝试并找到第一个成功获取到有效信息的
@@ -263,9 +263,11 @@ export interface IElementQuery {
   selector?: string | ":self" | string[] | null;
 
   /**
-   * 如果是html文档，则提供了4种Element的处理方法（如果不做定义，则直接返回 innerText），
+   * 如果是html文档，则提供了4种Element的处理方法，
    * 这四种方法互斥，优先级依次为：elementProcess > case > data > attr ,
-   * 如果不做定义，则直接返回 innerText
+   * 如果不做定义，则直接返回 innerText ?? textContent
+   *
+   * 对返回的结果，可以应用 filters 或 switchFilters 进行后续处理
    */
 
   // 对 selector 出来的 Element 进行自定义处理，此时不建议再定义 filters 或 switchFilters 以免出错
@@ -277,6 +279,8 @@ export interface IElementQuery {
   data?: string | null;
   // 使用 HTMLElement.getAttribute('') 进行取值，取不到值则置 ''
   attr?: "title" | "href" | string | null;
+
+  // 如果是json文档，则需要直接应用 filters 或 switchFilters 进行处理
 
   /**
    * 对获取结果进行处理，处理结果将作为最终的值输出

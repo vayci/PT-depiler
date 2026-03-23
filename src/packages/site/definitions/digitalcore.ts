@@ -195,10 +195,23 @@ export const siteMetadata: ISiteMetadata = {
 
   list: [
     {
-      urlPattern: [/\/(alltorrents|movies|tvseries|games|music|apps|xxx|other)(\?.*)?$/],
+      urlPattern: [/\/(alltorrents|movies|tvseries|games|music|apps|xxx|other|search)(\?.*)?$/],
       mergeSearchSelectors: false,
       selectors: {
-        link: { selector: "a[href*='/api/v1/torrents/download/']", attr: "href" },
+        time: {
+          selector: "td:nth-child(6)",
+          filters: [{ name: "parseTime" }],
+        },
+        size: {
+          selector: "td:nth-child(7)",
+          filters: [{ name: "parseSize" }],
+        },
+        completed: {
+          selector: "td:nth-child(8)",
+          filters: [{ name: "parseSize" }],
+        },
+        seeders: { selector: "td:nth-child(9)" },
+        leechers: { selector: "td:nth-child(10)" },
         ...commonDocumentSelectors,
       },
     },
@@ -207,14 +220,12 @@ export const siteMetadata: ISiteMetadata = {
       urlPattern: ["/toplists/torrents"],
       mergeSearchSelectors: false,
       selectors: {
-        link: {
-          selector: "a[title]",
-          attr: "href",
-          filters: [
-            { name: "split", args: ["/", 2] },
-            { name: "prepend", args: ["/api/v1/torrents/download/"] },
-          ],
+        completed: {
+          selector: "td:nth-child(4)",
+          filters: [{ name: "parseNumber" }],
         },
+        seeders: { selector: "td:nth-child(5)" },
+        leechers: { selector: "td:nth-child(6)" },
         ...commonDocumentSelectors,
       },
     },
@@ -255,7 +266,8 @@ export const siteMetadata: ISiteMetadata = {
         },
         assertion: { id: "url" },
         selectors: {
-          joinTime: { selector: "added" },
+          joinTime: { selector: "added", filters: [{ name: "parseTime" }] },
+          lastAccessAt: { selector: "last_access", filters: [{ name: "parseTime" }] },
           downloaded: { selector: "downloaded" },
           trueDownloaded: { selector: "downloaded_real" },
           uploaded: { selector: "uploaded" },
@@ -359,9 +371,9 @@ export default class DigitalCore extends PrivateSite {
     return this._passKey;
   }
 
-  protected async parseTorrentRowForLink(torrent: Partial<ITorrent>, row: { id: number }): Promise<Partial<ITorrent>> {
+  protected async parseTorrentRowForLink(torrent: Partial<ITorrent>): Promise<Partial<ITorrent>> {
     const passkey = await this.getPassKey();
-    torrent.link = `/api/v1/torrents/download/${row.id}/${passkey}`;
+    torrent.link = `/api/v1/torrents/download/${torrent.id}/${passkey}`;
     return torrent;
   }
 }

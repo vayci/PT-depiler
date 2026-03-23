@@ -244,6 +244,7 @@ export const useConfigStore = defineStore("config", {
 
     download: {
       saveDownloadHistory: true,
+      startupAutoFetchDownloaderStatus: false,
       saveLastDownloader: false,
       allowDirectSendToClient: false,
       localDownloadMethod: "browser",

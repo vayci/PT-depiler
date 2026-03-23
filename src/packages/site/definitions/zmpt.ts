@@ -7,7 +7,7 @@ export const siteMetadata: ISiteMetadata = {
   version: 4,
   id: "zmpt",
   name: "织梦",
-  aka: ["织梦PT"],
+  aka: ["织梦PT", "ZMPT"],
   description: "为爱启航，造就梦想！",
   timezoneOffset: "+0800",
 
@@ -191,6 +191,7 @@ export const siteMetadata: ISiteMetadata = {
       downloaded: "3TB",
       ratio: 4.55,
       seedingBonus: 1500000,
+      isKept: true,
       privilege: "传说训练家(NM)及以上用户会永远保留账号。",
     },
   ],

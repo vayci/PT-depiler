@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import { sendMessage } from "@/messages.ts";
 import type { ISearchResultTorrent } from "@/shared/types.ts";
@@ -7,6 +8,7 @@ import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 
 import SentToDownloaderDialog from "@/options/components/SentToDownloaderDialog/Index.vue";
+import KeepUploadDialog from "./KeepUploadDialog.vue";
 
 const { torrentItems, density = "default" } = defineProps<{
   torrentItems: ISearchResultTorrent[];
@@ -17,6 +19,7 @@ const btnSize = computed(() => {
   return density === "compact" ? "small" : "default";
 });
 
+const { t } = useI18n();
 const metadataStore = useMetadataStore();
 const runtimeStore = useRuntimeStore();
 
@@ -43,9 +46,9 @@ async function copyTorrentDownloadLink() {
         .join("\n")
         .trim(),
     );
-    runtimeStore.showSnakebar("下载链接已复制到剪贴板", { color: "success" });
+    runtimeStore.showSnakebar(t("SearchEntity.ActionTd.copyLinkSuccess"), { color: "success" });
   } catch (e) {
-    runtimeStore.showSnakebar("复制下载链接失败", { color: "error" });
+    runtimeStore.showSnakebar(t("SearchEntity.ActionTd.copyLinkFailed"), { color: "error" });
   }
 
   copyTorrentDownloadLinkBtnStatus.value = false;
@@ -67,6 +70,12 @@ function sendToDownloader(defaultDownload = false) {
   isDefaultSend.value = defaultDownload;
   showDownloadClientDialog.value = true;
 }
+
+const showKeepUploadDialog = ref(false);
+
+function openKeepUploadDialog() {
+  showKeepUploadDialog.value = true;
+}
 </script>
 
 <template>
@@ -76,7 +85,7 @@ function sendToDownloader(defaultDownload = false) {
       :disabled="torrentItems.length == 0"
       :size="btnSize"
       icon="mdi-download"
-      title="发送到默认下载器"
+      :title="t('SearchEntity.ActionTd.sendToDefault')"
       @click="() => sendToDownloader(true)"
     />
 
@@ -85,7 +94,7 @@ function sendToDownloader(defaultDownload = false) {
       :disabled="torrentItems.length == 0"
       :size="btnSize"
       icon="mdi-cloud-download"
-      title="发送到下载器"
+      :title="t('SearchEntity.ActionTd.sendToDownloader')"
       @click="() => sendToDownloader()"
     />
     <!-- 复制下载链接 -->
@@ -94,7 +103,7 @@ function sendToDownloader(defaultDownload = false) {
       :loading="copyTorrentDownloadLinkBtnStatus"
       :size="btnSize"
       icon="mdi-content-copy"
-      title="复制下载链接"
+      :title="t('SearchEntity.ActionTd.copyLink')"
       @click="() => copyTorrentDownloadLink()"
     />
     <!-- 下载种子文件到本地 -->
@@ -103,8 +112,16 @@ function sendToDownloader(defaultDownload = false) {
       :loading="localDlTorrentDownloadLinkBtnStatus"
       :size="btnSize"
       icon="mdi-content-save"
-      title="下载种子文件到本地"
+      :title="t('SearchEntity.ActionTd.localDownload')"
       @click="() => localDlTorrentDownloadLink()"
+    />
+    <!-- 辅种检测 -->
+    <v-btn
+      :disabled="torrentItems.length < 2"
+      :size="btnSize"
+      icon="mdi-merge"
+      :title="t('SearchEntity.KeepUploadDialog.keepUpload')"
+      @click="openKeepUploadDialog"
     />
   </v-btn-group>
 
@@ -114,6 +131,9 @@ function sendToDownloader(defaultDownload = false) {
     :torrent-items="torrentItems"
     :is-default-send="isDefaultSend"
   />
+
+  <!-- 辅种检测对话框 -->
+  <KeepUploadDialog v-model="showKeepUploadDialog" :torrent-items="torrentItems" />
 </template>
 
 <style scoped lang="scss"></style>

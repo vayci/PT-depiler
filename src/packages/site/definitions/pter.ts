@@ -231,12 +231,10 @@ export const siteMetadata: ISiteMetadata = {
         // TODO,
         rows: {
           selector: ".rowfollow",
-          filter: <T>(rows: T): T => {
+          filter: (rows: HTMLElement[] | null): HTMLElement[] | null => {
             // 只保留游戏种子
             if (Array.isArray(rows)) {
-              return Array.from(rows).filter(
-                (row) => !!(row as HTMLElement).querySelector("a[title='点击查看此种子详细资料']"),
-              ) as unknown as T;
+              return Array.from(rows).filter((row) => !!row.querySelector("a[title='点击查看此种子详细资料']"));
             }
             return rows;
           },
@@ -277,7 +275,8 @@ export const siteMetadata: ISiteMetadata = {
           selector: "div > span + span + span + span",
         },
         time: {
-          selector: "div[id^='ktorrent'] > #hidefl ~ span",
+          text: 0,
+          selector: ["div[id^='ktorrent'] > #hidefl ~ span[title]", "div[id^='ktorrent'] > span > span[title]"],
           attr: "title",
         },
       },
@@ -309,6 +308,10 @@ export const siteMetadata: ISiteMetadata = {
         ...SchemaMetadata.userInfo!.selectors!.messageCount,
         selector: ["div[style*='background: red'] a[href*='messages.php']"],
       },
+    },
+    donorConfig: {
+      ...SchemaMetadata.userInfo?.donorConfig,
+      isAccountKept: true,
     },
   },
 
@@ -404,6 +407,7 @@ export const siteMetadata: ISiteMetadata = {
         { seedingBonus: 2400000, uploads: 100 },
         { seedingBonus: 9600000, uploads: 10 },
       ],
+      isKept: true,
       privilege: "用户不会因不活跃原因被临时封禁，初次升级赠送3枚永久邀请码",
     },
   ],
