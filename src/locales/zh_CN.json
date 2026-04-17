@@ -588,7 +588,8 @@
       "download": "下载",
       "user-info": "用户信息",
       "backup": "备份恢复",
-      "social-information": "媒体评分"
+      "social-information": "媒体评分",
+      "native-bridge": "原生通信桥"
     },
     "ui": {
       "changeLanguage": "切换语言",
@@ -642,7 +643,7 @@
       "autoLoadInitialMediaWall": "自动加载首屏媒体墙",
       "autoLoadMoreMediaOnScroll": "当滚动到页面底部时，自动加载新的媒体墙",
       "allowSingleSiteSearch": "是否允许单一站点搜索",
-      "treatTTQueryAsImdbSearch": "是否将 tt\\d{7,8} 的搜索词直接视为 IMDb 搜索",
+      "treatTTQueryAsImdbSearch": "是否将 tt\\d\\{7,8\\} 的搜索词直接视为 IMDb 搜索",
       "imdbTip": "关闭后，你需要使用 `imdb|tt12345678` 的格式来进行 IMDb 搜索。",
       "filterLabel": "结果筛选",
       "searchPlanLabel": "搜索方案"
@@ -671,6 +672,38 @@
       "userDataRefresh": "用户数据刷新",
       "afterTime": "每日最早刷新时间",
       "userInfoDisplay": "用户信息展示"
+    }
+  },
+  "SetNativeBridge": {
+    "permission": {
+      "title": "权限",
+      "granted": "已授权",
+      "notGranted": "未授权",
+      "grant": "授予权限",
+      "revoke": "撤销权限",
+      "grantFailed": "权限请求被拒绝"
+    },
+    "bridge": {
+      "title": "通信桥控制",
+      "enabled": "启用原生通信桥",
+      "testConnection": "测试连接",
+      "status": {
+        "no-permission": "未授权",
+        "disabled": "已禁用",
+        "connecting": "连接中...",
+        "connected": "已连接",
+        "retrying": "重试中...",
+        "error": "错误"
+      }
+    },
+    "info": {
+      "title": "关于原生通信桥",
+      "description": "原生通信桥允许 PT-Depiler CLI 工具与本扩展进行通信。需要在电脑上单独安装 CLI 工具。",
+      "cliRequired": "此功能需要安装外部 CLI 工具。移动平台上不可用。安装说明请参考 {0}。",
+      "cliLink": "ptd-cli",
+      "setupCommand": "运行以下命令将此扩展注册到 CLI 工具：",
+      "setupHint": "运行命令后，重启浏览器或点击测试连接。",
+      "privacy": "启用后，原生通信桥允许本地安装的 CLI 工具访问扩展数据，包括站点配置、搜索结果、下载历史、用户信息和下载器状态。所有通信均在本地进行（浏览器与本机进程之间），不会将数据发送至任何远程服务器。您可以随时禁用此功能或撤销权限。"
     }
   },
   "SetDownloader": {
@@ -847,7 +880,8 @@
         "flushFavicon": "刷新站点图标"
       },
       "settingNote": ["只有配置过的站点才会显示插件图标及相应的功能；", "已离线的站点不再参与搜索和信息获取；"],
-      "oneClickImport": "一键导入站点"
+      "oneClickImport": "一键导入站点",
+      "reBuildMap": "重建站点映射"
     },
     "oneClickImportDialog": {
       "title": "一键导入站点",
@@ -864,6 +898,12 @@
       },
       "importComplete": "一键导入完成，成功添加 {count} 个站点"
     },
+    "ReBuildMapDialog": {
+      "title": "重建站点映射关系缓存",
+      "rebuildSiteHostMap": "重建站点域名关系缓存",
+      "rebuildSiteNameMap": "重建站点名称关系缓存",
+      "doRebuildBtn": "重建"
+    },
     "SiteCategoryPanel": {
       "siteDefault": "站点默认"
     },
@@ -875,7 +915,7 @@
       "otherSettings": "其他设置",
       "downloadLinkSuffix": "下载链接后缀",
       "downloadLinkSuffixHint": "该字段会被自动添加到该站点的下载链接后",
-      "downloadLinkSuffixExample": "如插件获得的链接为 https://example.com/download.php?id=1，此处设置为 &passkey=xxxx， 则最终下载链接为 https://example.com/download.php?id=1&passkey=xxxx",
+      "downloadLinkSuffixExample": "如插件获得的链接为 https://example.com/download.php?id=1，此处设置为 &passkey=xxxx， 则最终下载链接为 https://example.com/download.php?id=1&passkey=xxxx. 通常无须填写，仅在无法获得 passkey 时可手动添加",
       "requestTimeout": "请求超时",
       "requestTimeoutHint": "影响该站点请求（种子搜索、用户信息获取）的超时等待时间",
       "downloadInterval": "下载间隔",

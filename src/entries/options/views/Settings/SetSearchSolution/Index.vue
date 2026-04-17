@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { cloneDeep, omit } from "es-toolkit";
 import { saveAs } from "file-saver";
 import { nanoid } from "nanoid";
-import type { DataTableHeader } from "vuetify/lib/components/VDataTable/types";
+import type { DataTableHeader } from "vuetify";
 
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useConfigStore } from "@/options/stores/config.ts";

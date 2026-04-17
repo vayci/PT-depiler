@@ -13,6 +13,7 @@ import NexusPHP, {
   CategorySpstate,
   SchemaMetadata,
 } from "../schemas/NexusPHP.ts";
+import { parseSizeString } from "../utils";
 
 export const siteMetadata: ISiteMetadata = {
   ...SchemaMetadata,
@@ -208,13 +209,13 @@ export const siteMetadata: ISiteMetadata = {
         { name: "Excl.", selector: "a[href*='torrents.php?tag_exclusive=yes']", color: "red" },
         { name: "官方", selector: "a[href*='torrents.php?tag_internal=yes']", color: "blue" },
         { name: "国语", selector: "a[href*='torrents.php?tag_mandarin=yes']", color: "green" },
-        { name: "粤语", selector: "a[href*='torrents.php?tag_cantonese=yes']", color: "purple" },
+        { name: "粤语", selector: "a[href*='torrents.php?tag_cantonese=yes']", color: "pink" },
         { name: "中字", selector: "a[href*='torrents.php?tag_chinesesub=yes']", color: "orange" },
-        { name: "英字", selector: "a[href*='torrents.php?tag_englishsub=yes']", color: "yellow" },
-        { name: "应求", selector: "a[href*='torrents.php?tag_fillrequest=yes']", color: "pink" },
+        { name: "英字", selector: "a[href*='torrents.php?tag_englishsub=yes']", color: "teal" },
+        { name: "应求", selector: "a[href*='torrents.php?tag_fillrequest=yes']", color: "deep-purple" },
         { name: "DIY原盘", selector: "a[href*='torrents.php?tag_doityourself=yes']", color: "cyan" },
         { name: "原创", selector: "a[href*='torrents.php?tag_personalrip=yes']", color: "brown" },
-        { name: "自购", selector: "a[href*='torrents.php?tag_buyitmyself=yes']", color: "teal" },
+        { name: "自购", selector: "a[href*='torrents.php?tag_buyitmyself=yes']", color: "purple" },
         { name: "MV母盘", selector: "a[href*='torrents.php?tag_master=yes']", color: "indigo" },
       ],
     },
@@ -222,7 +223,7 @@ export const siteMetadata: ISiteMetadata = {
 
   list: [
     {
-      urlPattern: ["/torrents.php", "/music.php", "/officialgroup.php"],
+      urlPattern: ["/torrents.php", "/music.php", "/officialgroup.php", "/reseed.php"],
     },
     {
       urlPattern: ["/detailsgame.php"],
@@ -293,6 +294,28 @@ export const siteMetadata: ISiteMetadata = {
         ],
         filters: [{ name: "parseNumber" }],
       },
+      trueUploaded: {
+        ...SchemaMetadata.userInfo!.selectors!.trueUploaded,
+        filters: [
+          (query: string) => {
+            const queryMatch = query
+              .replace(/,/g, "")
+              .match(/((?:实际|真实)上传|(?:實際|真實)上傳|(?:Real|Actual) Uploaded).+?([\d.]+ ?[ZEPTGMK]?i?B)/);
+            return queryMatch && queryMatch.length === 3 ? parseSizeString(queryMatch[2]) : 0;
+          },
+        ],
+      },
+      trueDownloaded: {
+        ...SchemaMetadata.userInfo!.selectors!.trueDownloaded,
+        filters: [
+          (query: string) => {
+            const queryMatch = query
+              .replace(/,/g, "")
+              .match(/((?:实际|真实)下载|(?:實際|真實)下載|(?:Real|Actual) Downloaded).+?([\d.]+ ?[ZEPTGMK]?i?B)/);
+            return queryMatch && queryMatch.length === 3 ? parseSizeString(queryMatch[2]) : 0;
+          },
+        ],
+      },
       // 从顶端用户栏获取做种数，这样就可以避免对 /getusertorrentlist.php 页面的请求
       seeding: {
         selector: ["#info_block a[href*='getusertorrentlist.php'][href*='type=seeding']"],
@@ -309,6 +332,20 @@ export const siteMetadata: ISiteMetadata = {
         selector: ["div[style*='background: red'] a[href*='messages.php']"],
       },
     },
+    process: [
+      ...SchemaMetadata.userInfo!.process!.map((item) => ({
+        ...item,
+        requestConfig: {
+          ...item.requestConfig,
+          headers: {
+            ...(item.requestConfig?.headers || {}),
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        },
+      })),
+    ],
     donorConfig: {
       ...SchemaMetadata.userInfo?.donorConfig,
       isAccountKept: true,

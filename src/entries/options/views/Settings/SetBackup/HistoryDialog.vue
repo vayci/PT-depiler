@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import { ref, shallowRef } from "vue";
-import { IBackupFileInfo } from "@ptd/backupServer";
-import type { DataTableHeader } from "vuetify/lib/components/VDataTable/types";
+import type { IBackupFileInfo } from "@ptd/backupServer";
+import type { DataTableHeader } from "vuetify";
 
 import { sendMessage } from "@/messages.ts";
 import { formatDate, formatSize } from "@/options/utils.ts";

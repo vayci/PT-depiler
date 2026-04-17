@@ -34,6 +34,8 @@ const permissions = [
   "notifications",
 ];
 
+const optionalPermissions = ["nativeMessaging"];
+
 // @ts-ignore
 const git_count = git.count("HEAD");
 const base_version = `${pkg.version}.${git_count}`;
@@ -119,13 +121,15 @@ export default defineConfig({
 
         // 在 Chrome 中需要多注册一个 offscreen 权限
         "{{chrome}}.permissions": [...permissions, "offscreen"],
+        "{{chrome}}.optional_permissions": optionalPermissions,
         "{{firefox}}.permissions": permissions,
+        "{{firefox}}.optional_permissions": optionalPermissions,
         host_permissions: ["*://*/*"],
 
         "{{firefox}}.browser_specific_settings": {
           gecko: {
             id: "ptdepiler.ptplugins@gmail.com",
-            strict_min_version: "113.0",
+            strict_min_version: "121.0",
           },
         },
         "{{firefox}}.content_security_policy": {
@@ -141,7 +145,7 @@ export default defineConfig({
       }),
       // vite-plugin-web-extension 会在构造中，将js中引入的css文件自动添加到 manifest 中的 content_scripts 中，我们不需要这种默认行为
       transformManifest: (manifest) => {
-        manifest.content_scripts.forEach((script) => {
+        manifest.content_scripts.forEach((script: { css?: any }) => {
           if (script.css) {
             delete script.css;
           }
@@ -155,8 +159,8 @@ export default defineConfig({
           {
             name: "sort-asserts",
             config(config) {
-              config.build.rollupOptions.output = {
-                ...config.build?.rollupOptions.output,
+              config.build!.rollupOptions!.output = {
+                ...config.build?.rollupOptions!.output,
                 chunkFileNames: (chunkInfo) => {
                   // 特殊情况下 facadeModuleId 可能为 null，这时我们使用 moduleIds 的最后一个作为 chunkName
                   const chunkName = chunkInfo.facadeModuleId || chunkInfo.moduleIds.slice(-1)[0];
