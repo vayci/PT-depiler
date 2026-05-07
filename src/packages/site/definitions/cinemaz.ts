@@ -1,4 +1,4 @@
-import { ISiteMetadata, ISearchInput, IAdvancedSearchRequestConfig, ITorrent, ITorrentTag } from "../types";
+import { ISiteMetadata, ISearchInput, ITorrent, ITorrentTag } from "../types";
 import AvistazNetwork, { SchemaMetadata, avzNetDiscountMap, IAvzNetRawTorrent } from "../schemas/AvistazNetwork.ts";
 
 const categoryMap: Record<number, string> = {
@@ -27,19 +27,16 @@ export const siteMetadata: ISiteMetadata = {
   ...SchemaMetadata,
 
   version: 1,
-  id: "avistaz",
-  name: "AvistaZ",
-  aka: ["Avz"],
-  description: "AvistaZ (AsiaTorrents) is a Private Torrent Tracker for ASIAN MOVIES / TV / GENERAL",
-  tags: ["电影", "电视剧", "综合"],
+  id: "cinemaz",
+  name: "CinemaZ",
+  description: "CinemaZ is a Private Torrent Tracker for FOREIGN NON-ENGLISH MOVIES / TV / GENERAL",
+  tags: ["电影", "电视剧", "外语"],
   timezoneOffset: "+0100",
 
   type: "private",
   schema: "AvistazNetwork",
 
-  urls: ["uggcf://nivfgnm.gb/"],
-
-  collaborator: ["zdm9981"],
+  urls: ["uggcf://pvarznm.gb/"],
 
   category: [
     {
@@ -84,51 +81,10 @@ export const siteMetadata: ISiteMetadata = {
     },
   ],
 
-  levelRequirements: [
-    {
-      id: 1,
-      name: "Leech",
-      privilege: "Can download 1 torrent a day. Limited to download torrents uploaded 1 week ago. Cannot upload.",
-    },
-    {
-      id: 2,
-      name: "Newbie",
-      privilege: "Can download 5 torrents a day. Cannot upload. Cannot use RSS.",
-    },
-    {
-      id: 3,
-      name: "Member",
-      alternative: [{ ratio: 1 }, { interval: "P1W" }],
-      privilege: "Can download 100 torrents a day. Can upload. Can use RSS (must enable it in My Account settings).",
-    },
-    {
-      id: 100,
-      name: "V.I.P.",
-      groupType: "vip",
-      privilege: "Can download 200 torrents a day. Can upload.",
-    },
-    // Staff Classes
-    {
-      id: 200,
-      name: "Uploader",
-      groupType: "manager",
-      privilege: "Can upload.",
-    },
-    {
-      id: 201,
-      name: "Editor",
-      groupType: "manager",
-      privilege: "Can upload.",
-    },
-    { id: 203, name: "Moderator", groupType: "manager" },
-    { id: 204, name: "Admin", groupType: "manager" },
-    { id: 205, name: "Super Admin", groupType: "manager" },
-  ],
-
   userInputSettingMeta: [...SchemaMetadata.userInputSettingMeta!],
 };
 
-export interface IAvzRawTorrent extends IAvzNetRawTorrent {
+interface ICinemaZRawTorrent extends IAvzNetRawTorrent {
   adult: boolean;
   video_quality_id: number;
   video_quality: string;
@@ -137,10 +93,10 @@ export interface IAvzRawTorrent extends IAvzNetRawTorrent {
   music_type: string;
 }
 
-export default class Avistaz extends AvistazNetwork {
+export default class CinemaZ extends AvistazNetwork {
   protected override parseTorrentRowForTags(
     torrent: Partial<ITorrent>,
-    row: IAvzRawTorrent,
+    row: ICinemaZRawTorrent,
     searchConfig: ISearchInput,
   ): Partial<ITorrent> {
     const extendTorrent = super.parseTorrentRowForTags(torrent, row, searchConfig);
@@ -152,18 +108,16 @@ export default class Avistaz extends AvistazNetwork {
     }
 
     // 中配
-    const audioArray = row.audio?.map((a: any) => a.language).filter((x: string) => x.trim() !== "") || [];
-    if (audioArray.some((audio) => /Chinese|Cantonese/i.test(audio))) {
+    if (row.audio?.some((a) => /Chinese|Cantonese/i.test(a.language))) {
       tags.push({ name: "中配" });
     }
 
-    // 字幕
-    const subtitleArray = row.subtitle?.map((s: any) => s.language).filter((x: string) => x.trim() !== "") || [];
-    if (subtitleArray.some((subtitle) => /Chinese/i.test(subtitle))) {
+    // 中字
+    if (row.subtitle?.some((s) => /Chinese/i.test(s.language))) {
       tags.push({ name: "中字" });
     }
-    extendTorrent.tags = tags;
 
+    extendTorrent.tags = tags;
     return extendTorrent;
   }
 }
