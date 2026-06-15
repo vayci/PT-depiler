@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject } from "vue";
+import { computed, inject } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { sendMessage } from "@/messages.ts";
@@ -7,13 +7,18 @@ import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 
 import type { IRemoteDownloadDialogData } from "../types.ts";
-import { copyTextToClipboard, doKeywordSearch, siteInstance } from "../utils.ts";
+import { copyTextToClipboard, doKeywordSearch, siteInstance, type IPtdData } from "../utils.ts";
 
 import SpeedDialBtn from "../components/SpeedDialBtn.vue";
 
 const metadataStore = useMetadataStore();
 const runtimeStore = useRuntimeStore();
 const { t } = useI18n();
+
+const ptdData = inject<IPtdData>("ptd_data", {});
+const enabledDownloadersBySite = computed(() => {
+  return metadataStore.getEnabledDownloadersBySite(ptdData.siteId ?? "");
+});
 
 async function parseDetailPage() {
   const parsedResult = await siteInstance.value?.transformDetailPage(document);
@@ -68,7 +73,7 @@ function handleSearch() {
   />
   <SpeedDialBtn
     key="download"
-    :disabled="metadataStore.getEnabledDownloaders.length === 0"
+    :disabled="enabledDownloadersBySite.length === 0"
     color="light-blue"
     icon="mdi-cloud-download"
     :title="t('contentScript.pushTo')"
@@ -77,7 +82,7 @@ function handleSearch() {
   <SpeedDialBtn
     key="download_default"
     v-if="metadataStore.defaultDownloader?.id"
-    :disabled="metadataStore.getEnabledDownloaders.length === 0"
+    :disabled="enabledDownloadersBySite.length === 0"
     color="light-blue"
     icon="mdi-download"
     :title="t('contentScript.pushToDefault')"

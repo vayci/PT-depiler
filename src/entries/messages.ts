@@ -8,10 +8,15 @@ import type {
   TSiteID,
   getFaviconMetadata,
 } from "@ptd/site";
-import type { ISocialInformation, TSupportSocialSite$1 } from "@ptd/social";
+import type {
+  ISocialInformation,
+  ISocialRecommendationItem,
+  ISocialRecommendationsResult,
+  TSupportSocialSite$1,
+} from "@ptd/social";
 import type { IMediaServerId, IMediaServerSearchOptions, IMediaServerSearchResult } from "@ptd/mediaServer";
 import type { IBackupData, IBackupFileInfo } from "@ptd/backupServer";
-import type { TorrentClientStatus } from "@ptd/downloader";
+import type { CTorrent, TorrentClientStatus } from "@ptd/downloader";
 
 // 可序列化的种子信息，用于辅种检测
 export interface ITorrentInfoForVerification {
@@ -113,6 +118,11 @@ interface ProtocolMap extends TMessageMap {
   getTorrentDownloadLink(torrent: ITorrent): string;
   getTorrentInfoForVerification(torrent: ITorrent): ITorrentInfoForVerification;
 
+  getClientTorrents(downloaderId: string): CTorrent[];
+  deleteClientTorrent(data: { downloaderId: string; id: any; removeData?: boolean }): boolean;
+  pauseClientTorrent(data: { downloaderId: string; id: any }): boolean;
+  resumeClientTorrent(data: { downloaderId: string; id: any }): boolean;
+
   downloadTorrent(data: IDownloadTorrentOption): IDownloadTorrentResult;
 
   getDownloadHistory(): ITorrentDownloadMetadata[];
@@ -130,6 +140,13 @@ interface ProtocolMap extends TMessageMap {
 
   // 2.5 社交信息 ( utils/socialInformation )
   getSocialInformation(data: { site: TSupportSocialSite$1; sid: string }): ISocialInformation;
+  getSocialRecommendations(data?: {
+    flush?: boolean;
+    enrichment?: "all" | "none" | "visible";
+  }): ISocialRecommendationsResult;
+  getSocialRecommendationItem(data: { item: ISocialRecommendationItem; enrichment?: "all" | "visible" }): {
+    item: ISocialRecommendationItem;
+  };
   clearSocialInformationCache(): void;
 
   // 2.6 备份/恢复 ( utils/backup )

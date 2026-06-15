@@ -5,7 +5,7 @@
  * 如果需要忽略，目前只能重置过滤词。
  * refs: https://github.com/vuetifyjs/vuetify/blob/0ca7e93ad011b358591da646fdbd6ebe83625d25/packages/vuetify/src/components/VCheckbox/VCheckboxBtn.tsx#L49-L53
  */
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDays, startOfDay } from "date-fns";
 import { ETorrentStatus, preDefinedTorrentTagNameSet, sortTorrentTags } from "@ptd/site";
@@ -42,6 +42,13 @@ const statusOptions = [
 ];
 
 const torrentTags = computed(() => sortTorrentTags(advanceItemPropsRef.value.tags));
+
+const showHiddenTags = ref(false);
+
+const filteredTorrentTags = computed(() => {
+  const hiddenNames = configStore.searchEntifyControl.hiddenTagNames || [];
+  return torrentTags.value.filter((tag) => showHiddenTags.value || !hiddenNames.includes(tag.name));
+});
 
 function updateTableFilter() {
   updateTableFilterValueFn();
@@ -121,12 +128,26 @@ function enterDialog() {
           </v-row>
 
           <template v-if="configStore.searchEntifyControl.showTorrentTag">
-            <v-row
-              ><v-label>{{ t("SearchEntity.AdvanceFilterGenerateDialog.tags") }}</v-label></v-row
-            >
+            <v-row>
+              <v-label>{{ t("SearchEntity.AdvanceFilterGenerateDialog.tags") }}</v-label>
+              <v-spacer />
+              <v-btn
+                v-if="configStore.searchEntifyControl.hiddenTagNames?.length"
+                variant="text"
+                size="x-small"
+                color="info"
+                @click="showHiddenTags = !showHiddenTags"
+              >
+                {{
+                  showHiddenTags
+                    ? t("SearchEntity.AdvanceFilterGenerateDialog.hideHiddenTags")
+                    : t("SearchEntity.AdvanceFilterGenerateDialog.showHiddenTags")
+                }}
+              </v-btn>
+            </v-row>
             <v-row>
               <v-col
-                v-for="tag in torrentTags"
+                v-for="tag in filteredTorrentTags"
                 :key="`${reBuildFilterCountRef}_${tag.name}`"
                 class="pa-0"
                 cols="4"

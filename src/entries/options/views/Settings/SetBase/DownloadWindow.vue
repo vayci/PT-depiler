@@ -26,9 +26,15 @@ async function clearLastDownloader(v: boolean) {
         false-icon="mdi-alert-octagon"
         hide-details
       />
+    </v-col>
+  </v-row>
+
+  <v-row>
+    <v-col md="10" lg="8">
+      <v-label>{{ t("SetBase.download.myClientTitle") }}</v-label>
       <v-switch
-        v-model="configStore.download.startupAutoFetchDownloaderStatus"
-        :label="t('SetBase.download.startupAutoFetchDownloaderStatus')"
+        v-model="configStore.download.initDownloaderTorrentOnEnter"
+        :label="t('SetBase.download.initDownloaderTorrentOnEnter')"
         color="success"
         hide-details
       />
@@ -69,6 +75,13 @@ async function clearLastDownloader(v: boolean) {
         :label="t('SetBase.download.useQuickSendToClient')"
       />
       <v-alert type="info" variant="tonal" v-html="t('SetBase.download.quickSendToClientNote')" />
+
+      <v-switch
+        v-model="configStore.download.allowDownloaderFilterForSite"
+        color="success"
+        hide-details
+        :label="t('SetBase.download.enableSiteFilter')"
+      />
 
       <v-switch
         v-model="configStore.download.saveLastDownloader"

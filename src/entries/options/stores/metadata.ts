@@ -25,6 +25,7 @@ import {
   ISearchSolutionMetadata,
 } from "@/shared/types.ts";
 import { sendMessage } from "@/messages.ts";
+import { useConfigStore } from "@/options/stores/config.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 
 type TSimplePatchFieldKey = keyof Pick<
@@ -306,6 +307,24 @@ export const useMetadataStore = defineStore("metadata", {
       });
     },
 
+    getEnabledDownloadersBySite(state) {
+      return (siteId: string): IDownloaderMetadata[] => {
+        const configStore = useConfigStore();
+        if (!configStore.download.allowDownloaderFilterForSite) {
+          return this.getEnabledDownloaders;
+        }
+        return this.getEnabledDownloaders.filter((d) => !d.excludedSites?.includes(siteId));
+      };
+    },
+
+    getSortedEnabledDownloadersBySite(state) {
+      return (siteId: string): IDownloaderMetadata[] => {
+        return [...this.getEnabledDownloadersBySite(siteId)].sort((a, b) => {
+          return (b.sortIndex ?? 0) - (a.sortIndex ?? 0);
+        });
+      };
+    },
+
     getMediaServerIds(state) {
       return Object.keys(state.mediaServers);
     },
@@ -467,7 +486,7 @@ export const useMetadataStore = defineStore("metadata", {
     },
 
     async setLastSearchFilter(filter: string) {
-      this.lastSearchFilter = filter.replace(/\s*site:\S+/g, "").trim();
+      this.lastSearchFilter = (filter ?? "").replace(/\s*site:\S+/g, "").trim();
       await this.$save();
     },
 

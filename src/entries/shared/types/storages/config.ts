@@ -8,7 +8,7 @@ import type { TLocalDownloadMethod } from "../common/download.ts";
 
 export const supportTheme = ["auto", "light", "dark"] as const;
 export type supportThemeType = (typeof supportTheme)[number];
-type UiTableBehaviorKey = "SetSite" | "SearchEntity" | "MyData" | "DownloadHistory" | string;
+type UiTableBehaviorKey = "SetSite" | "SearchEntity" | "MyData" | "DownloadHistory" | "MyClient" | string;
 interface UiTableBehaviorItem<T = string> {
   itemsPerPage?: number;
   columns?: T[];
@@ -129,7 +129,7 @@ export interface IConfigPiniaStorageSchema {
     showChart: Record<
       | "totalSiteBase"
       | "totalSiteSeeding"
-      | `perSiteK${"uploaded" | "downloaded" | "seeding" | "seedingSize" | "bonus"}${"" | "Incr"}`,
+      | `perSiteK${"uploaded" | "downloaded" | "seeding" | "seedingSize" | "bonus" | "seedingBonus"}${"" | "Incr"}`,
       boolean
     >;
     dateRange: number | "custom" | "all";
@@ -157,6 +157,10 @@ export interface IConfigPiniaStorageSchema {
     uploadAtFormatAsAlive: boolean;
     // 是否限制种子标题列的最大宽度，防止过长导致表格布局混乱
     limitTorrentTitleTdWidth: boolean;
+    // 种子标签数量超过多少个时使用分组显示（0表示不限制）
+    maxTagCountBeforeGroup: number;
+    // 默认隐藏的标签名称列表
+    hiddenTagNames: string[];
   };
 
   userInfo: {
@@ -183,13 +187,15 @@ export interface IConfigPiniaStorageSchema {
     // 是否保存下载记录
     saveDownloadHistory: boolean;
 
-    // 在下载器页面，进入时自动获取下载器状态（如果下载器支持获取状态的话）
-    startupAutoFetchDownloaderStatus: boolean;
+    allowDownloaderFilterForSite: boolean; // 是否启用站点过滤器，启用后可在下载器设置中配置每个下载器可使用的站点
 
     // 当使用本地方法下载时，如何下载种子
     localDownloadMethod: TLocalDownloadMethod;
     // 当使用本地方法下载时，是否忽略站点的下载间隔设置；
     ignoreSiteDownloadIntervalWhenLocalDownload: boolean;
+
+    // 在我的下载器页面，进入时即刷新下载器
+    initDownloaderTorrentOnEnter: boolean;
 
     // 是否保存上一次使用的下载器
     saveLastDownloader: boolean;
@@ -217,6 +223,8 @@ export interface IConfigPiniaStorageSchema {
 
     // 是否启用快速站点过滤功能
     quickSiteFilter: boolean;
+    // 是否在搜索框中展示热门推荐按钮
+    showHotRecommendations: boolean;
   };
 
   // 配置同样在 searchEntity 页面（偷懒下）
