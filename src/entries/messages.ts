@@ -16,7 +16,7 @@ import type {
 } from "@ptd/social";
 import type { IMediaServerId, IMediaServerSearchOptions, IMediaServerSearchResult } from "@ptd/mediaServer";
 import type { IBackupData, IBackupFileInfo } from "@ptd/backupServer";
-import type { CTorrent, TorrentClientStatus } from "@ptd/downloader";
+import type { CTorrent, TorrentClientStatus, TorrentQueueDirection, TorrentSpeedLimit } from "@ptd/downloader";
 
 // 可序列化的种子信息，用于辅种检测
 export interface ITorrentInfoForVerification {
@@ -119,9 +119,14 @@ interface ProtocolMap extends TMessageMap {
   getTorrentInfoForVerification(torrent: ITorrent): ITorrentInfoForVerification;
 
   getClientTorrents(downloaderId: string): CTorrent[];
+  getClientTorrentTrackers(data: { downloaderId: string; torrent: CTorrent }): string[];
   deleteClientTorrent(data: { downloaderId: string; id: any; removeData?: boolean }): boolean;
   pauseClientTorrent(data: { downloaderId: string; id: any }): boolean;
   resumeClientTorrent(data: { downloaderId: string; id: any }): boolean;
+  recheckClientTorrent(data: { downloaderId: string; id: any }): boolean;
+  moveClientTorrentInQueue(data: { downloaderId: string; id: any; direction: TorrentQueueDirection }): boolean;
+  setClientTorrentSpeedLimit(data: { downloaderId: string; id: any; limits: TorrentSpeedLimit }): boolean;
+  setClientTorrentLabel(data: { downloaderId: string; id: any; label: string }): boolean;
 
   downloadTorrent(data: IDownloadTorrentOption): IDownloadTorrentResult;
 
@@ -140,6 +145,8 @@ interface ProtocolMap extends TMessageMap {
 
   // 2.5 社交信息 ( utils/socialInformation )
   getSocialInformation(data: { site: TSupportSocialSite$1; sid: string }): ISocialInformation;
+  // 判断 URL 命中的社交站点（供 content-script 引导做轻量预筛，避免把 social 包打进引导，见 issue #1467）
+  matchSocialPage(url: string): TSupportSocialSite$1 | null;
   getSocialRecommendations(data?: {
     flush?: boolean;
     enrichment?: "all" | "none" | "visible";
@@ -208,8 +215,11 @@ function createMessageWrapper<PM extends ProtocolMap>(original: {
     // @ts-expect-error
     const localHandler = messageMaps[type] as PM[K] | undefined;
 
-    if (__BROWSER__ == "firefox" && typeof data !== "undefined") {
-      data = JSON.parse(JSON.stringify(data)); // 为 firefox 深拷贝数据，避免传递 proxy 出现的 DataCloneError
+    // 深拷贝数据，避免 Vue 响应式 Proxy 或其他不可序列化对象进入消息链路引发 DataCloneError。
+    // 原实现仅对 firefox 生效，Chrome/Edge 下同样存在该问题（见 issue #1431），
+    // 故对所有浏览器统一执行深拷贝。
+    if (typeof data !== "undefined") {
+      data = JSON.parse(JSON.stringify(data));
     }
 
     if (localHandler) {

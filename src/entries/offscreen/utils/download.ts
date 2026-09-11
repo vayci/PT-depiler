@@ -9,6 +9,8 @@ import {
   type CTorrent,
   type CAddTorrentOptions,
   type TorrentClientStatus,
+  type TorrentQueueDirection,
+  type TorrentSpeedLimit,
 } from "@ptd/downloader";
 import type { ITorrent } from "@ptd/site";
 
@@ -140,6 +142,15 @@ onMessage("getClientTorrents", async ({ data: downloaderId }) => {
   return downloaderTorrents;
 });
 
+onMessage("getClientTorrentTrackers", async ({ data: { downloaderId, torrent } }) => {
+  let downloaderTrackers: string[] = [];
+  const downloaderInstance = await getDownloaderInstance(downloaderId);
+  if (downloaderInstance) {
+    downloaderTrackers = await downloaderInstance.getTorrentTrackers(torrent);
+  }
+  return downloaderTrackers;
+});
+
 onMessage("deleteClientTorrent", async ({ data: { downloaderId, id, removeData } }) => {
   let deleteStatus: boolean = false;
   const downloaderInstance = await getDownloaderInstance(downloaderId);
@@ -167,6 +178,46 @@ onMessage("resumeClientTorrent", async ({ data: { downloaderId, id } }) => {
   }
 
   return resumeStatus;
+});
+
+onMessage("recheckClientTorrent", async ({ data: { downloaderId, id } }) => {
+  let recheckStatus: boolean = false;
+  const downloaderInstance = await getDownloaderInstance(downloaderId);
+  if (downloaderInstance) {
+    recheckStatus = await downloaderInstance.recheckTorrent(id);
+  }
+
+  return recheckStatus;
+});
+
+onMessage("moveClientTorrentInQueue", async ({ data: { downloaderId, id, direction } }) => {
+  let moveStatus: boolean = false;
+  const downloaderInstance = await getDownloaderInstance(downloaderId);
+  if (downloaderInstance) {
+    moveStatus = await downloaderInstance.moveTorrentInQueue(id, direction as TorrentQueueDirection);
+  }
+
+  return moveStatus;
+});
+
+onMessage("setClientTorrentSpeedLimit", async ({ data: { downloaderId, id, limits } }) => {
+  let limitStatus: boolean = false;
+  const downloaderInstance = await getDownloaderInstance(downloaderId);
+  if (downloaderInstance) {
+    limitStatus = await downloaderInstance.setTorrentSpeedLimit(id, limits as TorrentSpeedLimit);
+  }
+
+  return limitStatus;
+});
+
+onMessage("setClientTorrentLabel", async ({ data: { downloaderId, id, label } }) => {
+  let labelStatus: boolean = false;
+  const downloaderInstance = await getDownloaderInstance(downloaderId);
+  if (downloaderInstance) {
+    labelStatus = await downloaderInstance.setTorrentLabel(id, label);
+  }
+
+  return labelStatus;
 });
 
 function buildDownloadHistory(downloadOption: IDownloadTorrentOption): ITorrentDownloadMetadata {
@@ -207,6 +258,7 @@ async function downloadTorrent(downloadOption: IDownloadTorrentOption) {
   }
   logger({ msg: `generate download torrent task #${downloadOption.downloadId}`, data: downloadOption });
   let downloadStatus = await setDownloadStatus(downloadId!, "pending");
+  let errorMessage: string | undefined;
 
   // 2. 构建下载链接的请求配置
   let downloadRequestConfig: AxiosRequestConfig = { url: torrent.link, method: "GET", timeout: 30e3 };
@@ -253,7 +305,12 @@ async function downloadTorrent(downloadOption: IDownloadTorrentOption) {
     if (isDownloadToLocalFile) {
       // 本地下载
       downloadOption.localDownloadMethod ??= configStoreRaw?.download?.localDownloadMethod ?? "web";
-      downloadStatus = await downloadTorrentToLocalFile(downloadOption as TLocalDownloadOption, downloadRequestConfig);
+      const localResult = await downloadTorrentToLocalFile(
+        downloadOption as TLocalDownloadOption,
+        downloadRequestConfig,
+      );
+      downloadStatus = localResult.downloadStatus;
+      errorMessage = localResult.errorMessage;
     } else {
       // 远程推送
       addTorrentOptions.localDownload ??= true; // 默认开启本地中转选项（如果传递进来的没有 localDownload 值的话）
@@ -261,14 +318,26 @@ async function downloadTorrent(downloadOption: IDownloadTorrentOption) {
         addTorrentOptions.localDownload = true; // 如果不允许直接发送到下载器，则将本地中转选项强行设置为 true
       }
       downloadOption.addTorrentOptions = addTorrentOptions;
-      downloadStatus = await downloadTorrentToRemote(downloadOption as TRemoteDownloadOption, downloadRequestConfig);
+      const remoteResult = await downloadTorrentToRemote(
+        downloadOption as TRemoteDownloadOption,
+        downloadRequestConfig,
+      );
+      downloadStatus = remoteResult.downloadStatus;
+      errorMessage = remoteResult.errorMessage;
     }
   } catch (e) {
     downloadStatus = "failed";
+    errorMessage = getErrorMessage(e);
   }
 
   await setDownloadStatus(downloadId, downloadStatus);
-  return { downloadId, downloadStatus } as IDownloadTorrentResult;
+  if (errorMessage) {
+    // 将失败原因写入下载历史，方便在下载历史页面定位问题（见 issue #1430）
+    await patchDownloadHistory(downloadId, { errorMessage }).catch(() => {
+      logger({ msg: `Failed to persist errorMessage for download task #${downloadId}` });
+    });
+  }
+  return { downloadId, downloadStatus, errorMessage } as IDownloadTorrentResult;
 }
 
 onMessage("downloadTorrent", async ({ data: downloadOption }) => await downloadTorrent(downloadOption));
@@ -276,9 +345,10 @@ onMessage("downloadTorrent", async ({ data: downloadOption }) => await downloadT
 async function downloadTorrentToLocalFile(
   downloadOption: TLocalDownloadOption,
   downloadRequestConfig: AxiosRequestConfig,
-): Promise<TTorrentDownloadStatus> {
+): Promise<Pick<IDownloadTorrentResult, "downloadStatus" | "errorMessage">> {
   let { torrent, localDownloadMethod = "web", downloadId } = downloadOption;
   let downloadStatus: TTorrentDownloadStatus = "downloading";
+  let errorMessage: string | undefined;
 
   const downloadUri = axios.getUri(downloadRequestConfig); // 组装 baseURL, url, params
   const {
@@ -292,7 +362,7 @@ async function downloadTorrentToLocalFile(
     if (downloadMethod.toUpperCase() === "GET" && isEmpty(downloadHeaders)) {
       logger({ msg: `Download torrent file with web method: ${downloadUri}` });
       window.open(downloadUri, "_blank");
-      return await setDownloadStatus(downloadId, "completed");
+      return { downloadStatus: await setDownloadStatus(downloadId, "completed"), errorMessage };
     } else {
       localDownloadMethod = "extension"; // 如果是不能直接使用 window.open 方法的情况，直接使用 extension 方法
     }
@@ -318,7 +388,7 @@ async function downloadTorrentToLocalFile(
 
       logger({ msg: `Download torrent file with browser method: ${downloadUri}`, data: downloadOptions });
       await sendMessage("downloadFile", downloadOptions);
-      return await setDownloadStatus(downloadId, "completed");
+      return { downloadStatus: await setDownloadStatus(downloadId, "completed"), errorMessage };
     } catch (e) {
       localDownloadMethod = "extension"; // 如果下载失败，直接使用 extension 方法（怎么可能？）
     }
@@ -344,23 +414,27 @@ async function downloadTorrentToLocalFile(
       URL.revokeObjectURL(torrentUrl);
     } catch (e) {
       downloadStatus = await setDownloadStatus(downloadId, "failed");
+      errorMessage = getErrorMessage(e);
     }
   }
 
-  return downloadStatus;
+  return { downloadStatus, errorMessage };
 }
 
 async function downloadTorrentToRemote(
   downloadOption: TRemoteDownloadOption,
   downloadRequestConfig: AxiosRequestConfig,
-): Promise<TTorrentDownloadStatus> {
+): Promise<Pick<IDownloadTorrentResult, "downloadStatus" | "errorMessage">> {
   const { torrent, downloaderId, addTorrentOptions, downloadId } = downloadOption;
   let downloadStatus: TTorrentDownloadStatus = "failed"; // 远程推送默认失败状态
+  let errorMessage: string | undefined;
 
   const downloaderConfig = await getDownloaderConfig(downloaderId);
   if (downloaderConfig.id && downloaderConfig.enabled) {
     const downloaderInstance = await getDownloaderInstance(downloaderId);
-    if (!downloaderInstance) return downloadStatus;
+    if (!downloaderInstance) {
+      return { downloadStatus, errorMessage: `Downloader not found: ${downloaderId}` };
+    }
     if (addTorrentOptions.localDownload) {
       addTorrentOptions.localDownloadOption = downloadRequestConfig;
     }
@@ -375,14 +449,28 @@ async function downloadTorrentToRemote(
         downloadStatus = "completed";
       } else {
         logger({ msg: "Failed to add torrent to downloader", data: loggerData });
+        errorMessage = getErrorMessage(addTorrentResult?.message || "Downloader rejected the torrent");
       }
       patchDownloadHistory(downloadId, { addTorrentResult }).catch(); // 存储添加种子结果，方便后续调试
     } catch (e) {
       logger({ msg: "Error adding torrent to downloader", data: loggerData });
+      errorMessage = getErrorMessage(e);
     }
+  } else {
+    errorMessage = `Downloader is missing or disabled: ${downloaderId}`;
   }
 
-  return downloadStatus;
+  return { downloadStatus, errorMessage };
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
 }
 
 export async function getDownloadHistory() {

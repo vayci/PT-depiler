@@ -40,6 +40,21 @@ export const clientMetaData: TorrentClientMetaData = {
     DefaultAutoStart: {
       allowed: true,
     },
+    Recheck: {
+      allowed: false,
+    },
+    Queue: {
+      allowed: false,
+    },
+    SpeedLimit: {
+      allowed: false,
+    },
+    Label: {
+      allowed: false,
+    },
+    BypassCSRF: {
+      allowed: false,
+    },
   },
 };
 

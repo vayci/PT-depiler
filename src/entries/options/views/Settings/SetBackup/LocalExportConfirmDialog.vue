@@ -31,7 +31,13 @@ function dialogEnter() {
       <v-card-text>
         <v-row no-gutters>
           <v-col v-for="backupField in BackupFields" :key="backupField" cols="12" md="6">
-            <v-switch v-model="backupFields" :label="backupField" :value="backupField" color="success" hide-details />
+            <v-switch
+              v-model="backupFields"
+              :label="t(`SetBackup.fields.${backupField}`)"
+              :value="backupField"
+              color="success"
+              hide-details
+            />
           </v-col>
         </v-row>
       </v-card-text>

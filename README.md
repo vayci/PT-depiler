@@ -21,7 +21,7 @@ PT-depiler 是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Pl
 
 ### 🖥️ 功能 Features
 
-- **多站点支持**：兼容 NexusPHP、Unit3D、Gazelle 等多种类型的 PT 站点，提供聚合搜索相同关键字的种子、批量下载等功能
+- **多站点支持**：兼容 NexusPHP、Unit3D、Gazelle 等多种类型的 PT 站点，提供聚合搜索相同关键字的种子、批量下载等功能 （ 支持站点列表见： [PT Site Status](https://pt-plugins.github.io/monitor/)  ）
 - **下载器集成**：支持 qBittorrent、Transmission、Deluge、ruTorrent、Synology Download Station、Aria2 等多种下载器，并保存下载历史记录
 - **备份服务器管理**：集成 WebDav、Gist、CookieCloud、Google Drive、DropBox、OWSS 等备份服务，方便数据同步
 - **智能搜索**：增强搜索功能，支持多站点同时搜索并合并结果
@@ -88,7 +88,13 @@ Copyright (c) 2020-present [pt-plugins](https://github.com/pt-plugins)
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=pt-plugins/PT-depiler&type=Date)](https://www.star-history.com/#pt-plugins/PT-depiler&Date)
+<a href="https://www.star-history.com/?type=date&repos=pt-plugins%2FPT-depiler">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=pt-plugins/PT-depiler&type=date&theme=dark&legend=top-left&sealed_token=OpJ3esFdalMwUXwBy-fVSBoD13v91i_UOr42DGy3YnLp1vYTmzz-HlmjbwfzTMJK22WAF77Mxee0x-lJe92NjXvP49gWWVu7EhT84a48k1NhYwnbtC2LOXyqDKThfZBnFF8pXClgBHQlFQbuo9ECpgC4u4Srg412B8A4rCyBbHovALa7zXcHckFLy0CV" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=pt-plugins/PT-depiler&type=date&legend=top-left&sealed_token=OpJ3esFdalMwUXwBy-fVSBoD13v91i_UOr42DGy3YnLp1vYTmzz-HlmjbwfzTMJK22WAF77Mxee0x-lJe92NjXvP49gWWVu7EhT84a48k1NhYwnbtC2LOXyqDKThfZBnFF8pXClgBHQlFQbuo9ECpgC4u4Srg412B8A4rCyBbHovALa7zXcHckFLy0CV" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=pt-plugins/PT-depiler&type=date&legend=top-left&sealed_token=OpJ3esFdalMwUXwBy-fVSBoD13v91i_UOr42DGy3YnLp1vYTmzz-HlmjbwfzTMJK22WAF77Mxee0x-lJe92NjXvP49gWWVu7EhT84a48k1NhYwnbtC2LOXyqDKThfZBnFF8pXClgBHQlFQbuo9ECpgC4u4Srg412B8A4rCyBbHovALa7zXcHckFLy0CV" />
+ </picture>
+</a>
 
 --------------
 

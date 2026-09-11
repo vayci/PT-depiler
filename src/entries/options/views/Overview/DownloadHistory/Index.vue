@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { onMounted, ref, shallowRef, computed } from "vue";
+import { onMounted, onUnmounted, ref, shallowRef, computed } from "vue";
 import { useDisplay, type DataTableHeader } from "vuetify";
 
 import { sendMessage } from "@/messages.ts";
@@ -22,6 +22,7 @@ import {
   downloadHistoryList,
   downloadStatusMap,
   tableCustomFilter,
+  clearWatchingMap,
   throttleLoadDownloadHistory,
 } from "./utils.ts"; // <-- 主要方法
 
@@ -90,13 +91,17 @@ function viewDownloadDetail(history: ITorrentDownloadMetadata) {
 onMounted(() => {
   throttleLoadDownloadHistory();
 });
+
+onUnmounted(() => {
+  clearWatchingMap();
+});
 </script>
 
 <template>
   <v-alert :title="t('route.Overview.DownloadHistory')" type="info" />
   <v-card>
     <v-card-title>
-      <v-row class="ma-0">
+      <v-row gap="0" class="ma-0">
         <!-- 按钮组 -->
         <NavButton
           color="green"
@@ -228,6 +233,12 @@ onMounted(() => {
   <v-dialog v-model="showDownloadDetailDialog" width="800">
     <v-card>
       <v-card-text>
+        <v-alert v-if="downloadDetail.errorMessage" class="mb-3" color="error" icon="mdi-alert" variant="tonal">
+          <div class="text-label-large font-weight-bold mb-1">
+            {{ t("DownloadHistory.detail.errorMessage") }}
+          </div>
+          <code class="text-body-medium">{{ downloadDetail.errorMessage }}</code>
+        </v-alert>
         <pre> {{ JSON.stringify(downloadDetail, null, 2) }}</pre>
       </v-card-text>
     </v-card>

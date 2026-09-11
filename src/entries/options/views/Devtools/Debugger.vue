@@ -190,11 +190,11 @@ async function resetFnWrapper(resetFn: resetItem["resetFn"]) {
       <tbody>
         <tr>
           <td>
-            <div class="d-flex justify-center align-center text-body-2">{{ t("Debugger.enableLibrary") }}</div>
+            <div class="d-flex justify-center align-center text-body-medium">{{ t("Debugger.enableLibrary") }}</div>
           </td>
           <td>
             <v-container>
-              <v-row dense>
+              <v-row density="compact">
                 <v-col class="d-flex align-center">
                   <v-btn @click="enableLibrary" class="mr-3">{{ t("common.enable") }}</v-btn>
                   {{ t("Debugger.libraryList") }}
@@ -205,11 +205,11 @@ async function resetFnWrapper(resetFn: resetItem["resetFn"]) {
         </tr>
         <tr>
           <td>
-            <div class="d-flex justify-center align-center text-body-2">{{ t("Debugger.debugBuiltinSite") }}</div>
+            <div class="d-flex justify-center align-center text-body-medium">{{ t("Debugger.debugBuiltinSite") }}</div>
           </td>
           <td>
             <v-container>
-              <v-row dense>
+              <v-row density="compact">
                 <v-col cols="4">
                   <v-autocomplete v-model="selectedSite" :items="definitionList" hide-details label="site" />
                 </v-col>
@@ -236,11 +236,13 @@ async function resetFnWrapper(resetFn: resetItem["resetFn"]) {
         </tr>
         <tr v-for="(server, serverType) in simpleServer" :key="serverType">
           <td>
-            <div class="d-flex justify-center align-center text-body-2">{{ t("Debugger.debug", { serverType }) }}</div>
+            <div class="d-flex justify-center align-center text-body-medium">
+              {{ t("Debugger.debug", { serverType }) }}
+            </div>
           </td>
           <td>
             <v-container>
-              <v-row dense>
+              <v-row density="compact">
                 <v-col cols="4">
                   <v-autocomplete
                     v-model="simpleServer[serverType].selected"
@@ -279,11 +281,11 @@ async function resetFnWrapper(resetFn: resetItem["resetFn"]) {
         </tr>
         <tr>
           <td>
-            <div class="d-flex justify-center align-center text-body-2">{{ t("Debugger.debugPinia") }}</div>
+            <div class="d-flex justify-center align-center text-body-medium">{{ t("Debugger.debugPinia") }}</div>
           </td>
           <td>
             <v-container>
-              <v-row dense>
+              <v-row density="compact">
                 <v-col cols="4">
                   <v-autocomplete
                     v-model="selectedPiniaStore"
@@ -303,7 +305,7 @@ async function resetFnWrapper(resetFn: resetItem["resetFn"]) {
         </tr>
         <tr>
           <td>
-            <div class="d-flex justify-center align-center text-body-2">{{ t("Debugger.pluginReset") }}</div>
+            <div class="d-flex justify-center align-center text-body-medium">{{ t("Debugger.pluginReset") }}</div>
           </td>
           <td>
             <v-container>

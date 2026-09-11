@@ -162,6 +162,14 @@ function getRecommendationRegionClass(region?: string) {
     : "hot-recommendation-chip-region-foreign";
 }
 
+function getRecommendationPosterSrc(item: ISocialRecommendationItem) {
+  if (!item.poster || /doubanio\.com/.test(item.poster)) {
+    return "/icons/movie_placeholder.png";
+  }
+
+  return item.poster;
+}
+
 watch(isRecommendationMenuOpen, (isOpen) => {
   if (isOpen) {
     loadRecommendations();
@@ -184,7 +192,7 @@ watch(isRecommendationMenuOpen, (isOpen) => {
     <v-card min-width="1120" max-width="1280">
       <v-card-title class="d-flex align-center py-2">
         <v-icon icon="mdi-fire" class="mr-2" />
-        <span class="text-subtitle-1">{{ t("layout.header.hotRecommendations.title") }}</span>
+        <span class="text-body-large">{{ t("layout.header.hotRecommendations.title") }}</span>
         <v-spacer />
         <v-btn
           :loading="isLoadingRecommendations"
@@ -214,15 +222,15 @@ watch(isRecommendationMenuOpen, (isOpen) => {
       </v-card-text>
 
       <v-card-text v-else class="pa-3">
-        <v-row dense>
+        <v-row density="compact">
           <v-col v-for="group in groupedRecommendationItems" :key="group.category" cols="12" sm="6" lg="3">
-            <div class="text-subtitle-2 mb-2">
+            <div class="text-label-large mb-2">
               {{ t(`layout.header.hotRecommendations.category.${group.category}`) }}
             </div>
 
             <v-list density="compact" class="hot-recommendation-list pa-0 rounded border">
               <v-list-item v-if="group.items.length === 0" class="hot-recommendation-empty-item px-2">
-                <v-list-item-title class="text-body-2 text-medium-emphasis">
+                <v-list-item-title class="text-body-medium text-medium-emphasis">
                   {{ t("layout.header.hotRecommendations.empty") }}
                 </v-list-item-title>
               </v-list-item>
@@ -235,7 +243,7 @@ watch(isRecommendationMenuOpen, (isOpen) => {
               >
                 <template #prepend>
                   <v-img
-                    :src="item.poster || '/icons/movie_placeholder.png'"
+                    :src="getRecommendationPosterSrc(item)"
                     class="hot-recommendation-poster mr-2"
                     cover
                     referrerpolicy="no-referrer"
@@ -246,7 +254,7 @@ watch(isRecommendationMenuOpen, (isOpen) => {
                   </v-img>
                 </template>
 
-                <v-list-item-title class="hot-recommendation-title-row text-body-2">
+                <v-list-item-title class="hot-recommendation-title-row text-body-medium">
                   <span class="hot-recommendation-title text-truncate">{{ item.title }}</span>
                   <span class="hot-recommendation-rating">
                     <v-icon icon="mdi-star" color="amber-darken-2" size="x-small" class="mr-1" />

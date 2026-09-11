@@ -3,7 +3,7 @@
  * @JackettIssue https://github.com/Jackett/Jackett/issues/14946
  */
 import { type ISiteMetadata } from "../types";
-import { SchemaMetadata } from "../schemas/NexusPHP";
+import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
 import { extractContent } from "../utils";
 
 export const siteMetadata: ISiteMetadata = {
@@ -23,6 +23,31 @@ export const siteMetadata: ISiteMetadata = {
   urls: ["uggcf://cg.ntficg.pa/", "uggcf://jjj.ntficg.pbz/", "uggcf://arj.ntficg.pa/"],
 
   officialGroupPattern: [/AGSV(PT|E|WEB|REMUX|Rip|TV|DIY|MUS)?$/i],
+
+  category: [
+    {
+      name: "分类",
+      key: "cat",
+      options: [
+        { name: "Movie(电影)", value: 401 },
+        { name: "MV(演唱)", value: 406 },
+        { name: "TV Series(电视剧)", value: 402 },
+        { name: "TV Shows(综艺)", value: 403 },
+        { name: "Documentaries(纪录片)", value: 404 },
+        { name: "Anime(动漫)", value: 405 },
+        { name: "Playlet（短剧）", value: 419 },
+        { name: "Music(音乐)", value: 411 },
+        { name: "Audio(音频)", value: 408 },
+        { name: "Sports(体育)", value: 407 },
+        { name: "Game(游戏)", value: 413 },
+        { name: "E-Book(电子书/有声书)", value: 415 },
+      ],
+      cross: { mode: "append" },
+    },
+    CategoryIncldead,
+    CategorySpstate,
+    CategoryInclbookmarked,
+  ],
 
   search: {
     ...SchemaMetadata.search,

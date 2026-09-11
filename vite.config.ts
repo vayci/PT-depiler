@@ -48,6 +48,18 @@ export default defineConfig({
     outDir: `dist-${target}`,
     emptyOutDir: true,
   },
+  // Vuetify 4: 强制 Vite 预打包 overlay 相关模块，避免 dev 模式下 useStack 被拆分为
+  // 两份实例导致 dialog 内的 menu/select 等浮层 z-index 计算失效（官方 Upgrade Guide 建议）。
+  // 仅影响 dev 模式；生产构建不受影响。
+  optimizeDeps: {
+    include: [
+      "vuetify/components/VOverlay",
+      "vuetify/components/VDialog",
+      "vuetify/components/VMenu",
+      "vuetify/components/VSelect",
+      "vuetify/components/VTooltip",
+    ],
+  },
   plugins: [
     vitePluginGenerateWebextLocales(),
     nodePolyfills({
@@ -60,14 +72,16 @@ export default defineConfig({
       launchEditor: fs.existsSync(base_path("./.idea")) ? "webstorm" : "vscode",
     }),
     vue(),
-    vuetify(),
+    vuetify({
+      styles: { configFile: "./src/styles/vuetify/settings.scss" },
+    }),
     webExtension({
       browser: target,
       disableAutoLaunch: true,
       skipManifestValidation: true,
       manifest: () => ({
         manifest_version: 3,
-        "{{chrome}}.minimum_chrome_version": "120",
+        "{{chrome}}.minimum_chrome_version": "140",
 
         version: base_version,
         "{{chrome}}.version_name": commit_version,
@@ -129,7 +143,7 @@ export default defineConfig({
         "{{firefox}}.browser_specific_settings": {
           gecko: {
             id: "ptdepiler.ptplugins@gmail.com",
-            strict_min_version: "121.0",
+            strict_min_version: "133.0",
           },
         },
         "{{firefox}}.content_security_policy": {
@@ -139,6 +153,13 @@ export default defineConfig({
         web_accessible_resources: [
           {
             resources: ["icons/*", "lib/*", "pt-depiler.css"],
+            matches: ["*://*/*"],
+          },
+          // content script 的按需主逻辑（assets/cs-app.js）及其共享 chunk 依赖链，
+          // 由轻量引导在匹配站点时于页面上下文动态 import 加载（见 issue #1467）。
+          // 使用通配以避免依赖拓扑变化后遗漏新 chunk 导致运行时加载失败。
+          {
+            resources: ["assets/*", "vendor/*"],
             matches: ["*://*/*"],
           },
         ],
@@ -156,6 +177,27 @@ export default defineConfig({
       watchFilePaths: ["package.json"],
       htmlViteConfig: {
         plugins: [
+          {
+            name: "cs-app-entry",
+            config(config) {
+              // content script 的重逻辑（Vue/Vuetify/站点包）挂到多页 ESM 构建中作为额外入口，
+              // 产物 assets/cs-app.js 由轻量引导在匹配站点时通过 chrome.runtime.getURL 动态加载，
+              // 并直接复用 options 构建已拆分的 vendor chunk（见 issue #1467）。
+              config.build ??= {};
+              config.build.rollupOptions ??= {};
+              config.build.rollupOptions.input ??= {};
+              (config.build.rollupOptions.input as Record<string, string>)["cs-app"] = base_path(
+                "src/entries/content-script/app/init.ts",
+              );
+              // 该入口仅由 content script 引导在运行时动态 import（构建期无静态消费者），
+              // 必须保留入口导出签名，否则 mountApp 会被 rollup 树摇成纯副作用壳
+              config.build.rollupOptions.preserveEntrySignatures = "strict";
+              // 动态 import 不会自动加载按 chunk 拆分的 css 分片，cs-app 的组件树样式
+              // （vuetify 组件、页面组件等分散在各 chunk 的 css）无法逐份在页面上下文
+              // 引入，故合并为单文件，由 app/init.ts 按固定地址 link
+              config.build.cssCodeSplit = false;
+            },
+          },
           {
             name: "sort-asserts",
             config(config) {
@@ -187,12 +229,24 @@ export default defineConfig({
 
                   return "assets/[name]-[hash].js"; // vite default
                 },
-                entryFileNames: "assets/[name]-[hash].js", // vite default
+                entryFileNames: (chunkInfo) => {
+                  // cs-app 的加载地址写死在 content script 引导里，必须使用稳定文件名（不带 hash）
+                  if (chunkInfo.name === "cs-app") {
+                    return "assets/cs-app.js";
+                  }
+                  return "assets/[name]-[hash].js"; // vite default
+                },
                 assetFileNames: (assetInfo) => {
                   const assetName = assetInfo.names[0] || "";
 
-                  // 将 css 文件放到 assets/css 目录下
+                  // 将 css 文件放到 assets/css 目录
                   if (assetName.endsWith(".css")) {
+                    // cssCodeSplit=false 后全量样式合并为单一文件；content script 的
+                    // shadow DOM 通过 chrome.runtime.getURL("pt-depiler.css") 固定地址
+                    // 加载（见 app/init.ts），必须输出到根目录且使用稳定文件名
+                    if (assetName === "index.css" || assetName === "style.css") {
+                      return "pt-depiler.css";
+                    }
                     return "assets/css/[name]-[hash][extname]";
                   }
 

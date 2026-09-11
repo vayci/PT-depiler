@@ -46,10 +46,10 @@ function dialogEnter() {
       <v-card-text>
         <v-text-field
           v-model="snapshotName"
-          dense
+          density="compact"
           hide-details
+          variant="outlined"
           :label="t('SearchResultSnapshot.EditNameDialog.snapshotName')"
-          outlined
         ></v-text-field>
       </v-card-text>
       <v-card-actions>

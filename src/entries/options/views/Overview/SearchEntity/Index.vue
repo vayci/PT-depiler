@@ -221,7 +221,7 @@ const hiddenTagNamesText = computed({
   </v-alert>
   <v-card>
     <v-card-title>
-      <v-row class="ma-0">
+      <v-row gap="0" class="ma-0">
         <v-btn-group size="small" variant="text">
           <!-- 启动/暂停 搜索队列 -->
           <v-btn
@@ -340,7 +340,7 @@ const hiddenTagNamesText = computed({
             <v-chip v-if="index === 0">
               <span>{{ item.title }}</span>
             </v-chip>
-            <span v-if="index === 1" class="grey--text caption">
+            <span v-if="index === 1" class="text-grey text-body-small">
               (+{{ configStore.tableBehavior.SearchEntity.columns!.length - 1 }})
             </span>
           </template>
@@ -450,7 +450,7 @@ const hiddenTagNamesText = computed({
 
         <!-- 其他操作 -->
         <template #item.action="{ item }">
-          <ActionTd :torrent-items="[item]" density="compact" />
+          <ActionTd :torrent-items="[item]" density="compact" :show-keep-upload-btn="false" />
         </template>
       </v-data-table>
     </v-card-text>

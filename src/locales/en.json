@@ -49,6 +49,9 @@
       "selectDownloader": "Select Downloader",
       "title": "Re-download {0} records"
     },
+    "detail": {
+      "errorMessage": "Error Message"
+    },
     "filterPlaceholder": "Filter download history",
     "reDownload": "Re-download",
     "refresh": "Refresh download history list",
@@ -76,6 +79,7 @@
     "editSavePath": "Edit save path",
     "emptyNotice": "No reseed tasks yet. Select torrents from search results and click reseed check button.",
     "leechers": "Leechers: ",
+    "qBittorrentLegacyFails": "qBittorrent rejected the torrent, but its legacy Web API returned no details; check for a duplicate torrent, validate the save path or category, and review the qBittorrent logs",
     "savePath": "Save Path: ",
     "seeders": "Seeders: ",
     "sendAllTorrents": "Send all torrents",
@@ -84,6 +88,7 @@
     "sendError": "Send failed",
     "sendOtherTorrents": "Send other torrents",
     "sendSingleError": "Failed to send",
+    "sendSingleErrorWithReason": "Failed to send: {reason}",
     "sendSingleSuccess": "Sent",
     "sendSuccess": "Sent successfully",
     "setAsBaseTorrent": "Set as base torrent",
@@ -128,10 +133,19 @@
   "MyClient": {
     "action": {
       "delete": "Delete",
+      "detail": "Details",
+      "moveQueueSuccess": "Moved {count} torrent(s) in queue",
       "pause": "Pause",
       "pauseError": "Failed to pause",
       "pauseSelectedSuccess": "Paused {count} torrent(s)",
       "pauseSuccess": "Paused successfully",
+      "queue": "Queue Position",
+      "queueBottom": "Move to Bottom",
+      "queueDown": "Move Down",
+      "queueTop": "Move to Top",
+      "queueUp": "Move Up",
+      "recheck": "Recheck",
+      "recheckSelectedSuccess": "Rechecked {count} torrent(s)",
       "resume": "Resume",
       "resumeError": "Failed to resume",
       "resumeSelectedSuccess": "Resumed {count} torrent(s)",
@@ -158,8 +172,22 @@
     },
     "columnSelector": "Columns",
     "deleteSelected": "Delete",
+    "detail": {
+      "copyHash": "Copy Hash",
+      "copyMagnet": "Copy Magnet Link",
+      "noTrackers": "This downloader does not support fetching trackers or has no trackers",
+      "title": "Torrent Details",
+      "trackers": "Trackers"
+    },
     "dialog": {
       "removeData": "Also remove data"
+    },
+    "label": {
+      "batchBtn": "Set Label",
+      "emptyLabel": "Label cannot be empty",
+      "input": "Label",
+      "success": "Labeled {count} torrent(s)",
+      "title": "Set Label ({count} torrent(s))"
     },
     "pauseSelected": "Pause",
     "pushToDownloader": {
@@ -172,9 +200,23 @@
       "urlInputHint": "One URL or magnet link per line",
       "urlInputLabel": "URLs / Magnet Links"
     },
+    "recheckSelected": "Recheck",
+    "recheckDialog": {
+      "text": "Are you sure you want to recheck the selected {count} torrent(s)? Rechecking consumes downloader resources and may temporarily interrupt seeding.",
+      "title": "Confirm Recheck"
+    },
     "refresh": "Refresh",
     "resumeSelected": "Resume",
     "searchPlaceholder": "Search by name, hash, label, or path",
+    "speedLimit": {
+      "batchBtn": "Speed Limit",
+      "download": "Download Limit (KiB/s, 0 = unlimited)",
+      "emptyLimit": "Please fill in at least one of upload or download limit",
+      "success": "Limited {count} torrent(s)",
+      "title": "Set Speed Limit ({count} torrent(s))",
+      "unitNote": "Speed limit unit is KiB/s; 0 means unlimited, empty means do not change this direction.",
+      "upload": "Upload Limit (KiB/s, 0 = unlimited)"
+    },
     "state": {
       "checking": "Checking",
       "downloading": "Downloading",
@@ -210,7 +252,26 @@
     "UserLevelRequirementsTd": {
       "levelList": "User Level List"
     },
+    "exportDialog": {
+      "exportAll": "Export User Info From {count} sites",
+      "exportSelected": "Export User Info from selected {count} sites",
+      "fields": {
+        "id": "User ID",
+        "joinTime": "Join Time",
+        "lastAccessAt": "Last Access",
+        "levelName": "Level",
+        "messageCount": "Messages",
+        "siteName": "Site Name",
+        "updateAt": "Updated At"
+      },
+      "fieldsLabel": "Fields",
+      "formatCSV": "CSV",
+      "formatJSON": "JSON",
+      "formatLabel": "Format",
+      "title": "Export User Info"
+    },
     "index": {
+      "exportData": "Export",
       "filter": {
         "lastUpdateError": "Last update error",
         "todayNotUpdated": "Not updated today",
@@ -411,6 +472,8 @@
     },
     "Editor": {
       "backupConfig": "Backup Configuration",
+      "backupInterval": "Auto Backup Interval",
+      "backupIntervalHint": "Set auto-backup interval (hours). Leave empty or 0 to disable auto backup. Max 48 hours.",
       "serverConfig": "Server Configuration"
     },
     "HistoryDialog": {
@@ -443,6 +506,15 @@
       "title": "Restore from Backup File",
       "versionWarning": "Backup data version is higher than the current extension version. Restoring may cause data incompatibility or loss. Continue?"
     },
+    "fields": {
+      "config": "Extension configuration (config)",
+      "cookies": "Site cookies (cookies)",
+      "downloadHistory": "Download history (downloadHistory)",
+      "keepUploadTask": "Reseed tasks (keepUploadTask)",
+      "metadata": "Site and service configuration (metadata)",
+      "searchResultSnapshot": "Search result snapshots (searchResultSnapshot)",
+      "userInfo": "User information (userInfo)"
+    },
     "localExport": "Local Export",
     "localImport": "Local Import",
     "snackbar": {
@@ -455,13 +527,15 @@
         "viewHistoryBackup": "View History Backups"
       },
       "backupFields": "Backup Content",
+      "backupInterval": "Auto Backup Interval",
+      "everyNHour": "Every {n} h",
       "lastBackupAt": "Last Backup Time",
       "notBackup": "Not Backed Up"
     }
   },
   "SetBase": {
     "download": {
-      "MyClientTitle": "My Downloader",
+      "myClientTitle": "My Downloader",
       "allowDirectSendToClient": "Allow sending links directly (instead of torrent files) to the download server (Do not enable unless necessary)",
       "enableSiteFilter": "Enable site filter (configure per-downloader site filtering in downloader settings)",
       "initDownloaderTorrentOnEnter": "Automatically load torrents from the downloader when entering the My Downloader page",
@@ -518,6 +592,8 @@
     "ui": {
       "allowDragLink": "Allow dragging links to the sidebar button",
       "allowExceptionSites": "Allow setting exception sites without sidebar (enable in site settings)",
+      "autoToggleNavBarOnDisplayChange": "Auto expand/collapse the sidebar when the window size changes",
+      "autoToggleNavBarOnDisplayChangeNote": "When disabled, resizing the window will not change the sidebar state automatically; control it manually via the top bar button.",
       "basicSettings": "Basic Settings",
       "changeLanguage": "Switch Language",
       "confirmTwoStep": "Require two-step confirmation for batch copy, local download, etc. on torrent list pages",
@@ -645,7 +721,7 @@
           "setDefault": "Set this downloader server as Default Downloader.",
           "setPathAndTag": "Set Suggest Download Path and Tags",
           "setSiteFilter": "Set Site Filter",
-          "status": "Status"
+          "status": "Manage Download Server"
         },
         "autodl": "Auto DL ?",
         "downloaderCategory": "Downloader Category",
@@ -1012,8 +1088,11 @@
       "title": "Customize batch actions for {0} torrents"
     },
     "SocialSiteParseResultsDialog": {
+      "defaultSeasonTitle": "Season",
+      "searchEntryTitle": "Search {title}",
       "searchExternalId": "Search External ID",
       "searchId": "Search ID",
+      "searchPlan": "Search Plan",
       "searchTitle": "Search Title",
       "title": "Quick Search"
     },
@@ -1087,6 +1166,7 @@
     "ratio": "Ratio",
     "seeding": "Seeding Count",
     "seedingBonus": "Seed Points",
+    "seedingBonusPerHour": "Seed Points Per Hour",
     "seedingSize": "Seeding Size",
     "seedingTime": "Seeding Time",
     "snatches": "Completed Torrents",

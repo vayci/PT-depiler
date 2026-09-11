@@ -20,6 +20,7 @@ import NavButton from "@/options/components/NavButton.vue";
 import UserLevelRequirementsTd from "./UserLevelRequirementsTd.vue";
 import HistoryDataViewDialog from "./HistoryDataViewDialog.vue";
 import BonusFormatSpan from "./BonusFormatSpan.vue";
+import ExportUserInfoDialog from "./ExportUserInfoDialog.vue";
 
 import { formatRatio } from "./utils/format.ts";
 import { tableData, initTableData, cancelFlushSiteLastUserInfo, flushSiteLastUserInfo } from "./utils/lastUserData.ts";
@@ -169,13 +170,15 @@ function viewStatistic() {
     },
   });
 }
+
+const showExportDialog = ref(false);
 </script>
 
 <template>
   <v-alert :title="t('route.Overview.MyData')" type="info" />
   <v-card>
     <v-card-title>
-      <v-row class="ma-0">
+      <v-row gap="0" class="ma-0">
         <!-- 刷新，取消刷新 -->
         <NavButton
           v-if="runtimeStore.isUserInfoFlush"
@@ -213,6 +216,16 @@ function viewStatistic() {
 
         <v-divider class="mx-2" vertical />
 
+        <!-- 导出按钮 -->
+        <NavButton
+          color="orange-darken-3"
+          icon="mdi-export"
+          :text="t('MyData.index.exportData')"
+          @click="showExportDialog = true"
+        />
+
+        <v-divider class="mx-2" vertical />
+
         <v-menu :close-on-content-clicks="false">
           <template v-slot:activator="{ props }">
             <NavButton color="blue" icon="mdi-cog" :text="t('MyData.index.setting')" class="mr-1" v-bind="props" />
@@ -223,7 +236,7 @@ function viewStatistic() {
               <template v-slot:prepend>
                 <v-list-item-action start class="ml-2">
                   <v-icon icon="mdi-calendar-account" class="mr-2" />
-                  <span class="text-subtitle-2">{{ t("MyData.index.joinTimeFormat") }}</span>
+                  <span class="text-label-large">{{ t("MyData.index.joinTimeFormat") }}</span>
                 </v-list-item-action>
               </template>
 
@@ -287,7 +300,7 @@ function viewStatistic() {
             <v-chip v-if="index === 0">
               <span>{{ item.title }}</span>
             </v-chip>
-            <span v-if="index === 1" class="text-grey caption">
+            <span v-if="index === 1" class="text-grey text-body-small">
               (+{{ configStore.tableBehavior.MyData.columns!.length - 1 }})
             </span>
           </template>
@@ -430,14 +443,14 @@ function viewStatistic() {
 
       <!-- 上传、下载 -->
       <template #item.uploaded="{ item }">
-        <v-container>
-          <v-row class="flex-nowrap" justify="end">
+        <v-container class="py-0 pr-0">
+          <v-row gap="0" class="justify-end flex-nowrap">
             <span class="text-no-wrap">
               {{ typeof item.uploaded !== "undefined" ? formatSize(item.uploaded) : "-" }}
             </span>
             <v-icon color="green-darken-4" icon="mdi-chevron-up" size="small"></v-icon>
           </v-row>
-          <v-row class="flex-nowrap" justify="end">
+          <v-row gap="0" class="justify-end flex-nowrap">
             <span class="text-no-wrap">
               {{ typeof item.downloaded !== "undefined" ? formatSize(item.downloaded) : "-" }}
             </span>
@@ -448,14 +461,14 @@ function viewStatistic() {
 
       <!-- 真实上传、下载 -->
       <template #item.trueUploaded="{ item }">
-        <v-container>
-          <v-row class="flex-nowrap" justify="end">
+        <v-container class="py-0 pr-0">
+          <v-row gap="0" class="justify-end flex-nowrap">
             <span class="text-no-wrap">
               {{ typeof item.trueUploaded !== "undefined" ? formatSize(item.trueUploaded) : "-" }}
             </span>
             <v-icon color="green-darken-4" icon="mdi-chevron-up" size="small"></v-icon>
           </v-row>
-          <v-row class="flex-nowrap" justify="end">
+          <v-row gap="0" class="justify-end flex-nowrap">
             <span class="text-no-wrap">
               {{ typeof item.trueDownloaded !== "undefined" ? formatSize(item.trueDownloaded) : "-" }}
             </span>
@@ -481,11 +494,15 @@ function viewStatistic() {
 
       <!-- 做种数， H&R 情况  -->
       <template #item.seeding="{ item }">
-        <v-container class="py-0">
-          <v-row align="center" class="flex-nowrap my-0" justify="end">
+        <v-container class="py-0 pr-0">
+          <v-row gap="0" class="align-center justify-end flex-nowrap my-0">
             <span class="text-no-wrap">{{ item.seeding ?? "-" }}</span>
           </v-row>
-          <v-row v-if="configStore.myDataTableControl.showHnR" align="center" class="flex-nowrap my-0" justify="end">
+          <v-row
+            gap="0"
+            v-if="configStore.myDataTableControl.showHnR"
+            class="align-center justify-end flex-nowrap my-0"
+          >
             <span
               v-if="typeof item.hnrPreWarning !== 'undefined' && item.hnrPreWarning > 0"
               class="d-inline-flex align-center ml-2"
@@ -527,12 +544,13 @@ function viewStatistic() {
 
       <!-- 魔力/积分 -->
       <template #item.bonus="{ item }">
-        <v-container>
-          <v-row align="center" class="flex-nowrap" justify="end">
+        <v-container class="py-0 pr-0">
+          <v-row gap="0" class="align-center justify-end flex-nowrap">
             <v-icon :title="t('levelRequirement.bonus')" color="green-darken-4" icon="mdi-currency-usd" size="small" />
             <BonusFormatSpan :num="item.bonus" />
           </v-row>
           <v-row
+            gap="0"
             v-if="
               configStore.myDataTableControl.showSeedingBonus &&
               item.seedingBonus !== '' &&
@@ -642,6 +660,7 @@ function viewStatistic() {
   </v-card>
 
   <HistoryDataViewDialog v-model="showHistoryDataViewDialog" :site-id="historyDataViewDialogSiteId!" />
+  <ExportUserInfoDialog v-model="showExportDialog" :selected-site-ids="tableSelected" />
 </template>
 
 <style scoped lang="scss">

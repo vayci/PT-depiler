@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
+import type { CAddTorrentOptions } from "@ptd/downloader";
 
-import type { IKeepUploadTask } from "@/shared/types.ts";
+import type { IKeepUploadTask, TKeepUploadTaskKey } from "@/shared/types.ts";
 import { sendMessage } from "@/messages.ts";
 import { formatSize, formatDate } from "@/options/utils.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
@@ -15,7 +16,8 @@ const runtimeStore = useRuntimeStore();
 const metadataStore = useMetadataStore();
 
 const tasks = ref<IKeepUploadTask[]>([]);
-const selectedTasks = ref<IKeepUploadTask[]>([]);
+// v-data-table 设置了 item-value="id"，因此 v-model 中保存的是任务ID（TKeepUploadTaskKey）而非任务对象
+const selectedTasks = ref<TKeepUploadTaskKey[]>([]);
 const expanded = ref<string[]>([]);
 const loading = ref(false);
 const tableKey = ref(0); // 用于强制刷新表格
@@ -62,10 +64,10 @@ async function deleteSelectedTasks() {
   if (!confirm(t("KeepUploadTask.deleteSelectedConfirm", { count: selectedTasks.value.length }))) return;
 
   try {
-    for (const task of selectedTasks.value) {
-      await sendMessage("deleteKeepUploadTask", task.id);
+    for (const taskId of selectedTasks.value) {
+      await sendMessage("deleteKeepUploadTask", taskId);
     }
-    tasks.value = tasks.value.filter((t) => !selectedTasks.value.includes(t));
+    tasks.value = tasks.value.filter((t) => !selectedTasks.value.includes(t.id));
     selectedTasks.value = [];
     runtimeStore.showSnakebar(t("KeepUploadTask.deleteSuccess"), { color: "success" });
   } catch (e) {
@@ -97,27 +99,54 @@ async function sendTorrentsToDownloader(task: IKeepUploadTask, items: IKeepUploa
 
   try {
     for (const item of items) {
-      await sendMessage("downloadTorrent", {
+      const now = new Date();
+      const replacements: Record<string, string> = {
+        "torrent.title": item.title,
+        "torrent.subTitle": item.subTitle ?? "",
+        "torrent.category": String(item.category ?? ""),
+        "torrent.site": item.site,
+        "torrent.siteName": await metadataStore.getSiteName(item.site),
+        "date:YYYY": formatDate(now, "yyyy"),
+        "date:MM": formatDate(now, "MM"),
+        "date:DD": formatDate(now, "dd"),
+      };
+      const addTorrentOptions: CAddTorrentOptions = {
+        localDownload: true,
+        // 与普通下载保持一致：是否暂停由下载器的“自动开始”设置决定。
+        addAtPaused: !(downloader.feature?.DefaultAutoStart ?? true),
+        savePath: task.downloadOptions.savePath || "",
+        ...task.downloadOptions.addTorrentOptions,
+      };
+
+      for (const key of ["savePath", "label"] as const) {
+        if (!addTorrentOptions[key]) continue;
+        for (const [templateKey, value] of Object.entries(replacements)) {
+          addTorrentOptions[key] = addTorrentOptions[key]!.replaceAll(`$${templateKey}$`, value);
+        }
+      }
+
+      const result = await sendMessage("downloadTorrent", {
         torrent: {
           site: item.site,
           title: item.title,
           subTitle: item.subTitle,
           link: item.url,
-          url: item.url,
+          // item.link 是详情页；下载链接为空时，后台需要它来动态解析真实下载地址。
+          url: item.link,
           size: item.size,
         },
         downloaderId: task.downloadOptions.downloaderId,
-        addTorrentOptions: {
-          localDownload: true,
-          addAtPaused: true,
-          savePath: task.downloadOptions.savePath || "",
-          ...task.downloadOptions.addTorrentOptions,
-        },
+        addTorrentOptions,
       });
+      if (result.downloadStatus === "failed") {
+        throw new Error(result.errorMessage || item.title);
+      }
     }
     runtimeStore.showSnakebar(t("KeepUploadTask.sendSingleSuccess"), { color: "success" });
   } catch (e) {
-    runtimeStore.showSnakebar(t("KeepUploadTask.sendSingleError"), { color: "error" });
+    const rawReason = e instanceof Error ? e.message : String(e);
+    const reason = rawReason.trim() === "Fails." ? t("KeepUploadTask.qBittorrentLegacyFails") : rawReason;
+    runtimeStore.showSnakebar(t("KeepUploadTask.sendSingleErrorWithReason", { reason }), { color: "error" });
   }
 }
 
@@ -224,14 +253,19 @@ async function copyLinksToClipboard(task: IKeepUploadTask) {
 
       <template #item.title="{ item }">
         <div>
-          <a :href="item.items[0]?.link" target="_blank" rel="noopener noreferrer nofollow">
+          <a
+            :href="item.items[0]?.link"
+            target="_blank"
+            class="text-decoration-none text-high-emphasis text-body-large text-truncate"
+            rel="noopener noreferrer nofollow"
+          >
             {{ item.title }}
           </a>
-          <div class="text-caption text-grey">
+          <div class="text-body-small text-grey">
             {{ t("KeepUploadTask.savePath") }}{{ item.downloadOptions?.clientName }} ->
             {{ item.downloadOptions?.savePath || t("KeepUploadTask.defaultPath") }}
           </div>
-          <div class="text-caption">{{ t("KeepUploadTask.torrentCount") }}{{ item.items.length }}</div>
+          <div class="text-body-small">{{ t("KeepUploadTask.torrentCount") }}{{ item.items.length }}</div>
         </div>
       </template>
 
@@ -344,13 +378,4 @@ async function copyLinksToClipboard(task: IKeepUploadTask) {
   </v-alert>
 </template>
 
-<style scoped lang="scss">
-a {
-  color: #000;
-  text-decoration: none;
-}
-
-a:hover {
-  color: #008c00;
-}
-</style>
+<style scoped lang="scss"></style>

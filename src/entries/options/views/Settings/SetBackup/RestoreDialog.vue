@@ -271,7 +271,7 @@ function goToPtppImport() {
               <v-col v-for="backupField in BackupFields" :key="backupField" cols="12" md="4">
                 <v-switch
                   v-model="restoreOptions.fields"
-                  :label="backupField"
+                  :label="t(`SetBackup.fields.${backupField}`)"
                   :value="backupField"
                   color="success"
                   :disabled="!restoreData?.manifest?.files?.[backupField]"

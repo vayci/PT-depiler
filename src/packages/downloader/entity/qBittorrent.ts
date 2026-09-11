@@ -14,10 +14,12 @@ import {
   CTorrentState,
   TorrentClientStatus,
   CAddTorrentResult,
+  TorrentQueueDirection,
+  TorrentSpeedLimit,
 } from "../types";
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import urlJoin from "url-join";
-import { getRemoteTorrentFile } from "../utils";
+import { axios, getRemoteTorrentFile } from "../utils";
 import { merge } from "es-toolkit";
 
 /**
@@ -42,7 +44,7 @@ export const clientMetaData: TorrentClientMetaData = {
   warning: [
     "当前仅支持 qBittorrent v4.1+",
     "如果你使用的 qBittorrent 版本大于 5.2.0，可以使用 API Key 形式连接，此时请直接留空用户名，在密码栏输入 API key。",
-    "由于浏览器限制，需要禁用 qBittorrent 的『启用跨站请求伪造(CSRF)保护』功能才能正常使用",
+    "如不便禁用 qBittorrent 的『启用跨站请求伪造(CSRF)保护』功能，可在下方开启『绕过 CSRF 保护』选项",
     "注意：由于 qBittorrent 验证机制限制，第一次测试连接成功后，后续测试无论密码正确与否都会提示成功。",
   ],
   feature: {
@@ -53,6 +55,21 @@ export const clientMetaData: TorrentClientMetaData = {
         `（ qBittorrent 额外支持以 "${category_prefix}" 前缀的分类作为下载目录，当使用该前缀时，请在 qBittorrent 中预设分类信息。）`,
     },
     DefaultAutoStart: {
+      allowed: true,
+    },
+    Recheck: {
+      allowed: true,
+    },
+    Queue: {
+      allowed: true,
+    },
+    SpeedLimit: {
+      allowed: true,
+    },
+    Label: {
+      allowed: true,
+    },
+    BypassCSRF: {
       allowed: true,
     },
   },
@@ -220,6 +237,11 @@ export default class QBittorrent extends AbstractBittorrentClient<TorrentClientC
     return !this.config.username && this.config.password.startsWith("qbt_");
   }
 
+  // 是否启用「绕过 CSRF 保护」：请求时通过 DNR 移除 Origin 头
+  private get bypassCSRF(): boolean {
+    return this.config.feature?.BypassCSRF === true;
+  }
+
   async ping(): Promise<boolean> {
     try {
       if (this.isApiKeyAuth) {
@@ -287,6 +309,7 @@ export default class QBittorrent extends AbstractBittorrentClient<TorrentClientC
     return await axios.post(urlJoin(this.config.address, "/api/v2", "/auth/login"), form, {
       timeout: this.config.timeout,
       withCredentials: true,
+      ...(this.bypassCSRF ? { headers: { origin: "" } } : {}),
     });
   }
 
@@ -306,6 +329,13 @@ export default class QBittorrent extends AbstractBittorrentClient<TorrentClientC
       config.headers = {
         ...(config.headers ?? {}),
         Authorization: `Bearer ${this.config.password}`,
+      };
+    }
+
+    if (this.bypassCSRF) {
+      config.headers = {
+        ...(config.headers ?? {}),
+        origin: "", // 空字符串哨兵：replaceUnsafeHeader 拦截器会将其转为移除 Origin 头
       };
     }
 
@@ -580,5 +610,65 @@ export default class QBittorrent extends AbstractBittorrentClient<TorrentClientC
     const hash = torrent.infoHash || (torrent.id as string);
     const { data } = await this.request<Array<{ url: string }>>("/torrents/trackers", { params: { hash } });
     return data.map((t) => t.url);
+  }
+
+  // 重新校验种子
+  override async recheckTorrent(id: any): Promise<boolean> {
+    await this.request("/torrents/recheck", {
+      method: "post",
+      data: { hashes: normalizePieces(id) },
+    });
+    return true;
+  }
+
+  // 调整种子在队列中的位置
+  override async moveTorrentInQueue(id: any, direction: TorrentQueueDirection): Promise<boolean> {
+    const endpointMap: Record<TorrentQueueDirection, string> = {
+      top: "/torrents/topPrio",
+      up: "/torrents/increasePrio",
+      down: "/torrents/decreasePrio",
+      bottom: "/torrents/bottomPrio",
+    };
+    await this.request(endpointMap[direction], {
+      method: "post",
+      data: { hashes: normalizePieces(id) },
+    });
+    return true;
+  }
+
+  // 设置单个种子的速度限制（单位 KiB/s，0 表示不限速；qBittorrent 使用 bytes/s，-1 表示不限速）
+  override async setTorrentSpeedLimit(id: any, limits: TorrentSpeedLimit): Promise<boolean> {
+    const hash = normalizePieces(id);
+    const requests: Promise<any>[] = [];
+
+    if (typeof limits.download !== "undefined") {
+      requests.push(
+        this.request("/torrents/setLimit", {
+          method: "post",
+          data: { hashes: hash, limit: limits.download > 0 ? limits.download * 1024 : -1 },
+        }),
+      );
+    }
+
+    if (typeof limits.upload !== "undefined") {
+      requests.push(
+        this.request("/torrents/setUploadLimit", {
+          method: "post",
+          data: { hashes: hash, limit: limits.upload > 0 ? limits.upload * 1024 : -1 },
+        }),
+      );
+    }
+
+    await Promise.all(requests);
+    return true;
+  }
+
+  // 设置单个种子的分类（qBittorrent 的 label 即 category）
+  override async setTorrentLabel(id: any, label: string): Promise<boolean> {
+    await this.request("/torrents/setCategory", {
+      method: "post",
+      data: { hashes: normalizePieces(id), category: label },
+    });
+    return true;
   }
 }

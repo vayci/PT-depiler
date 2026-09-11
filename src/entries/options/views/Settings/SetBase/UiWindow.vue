@@ -46,11 +46,11 @@ defineExpose({
       <!-- 明亮模式设置 -->
       <v-select v-model="configStore.theme" :label="t('SetBase.ui.displayMode.index')" :items="supportTheme">
         <template #selection="{ item }">
-          {{ t("SetBase.ui.displayMode." + item.raw) }}
+          {{ t("SetBase.ui.displayMode." + item) }}
         </template>
 
         <template #item="{ item, props }">
-          <v-list-item v-bind="props" :title="t('SetBase.ui.displayMode.' + item.raw)" />
+          <v-list-item v-bind="props" :title="t('SetBase.ui.displayMode.' + item)" />
         </template>
       </v-select>
 
@@ -84,6 +84,22 @@ defineExpose({
         </template>
       </v-switch>
 
+      <v-switch
+        v-model="configStore.autoToggleNavBarOnDisplayChange"
+        color="success"
+        hide-details
+        :label="t('SetBase.ui.autoToggleNavBarOnDisplayChange')"
+      >
+        <template #append>
+          <v-tooltip max-width="400" location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-icon color="info" icon="mdi-help-circle" v-bind="props" />
+            </template>
+            {{ t("SetBase.ui.autoToggleNavBarOnDisplayChangeNote") }}
+          </v-tooltip>
+        </template>
+      </v-switch>
+
       <v-divider />
     </v-col>
   </v-row>
@@ -104,7 +120,7 @@ defineExpose({
       <template v-if="configStore.contentScript.enabled">
         <v-alert type="warning" variant="tonal"> {{ t("SetBase.ui.contentScriptWarning") }} </v-alert>
 
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="12" md="2" class="d-flex align-center justify-center">
             <v-label>{{ t("SetBase.ui.basicSettings") }}</v-label>
           </v-col>
@@ -127,7 +143,7 @@ defineExpose({
           </v-col>
         </v-row>
 
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="12" md="2" class="d-flex align-center justify-center">
             <v-label>{{ t("SetBase.ui.sidebarStyle") }}</v-label>
           </v-col>
@@ -161,7 +177,7 @@ defineExpose({
           </v-col>
         </v-row>
 
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="12" md="2" class="d-flex align-center justify-center">
             <v-label>{{ t("SetBase.ui.sidebarFunctions") }}</v-label>
           </v-col>

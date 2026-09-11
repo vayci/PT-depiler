@@ -17,7 +17,9 @@ const emits = defineEmits<{
 }>();
 
 const clientMeta = computedAsync<IMediaServerMetadata>(
-  async () => await getMediaServerMetaData(clientConfig.value!.type),
+  // clientConfig 在编辑对话框 after-enter 时才赋值，computedAsync 首次求值可能尚未就绪，需空值短路
+  async () =>
+    clientConfig.value?.type ? await getMediaServerMetaData(clientConfig.value.type) : ({} as IMediaServerMetadata),
   {} as IMediaServerMetadata,
 );
 const formValid = ref<boolean>(false);

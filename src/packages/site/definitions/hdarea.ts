@@ -40,6 +40,14 @@ export const siteMetadata: ISiteMetadata = {
         { name: "Movies WEB-DL", value: 412 },
         { name: "Movies HDTV", value: 413 },
         { name: "Movies iPad", value: 417 },
+        { name: "Documentaries", value: 404 },
+        { name: "Animations", value: 405 },
+        { name: "TV Series", value: 402 },
+        { name: "TV Shows", value: 403 },
+        { name: "Music Videos", value: 406 },
+        { name: "Sports", value: 407 },
+        { name: "Misc", value: 409 },
+        { name: "HQ Audio", value: 408 },
       ],
       cross: { mode: "append" },
     },
@@ -142,6 +150,39 @@ export const siteMetadata: ISiteMetadata = {
       ...SchemaMetadata.search!.selectors!,
       rows: {
         selector: "table.torrents > tbody > tr:has(table.torrentname)",
+      },
+      title: {
+        ...SchemaMetadata.search!.selectors!.title!,
+        // 站点设置「种子标题上悬浮提示类型」选为简单/中型 IMDb 信息时，标题锚点渲染为
+        // onmouseover="get_ext_info_ajax(...)"（悬停浮窗），无 title 属性、href 不带 hit，
+        // 模板默认选择器全部落空导致标题丢失（#1417），此处追加该形态的兜底
+        selector: [
+          "a[href^='details.php?id='][title]:has(b)",
+          "a[href*='details.php?id='][href*='hit']",
+          "a[href*='hit'][title]",
+          "a[href*='hit']:has(b)",
+          "a[onmouseover*='get_ext_info_ajax']",
+        ],
+      },
+      subTitle: {
+        text: "",
+        selector: [
+          "a[href^='details.php?id='][title]:has(b)",
+          "a[href*='details.php?id='][href*='hit']",
+          "a[href*='hit'][title]",
+          "a[href*='hit']:has(b)",
+          "a[onmouseover*='get_ext_info_ajax']",
+        ],
+        // HDArea places the subtitle in a sibling div of the title div,
+        // rather than after a <br> tag, so we look at the next sibling element.
+        elementProcess: (element: HTMLElement) => {
+          const titleDiv = element.closest("td > div");
+          const subtitleEl = titleDiv?.nextElementSibling;
+          if (subtitleEl instanceof HTMLElement && subtitleEl.tagName === "DIV") {
+            return subtitleEl.textContent?.trim() ?? "";
+          }
+          return "";
+        },
       },
       tags: [
         ...SchemaMetadata.search!.selectors!.tags!,

@@ -32,7 +32,14 @@ const showDeleteDialog = ref<boolean>(false);
 const fullTableHeader = [
   { title: t("common.type"), key: "type", align: "center" },
   { title: t("common.name"), key: "name", align: "start" },
-  { title: t("SetBackup.table.backupFields"), key: "backupFields", align: "start", sortable: false },
+  {
+    title: t("SetBackup.table.backupFields"),
+    key: "backupFields",
+    align: "start",
+    sortable: false,
+    cellProps: { class: "pt-1" },
+  },
+  { title: t("SetBackup.table.backupInterval"), key: "backupInterval", align: "center" },
   { title: t("SetBackup.table.lastBackupAt"), key: "lastBackupAt", align: "end" },
   { title: t("common.enable"), key: "enabled", align: "center" },
   { title: t("common.action"), key: "action", sortable: false },
@@ -88,7 +95,7 @@ async function confirmDeleteBackupServer(id: TBackupServerKey) {
   <v-alert :title="t('route.Settings.SetBackup')" type="info" />
   <v-card class="set-backup">
     <v-card-title>
-      <v-row class="ma-0">
+      <v-row gap="0" class="ma-0">
         <NavButton :text="t('common.btn.add')" color="success" icon="mdi-plus" @click="showAddDialog = true" />
         <NavButton
           :disabled="tableSelected.length === 0"
@@ -134,11 +141,16 @@ async function confirmDeleteBackupServer(id: TBackupServerKey) {
       </template>
 
       <template #item.backupFields="{ item }">
-        <v-chip-group show-arrows>
-          <v-chip v-for="backupField in item.backupFields" label :key="backupField">
-            {{ backupField }}
-          </v-chip>
-        </v-chip-group>
+        <v-chip v-for="backupField in item.backupFields" label :key="backupField" class="mr-1 mb-1">
+          {{ t(`SetBackup.fields.${backupField}`) }}
+        </v-chip>
+      </template>
+
+      <template #item.backupInterval="{ item }">
+        <template v-if="item.backupInterval && item.backupInterval > 0">
+          {{ t("SetBackup.table.everyNHour", { n: item.backupInterval }) }}
+        </template>
+        <span v-else class="text-disabled">—</span>
       </template>
 
       <template #item.lastBackupAt="{ item }">

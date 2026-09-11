@@ -79,22 +79,26 @@ function doAdvanceSearch(site: TSupportSocialSite, sid: string) {
     router.push(toRoute);
   }
 }
+
+function canAdvanceSearch(site: TSupportSocialSite) {
+  return site !== "tmdb";
+}
 </script>
 
 <template>
-  <v-container ref="container" class="t_main">
-    <v-row>
+  <v-container ref="container" class="t_main pa-0">
+    <v-row gap="0">
       <!-- 种子主标题信息 -->
       <span
         :style="{
-          width: `${containerWidth - socialWidth}px`,
+          width: `${containerWidth - socialWidth - 8}px`,
         }"
         class="text-truncate"
       >
         <a
           :href="item.url"
           :title="item.title"
-          class="t_title text-decoration-none text-high-emphasis text-subtitle-1 text-truncate"
+          class="t_title text-decoration-none text-high-emphasis text-body-large text-truncate"
           rel="noopener noreferrer nofollow"
           target="_blank"
         >
@@ -140,7 +144,7 @@ function doAdvanceSearch(site: TSupportSocialSite, sid: string) {
                       >
                         {{ socialInformation[key]?.title.split(" / ")[0] }}
                       </h3>
-                      <p v-if="socialInformation[key]?.ratingScore" class="text-caption">
+                      <p v-if="socialInformation[key]?.ratingScore" class="text-body-small">
                         {{ socialInformation[key].ratingScore }}
                         <span v-if="socialInformation[key]?.ratingCount">
                           from {{ socialInformation[key].ratingCount }} votes
@@ -151,15 +155,17 @@ function doAdvanceSearch(site: TSupportSocialSite, sid: string) {
                       <h3 class="font-weight-bold my-2">No Information</h3>
                     </template>
 
-                    <v-divider class="my-1" />
-                    <v-btn
-                      variant="text"
-                      block
-                      append-icon="mdi-magnify"
-                      @click="doAdvanceSearch(key as TSupportSocialSite, item[`ext_${key}`] as string)"
-                    >
-                      {{ t("common.search") }}
-                    </v-btn>
+                    <template v-if="canAdvanceSearch(key as TSupportSocialSite)">
+                      <v-divider class="my-1" />
+                      <v-btn
+                        variant="text"
+                        block
+                        append-icon="mdi-magnify"
+                        @click="doAdvanceSearch(key as TSupportSocialSite, item[`ext_${key}`] as string)"
+                      >
+                        {{ t("common.search") }}
+                      </v-btn>
+                    </template>
 
                     <v-divider class="my-1" />
                     <v-btn
@@ -174,7 +180,7 @@ function doAdvanceSearch(site: TSupportSocialSite, sid: string) {
                       {{ t("common.visit") }}
                     </v-btn>
                     <v-divider class="my-1" />
-                    <p class="text-caption mt-1">( {{ key }}: {{ item[`ext_${key}`] }} )</p>
+                    <p class="text-body-small mt-1">( {{ key }}: {{ item[`ext_${key}`] }} )</p>
                   </div>
                 </v-card-text>
               </v-card>
@@ -183,7 +189,10 @@ function doAdvanceSearch(site: TSupportSocialSite, sid: string) {
         </template>
       </div>
     </v-row>
-    <v-row v-if="configStore.searchEntifyControl.showTorrentTag || configStore.searchEntifyControl.showTorrentSubtitle">
+    <v-row
+      gap="0"
+      v-if="configStore.searchEntifyControl.showTorrentTag || configStore.searchEntifyControl.showTorrentSubtitle"
+    >
       <!-- 种子标签信息 -->
       <div ref="tags">
         <template v-if="configStore.searchEntifyControl.showTorrentTag && item.tags && item.tags.length > 0">
