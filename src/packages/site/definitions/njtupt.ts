@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/njtupt.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/njtupt.json
+ */
 import type { ISiteMetadata } from "../types";
 import {
   CategoryInclbookmarked,
@@ -12,11 +16,13 @@ export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "njtupt",
   name: "浦园",
+  tags: ["综合", "影视", "音乐", "游戏"],
   collaborator: ["koal"],
   type: "private",
   schema: "NexusPHP",
 
   urls: ["https://njtupt.top/"],
+  favicon: "./_default_nexusphp.png",
 
   category: [CategoryIncldead, CategorySpstate, CategoryInclbookmarked],
 

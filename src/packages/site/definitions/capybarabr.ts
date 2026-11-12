@@ -1,3 +1,6 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/capybarabr.yml
+ */
 import { type ISiteMetadata } from "../types";
 import { SchemaMetadata, userInfoTrans } from "../schemas/Unit3D.ts";
 
@@ -15,11 +18,11 @@ export const siteMetadata: ISiteMetadata = {
   urls: ["uggcf://pnclonenoe.pbz/"],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       seedingSize: {
-        ...SchemaMetadata.userInfo!.selectors!.seedingSize,
+        ...SchemaMetadata.userInfo.selectors!.seedingSize,
         selector: [
           // 追加葡萄牙语标签，同时继承 Unit3D 已有的英文/中文标签
           ...["Tamanho em seeding", ...userInfoTrans.seedingSize].map((x) => `dt:contains('${x}') + dd`),

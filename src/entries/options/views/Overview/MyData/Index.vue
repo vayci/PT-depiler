@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { watchDebounced } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { isUndefined } from "es-toolkit/compat";
-import type { DataTableHeader } from "vuetify";
+import { useDisplay, type DataTableHeader } from "vuetify";
 import { EResultParseStatus, type ISiteUserConfig, type IUserInfo, type TSiteID } from "@ptd/site";
+import { siteMetadataIndex } from "@ptd/site/metadataIndex";
 
 import { useConfigStore } from "@/options/stores/config.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
+import { useTableActionColumn } from "@/options/directives/useTableActionColumn.ts";
 import { formatDate, formatSize, formatTimeAgo } from "@/options/utils.ts";
 
 import SiteName from "@/options/components/SiteName.vue";
@@ -30,43 +32,61 @@ const router = useRouter();
 const configStore = useConfigStore();
 const runtimeStore = useRuntimeStore();
 const metadataStore = useMetadataStore();
+const display = useDisplay();
+
+// 等级列是否限制宽度：用户开启「限制等级栏宽度」，或处于小屏时生效（与搜索结果页的标题列行为一致）。
+// 表头 maxWidth 与单元格截断共用此条件，避免出现「限宽不裁剪」或「裁剪不限宽」的错位。
+const limitLevelNameTdWidth = computed(
+  () => configStore.myDataTableControl.limitLevelNameTdWidth || display.smAndDown.value,
+);
 
 const currentDate = new Date();
 
 type TExtendDataTableHeader = DataTableHeader & { props?: any };
 
-const fullTableHeader = reactive([
-  {
-    title: t("common.site"),
-    key: "siteUserConfig.sortIndex",
-    align: "center",
-    props: { disabled: true },
-  },
-  { title: t("common.username"), key: "name", align: "center" },
-  { title: t("MyData.table.levelName"), key: "levelName", align: "start", width: "2%" },
-  // NOTE: 这里将key设为 uploaded, trueUploaded 而不是虚拟的 userData，可以让 v-data-table 使用 uploaded 的进行排序
-  { title: t("MyData.table.userData"), key: "uploaded", align: "end" },
-  { title: t("MyData.table.trueUserData"), key: "trueUploaded", align: "end" }, // 默认不显示
-  { title: t("levelRequirement.ratio"), key: "ratio", align: "end" },
-  { title: t("levelRequirement.trueRatio"), key: "trueRatio", align: "end" }, // 默认不显示
-  { title: t("levelRequirement.uploads"), key: "uploads", align: "end" },
-  { title: t("levelRequirement.seeding"), key: "seeding", align: "end" },
-  { title: t("levelRequirement.seedingSize"), key: "seedingSize", align: "end" },
-  { title: t("levelRequirement.bonus"), key: "bonus", align: "end" },
-  { title: t("levelRequirement.bonusPerHour"), key: "bonusPerHour", align: "end" },
-  { title: t("MyData.table.invites"), key: "invites", align: "end" }, // 默认不显示
-  { title: t("MyData.table.inviteStatus"), key: "inviteStatus", align: "end" },
-  { title: t("MyData.table.joinTime"), key: "joinTime", align: "center" },
-  { title: t("MyData.table.lastAccessAt"), key: "lastAccessAt", align: "center" }, // 默认不显示
-  { title: t("MyData.table.updateAt"), key: "updateAt", align: "center" },
-  { title: t("common.action"), key: "action", align: "center", sortable: false, props: { disabled: true } },
-] as TExtendDataTableHeader[]);
+const fullTableHeader = computed(
+  () =>
+    [
+      {
+        title: t("common.site"),
+        key: "siteUserConfig.sortIndex",
+        align: "center",
+        props: { disabled: true },
+      },
+      { title: t("common.username"), key: "name", align: "center" },
+      {
+        title: t("MyData.table.levelName"),
+        key: "levelName",
+        align: "start",
+        width: "10%",
+        ...(limitLevelNameTdWidth.value ? { maxWidth: "32vw" } : {}),
+      },
+      // NOTE: 这里将key设为 uploaded, trueUploaded 而不是虚拟的 userData，可以让 v-data-table 使用 uploaded 的进行排序
+      { title: t("MyData.table.userData"), key: "uploaded", align: "end" },
+      { title: t("MyData.table.trueUserData"), key: "trueUploaded", align: "end" }, // 默认不显示
+      { title: t("levelRequirement.ratio"), key: "ratio", align: "end" },
+      { title: t("levelRequirement.trueRatio"), key: "trueRatio", align: "end" }, // 默认不显示
+      { title: t("levelRequirement.uploads"), key: "uploads", align: "end" },
+      { title: t("levelRequirement.seeding"), key: "seeding", align: "end" },
+      { title: t("levelRequirement.seedingSize"), key: "seedingSize", align: "end" },
+      { title: t("levelRequirement.bonus"), key: "bonus", align: "end" },
+      { title: t("levelRequirement.bonusPerHour"), key: "bonusPerHour", align: "end" },
+      { title: t("MyData.table.invites"), key: "invites", align: "end" }, // 默认不显示
+      { title: t("MyData.table.inviteStatus"), key: "inviteStatus", align: "end" },
+      { title: t("MyData.table.joinTime"), key: "joinTime", align: "center" },
+      { title: t("MyData.table.lastAccessAt"), key: "lastAccessAt", align: "center" }, // 默认不显示
+      { title: t("MyData.table.updateAt"), key: "updateAt", align: "center" },
+      { title: t("common.action"), key: "action", align: "center", sortable: false, props: { disabled: true } },
+    ] as TExtendDataTableHeader[],
+);
 
 const tableHeader = computed(() => {
-  return fullTableHeader.filter(
-    (item: TExtendDataTableHeader) =>
-      item?.props?.disabled || configStore.tableBehavior.MyData.columns!.includes(item.key!),
-  ) as DataTableHeader[];
+  return useTableActionColumn(
+    fullTableHeader.value.filter(
+      (item: TExtendDataTableHeader) =>
+        item?.props?.disabled || configStore.tableBehavior.MyData.columns!.includes(item.key!),
+    ) as DataTableHeader[],
+  );
 });
 
 const tableNonBooleanControlKey = [
@@ -108,6 +128,26 @@ const {
 
 const tableSelected = ref<TSiteID[]>([]); // 选中的站点行
 
+// 当前分页展示的站点，由 v-data-table 的 `update:currentItems` 提供（已应用筛选与排序）
+// NOTE: 这是 v-data-table 唯一能拿到的「当前结果」钩子，它只包含当前页，参见 #1663
+const tableCurrentPageSites = ref<TSiteID[]>([]);
+function updateTableCurrentPageSites(items: any[]) {
+  tableCurrentPageSites.value = items.map((item) => item.value as TSiteID);
+}
+
+// 表格是否处于筛选状态：筛选词为空时 v-data-table 不会进行任何过滤（此时展示的即是全部站点）
+const tableFiltered = computed(() => tableFilterRef.value.trim().length > 0);
+
+// 最近一次更新失败的站点状态，用于快速筛选
+// NOTE: 不要在模板的事件回调中直接访问导入枚举的成员：vue-tsc 3.3.12 起会为这类窄化访问生成 `.value`，
+//       而闭包内无法通过类型检查（TS2339），故提前在 script 中展开（见 #1601）
+const lastUpdateErrorStatuses = [
+  EResultParseStatus.parseError,
+  EResultParseStatus.unknownError,
+  EResultParseStatus.needLogin,
+  EResultParseStatus.noUserInput,
+].map((item) => item.toString());
+
 // 挂载时加载表格数据
 onMounted(() => initTableData());
 
@@ -130,9 +170,32 @@ function viewHistoryData(siteId: TSiteID) {
   historyDataViewDialogSiteId.value = siteId;
 }
 
-async function multiOpen() {
-  for (const siteId of tableSelected.value) {
-    const siteUrl = await metadataStore.getSiteUrl(siteId);
+function multiOpen() {
+  let openSiteIds: TSiteID[] = tableSelected.value;
+
+  // #1663：未勾选站点时，按「是否处于筛选状态」决定打开范围，避免筛选后仍然打开全部站点
+  // NOTE: v-data-table 没有提供「筛选后的全部结果」的钩子（vuetifyjs/vuetify#19382），
+  //       只能取到当前分页展示的站点，故筛选状态下仅打开当前页
+  if (openSiteIds.length === 0) {
+    if (tableFiltered.value) {
+      openSiteIds = tableCurrentPageSites.value;
+      if (openSiteIds.length === 0) {
+        runtimeStore.showSnackbar(t("MyData.index.noSiteSelectedCancelOpen"), { color: "warning" });
+        return;
+      }
+      runtimeStore.showSnackbar(t("MyData.index.noSiteSelectedOpenFilteredPage", { count: openSiteIds.length }), {
+        color: "info",
+      });
+    } else {
+      openSiteIds = tableData.value.map((item) => item.site);
+      runtimeStore.showSnackbar(t("MyData.index.noSiteSelectedOpenAll"), { color: "info" });
+    }
+  }
+
+  // NOTE: 这里必须同步取 URL，若在循环内 `await`，则第一个 `window.open` 之后用户手势即失效，
+  //       后续标签页会被浏览器拦截（表格数据均已挂载 `siteUserConfig`，无需再走异步查询）
+  for (const siteId of openSiteIds) {
+    const siteUrl = metadataStore.sites[siteId]?.url || siteMetadataIndex[siteId]?.urls?.[0];
     if (siteUrl) {
       window.open(siteUrl, "_blank", "noopener noreferrer");
     }
@@ -143,13 +206,13 @@ async function multiFlush() {
   let flushSiteIds: TSiteID[] = tableSelected.value;
   if (flushSiteIds.length === 0) {
     flushSiteIds = tableData.value.map((item) => item.site);
-    runtimeStore.showSnakebar(t("MyData.index.noSiteSelectedRefreshAll"), { color: "info" });
+    runtimeStore.showSnackbar(t("MyData.index.noSiteSelectedRefreshAll"), { color: "info" });
   }
 
   if (flushSiteIds.length > 0) {
     flushSiteLastUserInfo(flushSiteIds);
   } else {
-    runtimeStore.showSnakebar(t("MyData.index.noSiteSelectedCancelRefresh"), { color: "warning" });
+    runtimeStore.showSnackbar(t("MyData.index.noSiteSelectedCancelRefresh"), { color: "warning" });
   }
 }
 
@@ -197,7 +260,7 @@ const showExportDialog = ref(false);
         />
 
         <NavButton
-          :disabled="tableSelected.length === 0"
+          :disabled="tableData.length === 0"
           color="indigo"
           icon="mdi-open-in-new"
           :text="t('MyData.index.multiOpen')"
@@ -226,7 +289,7 @@ const showExportDialog = ref(false);
 
         <v-divider class="mx-2" vertical />
 
-        <v-menu :close-on-content-clicks="false">
+        <v-menu :close-on-content-click="false">
           <template v-slot:activator="{ props }">
             <NavButton color="blue" icon="mdi-cog" :text="t('MyData.index.setting')" class="mr-1" v-bind="props" />
           </template>
@@ -243,7 +306,6 @@ const showExportDialog = ref(false);
               <v-btn-toggle
                 v-model="configStore.myDataTableControl.joinTimeFormat"
                 density="compact"
-                hide-details
                 class="ml-2"
                 @click.stop
                 @update:model-value="() => configStore.$save()"
@@ -254,7 +316,6 @@ const showExportDialog = ref(false);
                   :value="type"
                   :title="t(`MyData.index.joinTimeFormatOptions.${type}`)"
                   density="compact"
-                  hide-details
                 >
                   {{ t(`MyData.index.joinTimeFormatOptions.${type}`) }}
                 </v-btn>
@@ -322,7 +383,7 @@ const showExportDialog = ref(false);
           <template #prepend-inner>
             <v-menu min-width="100">
               <template v-slot:activator="{ props }">
-                <v-icon v-bind="props" icon="mdi-filter" variant="plain" />
+                <v-icon v-bind="props" icon="mdi-filter" />
               </template>
               <v-list class="pa-0">
                 <v-list-item-subtitle class="ma-2">
@@ -343,11 +404,7 @@ const showExportDialog = ref(false);
                   :title="t('MyData.index.filter.lastUpdateError')"
                   @click.stop="
                     () => {
-                      advanceFilterDictRef.status.required = [
-                        EResultParseStatus.parseError,
-                        EResultParseStatus.unknownError,
-                        EResultParseStatus.needLogin,
-                      ].map((item) => item.toString());
+                      advanceFilterDictRef.status.required = lastUpdateErrorStatuses;
                       updateTableFilterValueFn();
                     }
                   "
@@ -405,6 +462,7 @@ const showExportDialog = ref(false);
       item-selectable="selectable"
       item-value="site"
       show-select
+      @update:current-items="updateTableCurrentPageSites"
       @update:itemsPerPage="(v) => configStore.updateTableBehavior('MyData', 'itemsPerPage', v)"
       @update:sortBy="(v) => configStore.updateTableBehavior('MyData', 'sortBy', v)"
     >
@@ -438,7 +496,7 @@ const showExportDialog = ref(false);
 
       <!-- 等级信息，升级信息 -->
       <template #item.levelName="{ item }">
-        <UserLevelRequirementsTd :user-info="item" />
+        <UserLevelRequirementsTd :user-info="item" :limit-level-name-td-width="limitLevelNameTdWidth" />
       </template>
 
       <!-- 上传、下载 -->

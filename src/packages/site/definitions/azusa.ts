@@ -1,6 +1,8 @@
 /**
  * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/azusa.yml
  * @JackettIssue https://github.com/Jackett/Jackett/issues/14478
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/azusa.wiki/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/azusa.json
  */
 import { type ISiteMetadata } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP.ts";
@@ -98,15 +100,15 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       seeders: { selector: "a[href*='seeders']" },
       leechers: { selector: "a[href*='leechers']" },
       completed: { selector: "a[href*='viewsnatches']" },
       comments: { selector: "a[href*='comments']" },
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         { name: "条漫", selector: "span:contains('条漫')", color: "#1892EC" },
         { name: "自购", selector: "span:contains('自购')", color: "#9400D3" },
         { name: "电子版", selector: "span:contains('电子版')", color: "#732E67" },
@@ -131,9 +133,9 @@ export const siteMetadata: ISiteMetadata = {
   userInfo: undefined,
   /*
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       name: {
         selector: ["a[href*='userdetails.php'][class*='Name']:first"],
         elementProcess: (element: HTMLElement) => {

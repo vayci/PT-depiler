@@ -1,13 +1,16 @@
 /**
  * 新站点模板 - NP架构
  * 基于NexusPHP架构的通用站点配置
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/momentpt.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/momentpt.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/momentpt.json
  */
 import { type ISiteMetadata } from "../types";
-import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
-import { userInfoWithInvitesInUserDetailsPage } from "./kunlun";
+// import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
+// import { userInfoWithInvitesInUserDetailsPage } from "./kunlun";
 
 export const siteMetadata: ISiteMetadata = {
-  ...SchemaMetadata,
+  // ...SchemaMetadata,
   version: 1,
 
   id: "momentpt",
@@ -24,6 +27,10 @@ export const siteMetadata: ISiteMetadata = {
 
   urls: ["uggcf://jjj.zbzragcg.gbc/"],
 
+  // dead at 2026.10.29 from savept.icu
+  isDead: true,
+
+  /**
   category: [
     {
       name: "搜索入口",
@@ -58,6 +65,7 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: userInfoWithInvitesInUserDetailsPage,
+   */
 
   levelRequirements: [
     {

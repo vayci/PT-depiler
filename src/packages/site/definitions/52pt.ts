@@ -1,6 +1,8 @@
 /**
  * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/52pt.yml
  * @JackettIssue https://github.com/Jackett/Jackett/issues/6763
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/52pt.site/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/52pt.json
  */
 import type { ISiteMetadata, IUserInfo } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
@@ -236,6 +238,18 @@ export const siteMetadata: ISiteMetadata = {
       privilege: "校区创始人等级，最高权限。",
     },
   ],
+
+  search: {
+    ...SchemaMetadata.search,
+    selectors: {
+      ...SchemaMetadata.search.selectors,
+      // 2026-11-07 Jackett b2d8d13e「drop titles without DL」：行收紧为带下载链接的行，
+      // 剔除公告/广告等没有下载按钮的表格行。与我们 NexusPHP 默认的 `table.torrents:last > tbody > tr`
+      // （仅按表头猜列）相比语义等价且更稳；link 仍走基类 baseLinkQuery（download.php?id + img[alt=download]），
+      // 被剔除的行本来就取不到 link，覆写 rows 只会减少空行、不会丢正常种子。
+      rows: { selector: 'table.torrents > tbody > tr:has(a[href^="download.php?id="])' },
+    },
+  },
 
   userInfo: userInfoWithInvitesInUserDetailsPage,
 };

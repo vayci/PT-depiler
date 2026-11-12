@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/putao.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/pt.sjtu.edu.cn/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/putao.json
+ */
 import { mergeWith } from "es-toolkit";
 import { ETorrentStatus, type ISiteMetadata, type IUserInfo } from "../types";
 import { parseSizeString, createDocument } from "../utils";
@@ -10,9 +15,9 @@ import NexusPHP, {
 
 // 邀请采集配置
 const userInfoWithInvitesInUserDetailsPage = {
-  ...SchemaMetadata.userInfo!,
+  ...SchemaMetadata.userInfo,
   selectors: {
-    ...SchemaMetadata.userInfo!.selectors!,
+    ...SchemaMetadata.userInfo.selectors!,
     invites: {
       selector: [
         "td.rowhead:contains('邀请') + td",
@@ -42,7 +47,7 @@ const userInfoWithInvitesInUserDetailsPage = {
     },
   },
   process: [
-    ...SchemaMetadata.userInfo!.process!.map((item) => {
+    ...SchemaMetadata.userInfo.process!.map((item) => {
       // 在用户详情页面添加 invites 字段
       if (item.requestConfig.url === "/userdetails.php") {
         return {
@@ -160,7 +165,7 @@ export const siteMetadata: ISiteMetadata = {
   search: {
     ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       progress: {
         selector: ["td.snatched_no_yes, td.snatched_yes_yes", "td.snatched_no_no, td.snatched_yes_no"],
         attr: "class",
@@ -392,7 +397,7 @@ export default class sjtu extends NexusPHP {
       const textBetween = match[0]; // 提取出 </a> 和 <div id="ka"> 之间的文本内容
       const numberMatch = textBetween.match(/(\d+)/);
       if (numberMatch) {
-        flushUserInfo.uploads = numberMatch[0];
+        flushUserInfo.uploads = Number(numberMatch[0]);
       }
     }
 

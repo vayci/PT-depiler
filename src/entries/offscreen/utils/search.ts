@@ -1,6 +1,6 @@
 import { uniqBy } from "es-toolkit";
 import { getMediaServer } from "@ptd/mediaServer";
-import { normalizedTorrentTagMap, sortTorrentTags, type TPatterns } from "@ptd/site";
+import { normalizeTorrentPromotion, normalizedTorrentTagMap, sortTorrentTags, type TPatterns } from "@ptd/site";
 
 import { onMessage, sendMessage } from "@/messages.ts";
 import type {
@@ -38,6 +38,10 @@ onMessage("getSiteSearchResult", async ({ data: { siteId, keyword = "", searchEn
         }
       }
 
+      // 让种子同时具备 factor 与 tag 两种优惠表示（factor 优先；仅 tags 时反推 factor）。
+      // 这里也兜住了不经过 parseWholeTorrentFromRow 的 JSON API schema（如 GazelleJSONAPI 直接构造 ITorrent）。
+      normalizeTorrentPromotion(item);
+
       // 尽可能将 tags 转换预定义的部分，去重并排序
       item.tags = sortTorrentTags(
         uniqBy(
@@ -68,6 +72,29 @@ onMessage("getMediaServerSearchResult", async ({ data: { mediaServerId, keywords
   const mediaServerConfig = metadataStore.mediaServers[mediaServerId];
   const mediaServer = await getMediaServer(mediaServerConfig);
   return await mediaServer.getSearchResult(keywords ?? "", options);
+});
+
+// 调研 B12：详情弹窗按需拉取单条目的完整信息（列表只带轻量字段，避免 /Items 响应过大）
+onMessage("getMediaServerItemDetail", async ({ data: { mediaServerId, itemId } }) => {
+  logger({
+    msg: `getMediaServerItemDetail For mediaServer: ${mediaServerId} with itemId: ${itemId}`,
+  });
+  const metadataStore = (await sendMessage("getExtStorage", "metadata")) as IMetadataPiniaStorageSchema;
+  const mediaServerConfig = metadataStore.mediaServers[mediaServerId];
+  const mediaServer = await getMediaServer(mediaServerConfig);
+  return (await mediaServer.getItemDetail(itemId)) ?? null;
+});
+
+// 调研 C14 / C20：按需生成媒体库概览 —— 整库遍历与聚合都在这里做，只把统计结果回传 UI
+onMessage("getMediaServerOverview", async ({ data: { mediaServerId, maxItems } }) => {
+  logger({
+    msg: `getMediaServerOverview For mediaServer: ${mediaServerId}`,
+    data: { maxItems },
+  });
+  const metadataStore = (await sendMessage("getExtStorage", "metadata")) as IMetadataPiniaStorageSchema;
+  const mediaServerConfig = metadataStore.mediaServers[mediaServerId];
+  const mediaServer = await getMediaServer(mediaServerConfig);
+  return (await mediaServer.getLibraryOverview({ maxItems })) ?? null;
 });
 
 async function getSnapshotData() {

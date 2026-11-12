@@ -1,3 +1,6 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/yuscene-api.yml
+ */
 import type { ISiteMetadata } from "../types";
 import { CategoryFree, SchemaMetadata } from "../schemas/Unit3D.ts";
 import { buildCategoryOptionsFromDict, parseValidTimeString } from "../utils.ts";
@@ -27,7 +30,6 @@ export const siteMetadata: ISiteMetadata = {
   schema: "Unit3D",
 
   urls: ["https://yu-scene.net/"],
-  favicon: "https://yu-scene.net/favicon.ico",
 
   category: [
     {
@@ -42,7 +44,7 @@ export const siteMetadata: ISiteMetadata = {
   search: {
     ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       category: {
         selector: ":self",
         data: "categoryId",
@@ -52,14 +54,14 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       levelName: {
         selector: [
           "span.user-tag.profile-hero__username a.user-tag__link[title]",
           "main article section:first-of-type div div:nth-child(2) > span > a.user-tag__link[title]",
-          ...(SchemaMetadata.userInfo!.selectors!.levelName?.selector ?? []),
+          ...(SchemaMetadata.userInfo.selectors!.levelName?.selector ?? []),
         ],
         elementProcess: (el: Element) => el.getAttribute("title") || el.textContent,
       },
@@ -68,7 +70,7 @@ export const siteMetadata: ISiteMetadata = {
           "time.profile-hero__meta-item--registration",
           "time.profile-hero__meta-item--registration strong.profile-hero__meta-value",
           "main article section:first-of-type div div:nth-child(2) div time strong.profile-hero__meta-value",
-          ...(SchemaMetadata.userInfo!.selectors!.joinTime?.selector ?? []),
+          ...(SchemaMetadata.userInfo.selectors!.joinTime?.selector ?? []),
         ],
         elementProcess: (el: Element) => {
           const timeEl = el.closest("time") ?? el;
@@ -81,7 +83,7 @@ export const siteMetadata: ISiteMetadata = {
         selector: [
           "span.profile-hero__meta-item time[datetime]",
           "main article section:first-of-type div div:nth-child(2) div span:first-of-type time[datetime]",
-          ...(SchemaMetadata.userInfo!.selectors!.lastAccessAt?.selector ?? []),
+          ...(SchemaMetadata.userInfo.selectors!.lastAccessAt?.selector ?? []),
         ],
         elementProcess: (el: Element) => {
           return parseValidTimeString(el.getAttribute("title") || el.getAttribute("datetime") || el.textContent || "");

@@ -1,3 +1,9 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/hddolby.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/hddolby.com/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/hddolby.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/hddolby.json
+ */
 import { type ISiteMetadata } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP.ts";
 import { allCustomTags, allTagSelectors, selectorSearchProgress, selectorSearchStatus } from "./hdhome.ts";
@@ -8,8 +14,8 @@ export const siteMetadata: ISiteMetadata = {
 
   version: 2,
   id: "hddolby",
-  name: "HD Dolby",
-  aka: ["高清杜比"],
+  name: "UHDDolby",
+  aka: ["高清杜比", "HD Dolby"],
   description: "高清杜比",
   tags: ["影视", "综合"],
   collaborator: ["iceyuamao0510", "tongyifan"],
@@ -17,8 +23,8 @@ export const siteMetadata: ISiteMetadata = {
   type: "private",
   schema: "NexusPHP",
 
-  urls: ["https://www.hddolby.com/"],
-  legacyUrls: ["https://hddolby.com/"],
+  urls: ["https://www.uhddolby.com/"],
+  legacyUrls: ["https://hddolby.com/", "https://www.hddolby.com/"],
 
   category: [
     {
@@ -160,10 +166,10 @@ export const siteMetadata: ISiteMetadata = {
     },
   ],
 
-  officialGroupPattern: [/-DBTV|-QHstudIo|Dream$|.*@dream/i],
+  officialGroupPattern: [/[@-]\s?(Dream|DBTV|QHstudIo|HDo)\b/i],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     advanceKeywordParams: {
       imdb: false, // 该站点不支持 imdb
       tmdb: {
@@ -174,20 +180,20 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       subTitle: {
         selector: ["td:has(a[href*='hit'][title]) > span:last"],
       },
       progress: selectorSearchProgress,
       status: selectorSearchStatus,
-      tags: [...SchemaMetadata.search!.selectors!.tags!, ...allTagSelectors],
+      tags: [...SchemaMetadata.search.selectors!.tags!, ...allTagSelectors],
     },
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       bonus: {
         selector: ["td.rowhead:contains('鲸币') + td", "td.rowhead:contains('Karma Points') + td"],
         filters: [{ name: "parseNumber" }],

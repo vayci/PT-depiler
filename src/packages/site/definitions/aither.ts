@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/aither-api.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/aither.cc/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/aither.json
+ */
 import { type ISiteMetadata } from "../types";
 import { CategoryFree, SchemaMetadata, userInfoTrans } from "../schemas/Unit3D.ts";
 import { buildCategoryOptionsFromDict } from "../utils.ts";
@@ -84,14 +89,14 @@ export const siteMetadata: ISiteMetadata = {
     ...SchemaMetadata.search,
     skipNonLatinCharacters: true,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       category: {
         selector: ":self",
         data: "categoryId",
         filters: [(query: string) => categoryMap[Number(query)]],
       },
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         {
           name: "H&R",
           selector: "*",
@@ -102,23 +107,23 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       id: {
-        ...SchemaMetadata.userInfo!.selectors!.id,
+        ...SchemaMetadata.userInfo.selectors!.id,
         selector: profileCardValue(userInfoTrans.id),
       },
       seedingSize: {
-        ...SchemaMetadata.userInfo!.selectors!.seedingSize,
+        ...SchemaMetadata.userInfo.selectors!.seedingSize,
         selector: profileCardValue(userInfoTrans.seedingSize),
       },
       joinTime: {
-        ...SchemaMetadata.userInfo!.selectors!.joinTime,
+        ...SchemaMetadata.userInfo.selectors!.joinTime,
         selector: userInfoTrans.joinTime.map((x) => `span[title='${x}'] span`),
       },
       averageSeedingTime: {
-        ...SchemaMetadata.userInfo!.selectors!.averageSeedingTime,
+        ...SchemaMetadata.userInfo.selectors!.averageSeedingTime,
         selector: profileCardValue(userInfoTrans.averageSeedingTime),
       },
       lastAccessAt: {
@@ -126,7 +131,7 @@ export const siteMetadata: ISiteMetadata = {
         filters: [{ name: "parseTTL" }],
       },
       invites: {
-        ...SchemaMetadata.userInfo!.selectors!.invites,
+        ...SchemaMetadata.userInfo.selectors!.invites,
         selector: ".ratio-bar__invites",
       },
       ratio: {

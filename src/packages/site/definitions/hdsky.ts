@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/hdsky.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/hdsky.me/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/hdsky.json
+ */
 import urlJoin from "url-join";
 import { omit } from "es-toolkit";
 
@@ -267,12 +272,12 @@ export const siteMetadata: ISiteMetadata = {
     CategoryInclbookmarked,
   ],
 
-  officialGroupPattern: [/-(hds|.*@HDSky)/i],
+  officialGroupPattern: [/[@-]\s?(HDSky|HDSWEB|HDSTV|HDSPad|HDS)\b/i],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       id: {
         ...baseIdSelector,
         filters: [{ name: "querystring", args: ["id"] }],

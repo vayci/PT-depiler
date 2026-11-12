@@ -1,3 +1,9 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/monikadesign-api.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/monikadesign.uk/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/monikadesign.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/monikadesign.json
+ */
 import { ETorrentStatus, type ISiteMetadata, type ITorrent } from "../types";
 import Unit3D, { SchemaMetadata } from "../schemas/Unit3D.ts";
 import AbstractBittorrentSite from "../schemas/AbstractBittorrentSite";
@@ -170,7 +176,7 @@ export const siteMetadata: ISiteMetadata = {
   search: {
     ...SchemaMetadata.search,
     advanceKeywordParams: {
-      ...SchemaMetadata.search!.advanceKeywordParams,
+      ...SchemaMetadata.search.advanceKeywordParams,
       bangumi: {
         requestConfigTransformer: ({ requestConfig: config }) => {
           if (config?.params?.name) {
@@ -183,7 +189,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       subTitle: { selector: ["span.torrent-listings-subhead"] },
       time: { selector: ["td.torrent-listings-age > span"], data: "originalTitle", filters: [{ name: "parseTime" }] },
       size: { selector: ["td.torrent-listings-size > span"], filters: [{ name: "parseSize" }] },
@@ -225,16 +231,16 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   list: [
-    ...SchemaMetadata.list!,
+    ...SchemaMetadata.list,
     {
       urlPattern: ["/torrents/airing/"],
     },
   ],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       bonus: {
         selector: ["li.ratio-bar__points a:has( > i.fa-coins)"],
         filters: [{ name: "parseNumber" }],

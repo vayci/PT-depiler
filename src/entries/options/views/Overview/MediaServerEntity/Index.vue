@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { isEmpty } from "es-toolkit/compat";
-import { getMediaServerIcon, type IMediaServerItem } from "@ptd/mediaServer";
+import { formatBitrate, getMediaServerIcon, getPlayedIcon, type IMediaServerItem } from "@ptd/mediaServer";
 
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
@@ -11,6 +11,8 @@ import { useConfigStore } from "@/options/stores/config.ts";
 import { formatSize } from "@/options/utils.ts";
 
 import ItemInformationDialog from "./ItemInformationDialog.vue";
+
+import FilterChips from "@/options/components/FilterChips.vue";
 
 import { doSearch, searchMediaServerIds } from "./utils.ts";
 
@@ -31,9 +33,41 @@ const hasMore = computed<boolean>(() =>
     : Object.values(runtimeStore.mediaServerSearch.searchStatus).some((x) => x?.canLoadMore ?? true),
 );
 
+const mediaServerItems = computed<string[]>(() =>
+  metadataStore.getEnabledMediaServers.map((mediaServer) => mediaServer.id),
+);
+
+// 已加载的结果保留在 store 中不丢弃，仅按当前筛选出的服务器决定显示哪些卡片
+const filteredSearchResult = computed(() =>
+  runtimeStore.mediaServerSearch.searchResult.filter((item) => searchMediaServerIds.value.includes(item.server)),
+);
+
 function showItemInformation(item: IMediaServerItem) {
   showItem.value = item;
   showItemInformationDialog.value = true;
+}
+
+/** 卡片上的画质摘要（调研 A2）：分辨率 · 码率；没有结构化信息时回退到首个视频流标题 */
+function videoSummary(item: IMediaServerItem): string | undefined {
+  const video = item.mediaInfo?.video;
+  const parts = [video?.resolution, formatBitrate(video?.bitrate)].filter(Boolean) as string[];
+  if (parts.length > 0) return parts.join(" · ");
+  return item.streams?.filter((s) => s.type === "Video")[0]?.title;
+}
+
+/** 色域角标（调研 A2）：SDR 不显示，其余（HDR10 / DolbyVision…）透出原始值 */
+function videoRangeBadge(item: IMediaServerItem): string | undefined {
+  const range = item.mediaInfo?.video?.videoRange;
+  if (!range || /^sdr$/i.test(range)) return undefined;
+  return range.toUpperCase();
+}
+
+/** 剧集编号（调研 B10）：S01E05（季号缺失时只给 E05） */
+function seriesText(item: IMediaServerItem): string | undefined {
+  if (typeof item.indexNumber !== "number") return undefined;
+  const season =
+    typeof item.parentIndexNumber === "number" ? `S${String(item.parentIndexNumber).padStart(2, "0")}` : "";
+  return `${season}E${String(item.indexNumber).padStart(2, "0")}`;
 }
 
 function onScroll() {
@@ -60,8 +94,24 @@ onMounted(async () => {
   <v-alert :title="t('route.Overview.MediaServerEntity')" type="info" />
   <v-card v-scroll="onScroll">
     <v-card-title>
-      <v-row class="ma-0">
+      <v-row class="ma-0 align-center">
+        <!-- 媒体服务器筛选器 -->
+        <FilterChips
+          v-model="searchMediaServerIds"
+          :all-label="t('MediaServerEntity.serverFilter.all')"
+          all-icon="mdi-server"
+          :items="mediaServerItems"
+          class="mr-2"
+          multiple
+        >
+          <template #chip="{ item }">
+            <v-avatar :image="getMediaServerIcon(metadataStore.mediaServers[item].type)" class="mr-1" size="18" />
+            {{ metadataStore.mediaServers[item].name }}
+          </template>
+        </FilterChips>
+
         <v-spacer />
+
         <v-text-field
           v-model="search"
           :loading="runtimeStore.mediaServerSearch.isSearching"
@@ -73,64 +123,17 @@ onMounted(async () => {
           :placeholder="t('MediaServerEntity.searchPlaceholder')"
           @keyup.enter="() => doSearch({ searchKey: search })"
           @click:append="() => doSearch({ searchKey: search })"
-        >
-          <template #prepend-inner>
-            <v-menu :close-on-content-clicks="false">
-              <template v-slot:activator="{ props }">
-                <v-icon v-bind="props" icon="mdi-server" variant="plain" />
-              </template>
-              <v-list class="pa-0">
-                <v-list-item>
-                  <v-checkbox
-                    hide-details
-                    indeterminate
-                    :label="t('common.checkbox.all')"
-                    @click.stop
-                    @update:model-value="
-                      (v: unknown) => {
-                        if (v) {
-                          searchMediaServerIds = metadataStore.getEnabledMediaServers.map(
-                            (mediaServer) => mediaServer.id,
-                          );
-                        } else {
-                          searchMediaServerIds = [];
-                        }
-                      }
-                    "
-                  />
-                </v-list-item>
-                <v-divider />
-                <v-list-item v-for="item in metadataStore.getMediaServers" :key="item.id">
-                  <v-checkbox
-                    v-model="searchMediaServerIds"
-                    :disabled="item.enabled === false"
-                    :indeterminate="item.enabled === false"
-                    :label="item.name"
-                    :value="item.id"
-                    hide-details
-                    indeterminate-icon="mdi-close"
-                    multiple
-                    @click.stop
-                  >
-                    <template #append>
-                      <v-avatar :alt="item.type" :image="getMediaServerIcon(item.type)" size="x-small" />
-                    </template>
-                  </v-checkbox>
-                </v-list-item>
-              </v-list>
-            </v-menu>
-          </template>
-        </v-text-field>
+        />
       </v-row>
     </v-card-title>
 
     <!--  瀑布流形式展示媒体服务器搜索结果 -->
-    <div v-if="runtimeStore.mediaServerSearch.searchResult.length > 0" class="masonry-grid">
-      <div v-for="item in runtimeStore.mediaServerSearch.searchResult" :key="item.url" class="masonry-item">
+    <div v-if="filteredSearchResult.length > 0" class="masonry-grid">
+      <div v-for="item in filteredSearchResult" :key="item.url" class="masonry-item">
         <v-card>
           <div class="position-relative mb-1">
             <v-menu
-              :close-on-content-clicks="false"
+              :close-on-content-click="false"
               contained
               content-class="masonry-img-overlay"
               location="start center"
@@ -140,7 +143,7 @@ onMounted(async () => {
             >
               <template v-slot:activator="{ props, isActive }">
                 <div class="masonry-right-label">
-                  <!-- 用户状态（观看、喜欢） -->
+                  <!-- 用户状态（观看、喜欢、观看深度，调研 A6） -->
                   <v-chip
                     v-if="item.user"
                     :variant="isActive ? 'tonal' : 'elevated'"
@@ -148,12 +151,12 @@ onMounted(async () => {
                     label
                     size="x-small"
                   >
-                    <v-icon :icon="item.user?.IsPlayed ? 'mdi-check-bold' : 'mdi-radiobox-blank'" color="green" />
+                    <v-icon :icon="getPlayedIcon(item.user?.playedPercentage, item.user?.IsPlayed)" color="green" />
                     <v-icon :icon="item.user?.IsFavorite ? 'mdi-heart' : 'mdi-heart-outline'" color="red" />
                   </v-chip>
                 </div>
                 <div class="masonry-left-label">
-                  <!-- 封装格式 -->
+                  <!-- 封装格式 + 画质/码率（调研 A2） -->
                   <v-chip
                     v-if="item.format"
                     :variant="isActive ? 'tonal' : 'elevated'"
@@ -163,11 +166,9 @@ onMounted(async () => {
                     size="x-small"
                   >
                     {{ item.format?.toUpperCase() }}
-                    <template v-if="item.streams && item.streams.filter((s) => s.type === 'Video')!.length > 0">
-                      / {{ item.streams.filter((s) => s.type === "Video")[0].title }}
-                    </template>
+                    <template v-if="videoSummary(item)"> / {{ videoSummary(item) }}</template>
                   </v-chip>
-                  <br />
+                  <br v-if="item.format" />
                   <!-- 大小 -->
                   <v-chip
                     v-if="item.size"
@@ -178,12 +179,75 @@ onMounted(async () => {
                   >
                     {{ formatSize(item.size ?? 0) }}
                   </v-chip>
+                  <!-- 评分（调研 A1） -->
+                  <v-chip
+                    v-if="typeof item.rating === 'number'"
+                    :variant="isActive ? 'tonal' : 'elevated'"
+                    base-color="amber"
+                    label
+                    prepend-icon="mdi-star"
+                    size="x-small"
+                  >
+                    {{ item.rating.toFixed(1) }}
+                  </v-chip>
+                  <!-- 色域（调研 A2） -->
+                  <v-chip
+                    v-if="videoRangeBadge(item)"
+                    :variant="isActive ? 'tonal' : 'elevated'"
+                    base-color="deep-orange"
+                    label
+                    size="x-small"
+                  >
+                    {{ videoRangeBadge(item) }}
+                  </v-chip>
+                  <!-- 年份（调研 B8） -->
+                  <v-chip
+                    v-if="item.productionYear"
+                    :variant="isActive ? 'tonal' : 'elevated'"
+                    base-color="blue-grey"
+                    label
+                    size="x-small"
+                  >
+                    {{ item.productionYear }}
+                  </v-chip>
+                  <!-- 同片多版本（调研 B9） -->
+                  <v-chip
+                    v-if="(item.mediaSourceCount ?? 0) > 1"
+                    :variant="isActive ? 'tonal' : 'elevated'"
+                    base-color="purple"
+                    label
+                    size="x-small"
+                  >
+                    {{ t("MediaServerEntity.versions", { count: item.mediaSourceCount }) }}
+                  </v-chip>
+                  <!-- 剧集编号（调研 B10） -->
+                  <v-chip
+                    v-if="seriesText(item)"
+                    :variant="isActive ? 'tonal' : 'elevated'"
+                    base-color="indigo"
+                    label
+                    size="x-small"
+                  >
+                    {{ seriesText(item) }}
+                  </v-chip>
                 </div>
                 <v-img v-bind="props" :src="item.poster" :title="item.name" />
               </template>
 
               <v-btn append-icon="mdi-information-outline" block @click="() => showItemInformation(item)">
                 {{ t("MediaServerEntity.detail") }}
+              </v-btn>
+              <!-- 外部链接（调研 A5：IMDb / TMDb …） -->
+              <v-btn
+                v-for="externalUrl in item.externalUrls ?? []"
+                :key="externalUrl.url"
+                :href="externalUrl.url"
+                append-icon="mdi-open-in-new"
+                block
+                rel="noopener noreferrer nofollow"
+                target="_blank"
+              >
+                {{ externalUrl.name }}
               </v-btn>
               <v-btn
                 :href="item.url"

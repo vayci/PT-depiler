@@ -12,6 +12,7 @@ export type SiteSchema =
   | "AbstractBittorrentSite"
   | "AbstractPrivateSite"
   | "AvistazNetwork"
+  | "FluxTorrent"
   | "Gazelle"
   | "GazelleJSONAPI"
   | "Luminance"
@@ -46,7 +47,7 @@ export interface ISiteMetadata {
   /**
    * 对应解析的更新版本，建议每次对ISiteMetadata的修改都对此版本号 +1
    * 注意，我们在此处约定如下：
-   *  - AbstractBittorrentSite，AbstractPrivateSite，NexusPHP，Unit3D，Gazelle，GazelleJSONAPI，AvistaZ 这些架构不需要更新版本号
+   *  - AbstractBittorrentSite，AbstractPrivateSite，NexusPHP，Unit3D，Gazelle，GazelleJSONAPI，AvistaZ，FluxTorrent 这些架构不需要更新版本号
    *  - AbstractBittorrentSite，AbstractPrivateSite 模板定义为 -1
    *  - NexusPHP 等其他架构定义为 0
    *  - 其他站点都应该定义为任意大于0的数字，建议定义为 1，你也可以定义为编辑的日期如 YYYYMMDD ，但在单个站点定义中应该保持一致
@@ -94,6 +95,17 @@ export interface ISiteMetadata {
    * 2. 如果一个站点曾经在 ptpp 中定义过，如果该域名未在 urls 中出现过，则 *必须* 将其放入 legacyUrls 中
    */
   legacyUrls?: TSiteUrl[];
+
+  /**
+   * 站点使用的 tracker 地址（即种子内的 announce / 汇报地址）
+   *
+   * 如果站点的 tracker 地址不在 urls 或 legacyUrls 中（即 tracker 使用了与站点页面不同的域名），
+   * 则使用该属性声明站点所使用的 trackerUrls，
+   * 以便根据种子内的 tracker 地址（host）反查该种子所属的站点
+   *
+   * 支持 rot13 格式，以防止在配置时泄露
+   */
+  trackerUrls?: TSiteUrl[];
 
   /**
    * 站点图标，具体处理过程见 `../utils/favicon.ts` 的说明
@@ -381,6 +393,22 @@ export interface ISiteMetadata {
    */
   userInputSettingMeta?: ISiteUserInputMeta[];
 }
+
+/**
+ * schema 默认元数据（各 `schemas/*.ts` 导出的 `SchemaMetadata`）的类型：`K` 显式列出该引擎
+ * **一定会提供**的键。
+ *
+ * 为什么要显式列出来：
+ *  - 只写 `Partial<ISiteMetadata>` 时，每个键都是 `T | undefined`，读的人到处要写非空断言
+ *    （`SchemaMetadata.search.selectors`）；
+ *  - 而直接让 TS 推断字面量类型（`satisfies`）又太窄：定义文件经常要读引擎没有写的可选项
+ *    （`noLoginAssert`、`requestConfig.params`、`advanceKeywordParams`……），字面量类型会让这些读取报错。
+ *
+ * 所以这里取两者之间：列出的键**必填**，但取值仍用 `ISiteMetadata` 里声明的类型（而非窄化后的字面量）；
+ * 未列出的键保持 `ISiteMetadata` 的可选形态。
+ */
+export type TSchemaMetadata<K extends keyof ISiteMetadata> = Omit<Partial<ISiteMetadata>, K> &
+  Required<Pick<ISiteMetadata, K>>;
 
 /**
  * 用于站点的用户配置，这部分配置由用户提供，外部应用应仅存储以下内容，不应存储其他内容

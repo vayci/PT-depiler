@@ -1,8 +1,31 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Indexers/Definitions/BroadcasTheNet.cs
+ */
 import type { ISiteMetadata, ISearchResult, ISearchEntryRequestConfig, ITorrent } from "../types.ts";
 import { SchemaMetadata } from "../schemas/Gazelle.ts";
 import Gazelle from "../schemas/Gazelle.ts";
-import { EResultParseStatus, ETorrentStatus } from "../types.ts";
+import { CFBlockedError, EResultParseStatus, ETorrentStatus } from "../types.ts";
 import { parseSizeString } from "../utils";
+
+interface BTNTorrent {
+  TorrentID: string | number;
+  GroupID: string | number;
+  ReleaseName: string;
+  Series: string;
+  GroupName: string;
+  Category: string;
+  Size: string | number;
+  Time: string | number;
+  Seeders: string | number;
+  Leechers: string | number;
+  Snatched: string | number;
+  DownloadURL: string;
+}
+
+interface BTNSearchResponse {
+  result: { results: string | number; torrents?: Record<string, BTNTorrent> } | null;
+  error?: { code: number; message: string } | null;
+}
 
 export const siteMetadata: ISiteMetadata = {
   ...SchemaMetadata,
@@ -22,6 +45,15 @@ export const siteMetadata: ISiteMetadata = {
 
   urls: ["uggcf://oebnqpnfgur.arg/"],
 
+  userInputSettingMeta: [
+    {
+      name: "apiKey",
+      label: "API Key",
+      hint: "选填：填写后使用 API 搜索，否则使用网页搜索。请在 BTN 个人设置中生成；新 IP 需在站点通知中授权。",
+      required: false,
+    },
+  ],
+
   search: {
     ...SchemaMetadata.search,
     skipNonLatinCharacters: true,
@@ -39,7 +71,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       url: {
         selector: "a[href*='torrents.php?id='][href*='torrentid=']", // 更精确的种子链接选择器
         attr: "href",
@@ -74,7 +106,7 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     process: [
       {
         requestConfig: { url: "/index.php", responseType: "document" },
@@ -83,9 +115,7 @@ export const siteMetadata: ISiteMetadata = {
       {
         requestConfig: {
           url: "/user.php",
-          params: {
-            /* id: flushUserInfo.id */
-          },
+          params: {/* id: flushUserInfo.id */},
           responseType: "document",
         },
         assertion: { id: "params.id" },
@@ -122,7 +152,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     ],
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors,
+      ...SchemaMetadata.userInfo.selectors,
       uploaded: {
         selector: "ul.nobullet > li:contains('Upload:')",
         filters: [{ name: "parseSize" }],
@@ -148,8 +178,10 @@ export const siteMetadata: ISiteMetadata = {
         filters: [{ name: "parseNumber" }],
       },
       bonusPerHour: {
+        // 站点只给「Per Day」，除以 24 得到时魔；这里用内联过滤器 —— 具名过滤器表里没有 divide，
+        // 写成 { name: "divide" } 会被 runQueryFilters 静默跳过（该值曾因此偏高 24 倍）
         selector: "ul.nobullet > li:contains('Per Day:')",
-        filters: [{ name: "parseNumber" }, { name: "divide", args: [24] }],
+        filters: [{ name: "parseNumber" }, (query: number) => query / 24],
       },
       ratio: undefined,
       joinTime: {
@@ -307,6 +339,78 @@ export const siteMetadata: ISiteMetadata = {
 };
 
 export default class BroadcastTheNet extends Gazelle {
+  private async getAPISearchResult(keywords: string | undefined, apiKey: string): Promise<ISearchResult> {
+    try {
+      let search: string | { imdb: string } = keywords || "";
+      if (keywords?.startsWith("imdb|")) {
+        const imdbId = keywords.match(/^imdb\|(?:tt)?(\d+)$/)?.[1];
+        if (!imdbId) throw new Error("Invalid IMDb ID");
+        search = { imdb: `tt${imdbId}` };
+      }
+
+      const { data } = await this.request<BTNSearchResponse>(
+        {
+          url: "https://api.broadcasthe.net/",
+          method: "POST",
+          responseType: "json",
+          headers: { "Content-Type": "application/json" },
+          data: { id: 1, method: "getTorrents", params: { key: apiKey, search, results: 1000, offset: 0 } },
+        },
+        false,
+      );
+
+      if (data?.error) {
+        const messages: Record<number, string> = {
+          [-32001]: "API Key 无效，请检查 BTN 设置",
+          [-32002]: "API 调用次数已达限制，请稍后再试",
+          [-32003]: "BTN 账号已被禁用",
+          [-32004]: "当前 IP 未获授权，请在 BTN 站点通知中批准后重试",
+        };
+        return {
+          data: [],
+          status: EResultParseStatus.parseError,
+          statusMsg: messages[data.error.code] || `BTN API error ${data.error.code}: ${data.error.message}`,
+        };
+      }
+
+      if (!data?.result || !Number.isFinite(Number(data.result.results))) {
+        throw new Error("Invalid BTN API response");
+      }
+      if (Number(data.result.results) > 0 && !data.result.torrents) {
+        throw new Error("BTN API response is missing torrents");
+      }
+
+      const torrents = Object.values(data.result.torrents || {}).map((torrent): ITorrent => ({
+        site: this.metadata.id,
+        id: torrent.TorrentID,
+        title: torrent.ReleaseName,
+        subTitle: [torrent.Series, torrent.GroupName].filter(Boolean).join(" / "),
+        category: torrent.Category,
+        url: new URL(`torrents.php?id=${torrent.GroupID}&torrentid=${torrent.TorrentID}`, this.url).toString(),
+        link: torrent.DownloadURL,
+        size: Number(torrent.Size),
+        time: Number(torrent.Time) * 1000,
+        seeders: Number(torrent.Seeders),
+        leechers: Number(torrent.Leechers),
+        completed: Number(torrent.Snatched),
+        progress: 0,
+        status: ETorrentStatus.unknown,
+        tags: [{ name: "H&R", color: "red" }],
+      }));
+
+      return {
+        data: torrents,
+        status: torrents.length > 0 ? EResultParseStatus.success : EResultParseStatus.noResults,
+      };
+    } catch (error) {
+      return {
+        data: [],
+        status: error instanceof CFBlockedError ? EResultParseStatus.CFBlocked : EResultParseStatus.parseError,
+        statusMsg: error instanceof Error ? error.message : "BTN API search failed",
+      };
+    }
+  }
+
   private async getSeriesPageFromIMDB(imdbId: string): Promise<{ document: Document; pageUrl: string } | null> {
     try {
       const response = await this.request({
@@ -399,6 +503,9 @@ export default class BroadcastTheNet extends Gazelle {
     keywords?: string,
     searchEntry: ISearchEntryRequestConfig = {},
   ): Promise<ISearchResult> {
+    const apiKey = this.userConfig.inputSetting?.apiKey?.trim();
+    if (apiKey) return this.getAPISearchResult(keywords, apiKey);
+
     if (keywords?.startsWith("imdb|")) {
       const imdbId = keywords.replace("imdb|", "");
       const seriesPage = await this.getSeriesPageFromIMDB(imdbId);

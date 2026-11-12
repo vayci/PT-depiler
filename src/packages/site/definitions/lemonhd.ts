@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/lemonhd-net.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/lemonhd_club.json
+ */
 import type { ISiteMetadata } from "../types";
 //import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
 
@@ -24,9 +28,9 @@ export const siteMetadata: ISiteMetadata = {
 
   /*
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       seeding: {
         selector: ["img.arrowup"],
         elementProcess: (element: HTMLElement) => {

@@ -1,3 +1,6 @@
+/**
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/mypt.json
+ */
 import { type ISiteMetadata } from "../types";
 import { SchemaMetadata } from "../schemas/NexusPHP";
 
@@ -17,9 +20,9 @@ export const siteMetadata: ISiteMetadata = {
   favicon: "./mypt.ico",
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       bonus: {
         selector: ["td.rowhead:contains('魔力值') + td, td.rowhead:contains('Karma Points') + td"],
         filters: [{ name: "parseNumber" }],
@@ -42,14 +45,17 @@ export const siteMetadata: ISiteMetadata = {
       id: 3,
       name: "Power User",
       interval: "P4W",
+      seedingBonus: 40000,
       downloaded: "50GB",
       ratio: 1.05,
-      privilege: '得到一個邀請名額；可以直接發布種子；可以檢視NFO文件；可以檢視用戶清單；可以要求續種； 可以傳送邀請； 可以檢視排行榜；可以檢視其他用戶的種子曆史(如果用戶隱私等級未設定為"強")； 可以移除自己上傳的字幕。',
+      privilege:
+        '得到一個邀請名額；可以直接發布種子；可以檢視NFO文件；可以檢視用戶清單；可以要求續種； 可以傳送邀請； 可以檢視排行榜；可以檢視其他用戶的種子曆史(如果用戶隱私等級未設定為"強")； 可以移除自己上傳的字幕。',
     },
     {
       id: 4,
       name: "Elite User",
       interval: "P8W",
+      seedingBonus: 80000,
       downloaded: "120GB",
       ratio: 1.55,
       privilege: "Elite User及以上用戶封存賬號后不會被移除。",
@@ -58,6 +64,7 @@ export const siteMetadata: ISiteMetadata = {
       id: 5,
       name: "Crazy User",
       interval: "P15W",
+      seedingBonus: 150000,
       downloaded: "300GB",
       ratio: 2.05,
       privilege: "得到兩個邀請名額；可以在做種/下載/發布的時候選取匿名型態。",
@@ -66,6 +73,7 @@ export const siteMetadata: ISiteMetadata = {
       id: 6,
       name: "Insane User",
       interval: "P25W",
+      seedingBonus: 250000,
       downloaded: "500GB",
       ratio: 2.55,
       privilege: "可以檢視普通日誌。",
@@ -74,32 +82,40 @@ export const siteMetadata: ISiteMetadata = {
       id: 7,
       name: "Veteran User",
       interval: "P40W",
+      seedingBonus: 400000,
       downloaded: "750GB",
       ratio: 3.05,
+      isKept: true,
       privilege: "得到三個邀請名額；可以檢視其他用戶的評論、帖子曆史。Veteran User及以上用戶會永遠保留賬號。",
     },
     {
       id: 8,
       name: "Extreme User",
       interval: "P60W",
+      seedingBonus: 600000,
       downloaded: "1TB",
       ratio: 3.55,
+      isKept: true,
       privilege: "可以更新過期的外部資訊；可以檢視Extreme User論壇。",
     },
     {
       id: 9,
       name: "Ultimate User",
-      interval: "P60W",
+      interval: "P80W",
+      seedingBonus: 800000,
       downloaded: "1.5TB",
-      ratio: 5.05,
+      ratio: 4.05,
+      isKept: true,
       privilege: "得到五個邀請名額。",
     },
     {
       id: 10,
       name: "Nexus Master",
       interval: "P100W",
+      seedingBonus: 1000000,
       downloaded: "3TB",
       ratio: 4.55,
+      isKept: true,
       privilege: "得到十個邀請名額。",
     },
     {

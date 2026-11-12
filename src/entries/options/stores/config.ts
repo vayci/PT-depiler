@@ -15,6 +15,8 @@ const deprecatedConfigKeys = [
 ];
 
 export const defaultTimelineBackgroundColor = "#455A64";
+export const defaultTimelineUserNameColor = "#FFFFFF";
+export const defaultTimelineTextColor = "#FFFFFF";
 
 export const useConfigStore = defineStore("config", {
   persistWebExt: {
@@ -50,6 +52,13 @@ export const useConfigStore = defineStore("config", {
         }
       }
 
+      // 优惠信息展示形式只允许 tags / factor / both（防止旧版本/手工改动写入非法值）
+      const promotionDisplay = state.searchEntifyControl?.promotionDisplay;
+      if (promotionDisplay !== undefined && !["tags", "factor", "both", "none"].includes(promotionDisplay)) {
+        state.searchEntifyControl.promotionDisplay = "tags";
+        needsSave = true;
+      }
+
       if (needsSave) {
         context.store.$save();
       }
@@ -67,6 +76,8 @@ export const useConfigStore = defineStore("config", {
 
     saveTableBehavior: true,
     enableTableMultiSort: false,
+    tableActionColumnPosition: "end",
+    tableActionColumnFixed: false,
 
     contextMenus: {
       enabled: true,
@@ -137,6 +148,14 @@ export const useConfigStore = defineStore("config", {
         itemsPerPage: 25,
         sortBy: [{ key: "createdAt", order: "desc" }],
       },
+      MyCollection: {
+        itemsPerPage: 25,
+        sortBy: [{ key: "createdAt", order: "desc" }],
+      },
+      KeepUploadTask: {
+        itemsPerPage: 10,
+        sortBy: [{ key: "time", order: "desc" }],
+      },
       SetDownloader: {
         itemsPerPage: 10,
         sortBy: [{ key: "enabled", order: "desc" }],
@@ -146,6 +165,7 @@ export const useConfigStore = defineStore("config", {
         columns: [
           "clientId",
           "name",
+          "site",
           "totalSize",
           "progress",
           "state",
@@ -173,6 +193,7 @@ export const useConfigStore = defineStore("config", {
       showUnreadMessage: true,
       showUserName: true,
       normalizeLevelName: true,
+      limitLevelNameTdWidth: true,
       showLevelRequirement: true,
       onlyShowUserLevelRequirement: true,
       showNextLevelInTable: false,
@@ -208,6 +229,8 @@ export const useConfigStore = defineStore("config", {
       showTop: true,
       showTimeline: true,
       backgroundColor: defaultTimelineBackgroundColor,
+      userNameColor: defaultTimelineUserNameColor,
+      textColor: defaultTimelineTextColor,
       dateFormat: "time_added",
       faviconBlue: 3,
       selectedSites: [],
@@ -238,11 +261,14 @@ export const useConfigStore = defineStore("config", {
     searchEntifyControl: {
       showSiteName: true,
       showTorrentTag: true,
+      promotionDisplay: "tags",
       showTorrentSubtitle: true,
+      showTorrentCover: false,
       showSocialInformation: true,
       socialInformationSearchOnNewTab: true,
       uploadAtFormatAsAlive: false,
-      limitTorrentTitleTdWidth: false,
+      limitTorrentTitleTdWidth: true,
+      highlightSameSizeTorrent: false,
       maxTagCountBeforeGroup: 0,
       hiddenTagNames: [],
     },

@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/hdhome.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/hdhome.org/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/hd_home.json
+ */
 import { ETorrentStatus, type IElementQuery, type ISiteMetadata } from "../types";
 import {
   CategoryInclbookmarked,
@@ -328,12 +333,12 @@ export const siteMetadata: ISiteMetadata = {
     },
   ],
 
-  officialGroupPattern: [/(-hdh|.*@HDHome)/i],
+  officialGroupPattern: [/[@-]\s?(HDH(?:ome|TV|Pad|WEB)?)\b/i],
 
   search: {
     ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       subTitle: {
         text: "",
         selector: ["a[href*='hit'][title]", "a[href*='hit']:has(b)"],
@@ -341,7 +346,7 @@ export const siteMetadata: ISiteMetadata = {
       },
       progress: selectorSearchProgress,
       status: selectorSearchStatus,
-      tags: [...SchemaMetadata.search!.selectors!.tags!, ...allTagSelectors],
+      tags: [...SchemaMetadata.search.selectors!.tags!, ...allTagSelectors],
     },
   },
 
@@ -352,7 +357,7 @@ export const siteMetadata: ISiteMetadata = {
   userInfo: {
     ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors,
+      ...SchemaMetadata.userInfo.selectors,
       bonusPerHour: {
         selector: ["td.text:has(>h1)"],
         elementProcess: (element: any) => {
@@ -381,7 +386,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     donorConfig: {
-      ...SchemaMetadata.userInfo!.donorConfig,
+      ...SchemaMetadata.userInfo.donorConfig,
       bonusPerHourMultiplier: 1, // selector 已能正确选中加倍后的时魔
     },
   },

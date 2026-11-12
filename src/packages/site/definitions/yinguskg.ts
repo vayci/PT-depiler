@@ -1,15 +1,19 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/ptying.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/yinghua.json
+ */
 import type { ISiteMetadata } from "../types";
 import {
-  CategoryInclbookmarked,
-  CategoryIncldead,
-  CategorySpstate,
-  SchemaMetadata,
+  //  CategoryInclbookmarked,
+  //  CategoryIncldead,
+  //  CategorySpstate,
+  //  SchemaMetadata,
   xiaomloveDefaultUserLevelRequirements,
 } from "../schemas/NexusPHP";
-import { userInfoWithInvitesInUserDetailsPage } from "./kunlun.ts";
+//import { userInfoWithInvitesInUserDetailsPage } from "./kunlun.ts";
 
 export const siteMetadata: ISiteMetadata = {
-  ...SchemaMetadata,
+  //...SchemaMetadata,
 
   version: 1,
   id: "yinguskg",
@@ -25,6 +29,10 @@ export const siteMetadata: ISiteMetadata = {
 
   urls: ["https://pt.ying.us.kg/"],
 
+  // dead at 2026-09-20 , from savept.icu
+  isDead: true,
+
+  /**
   category: [
     {
       name: "分类",
@@ -111,13 +119,15 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     advanceKeywordParams: {
       imdb: false, // 暂不支持IMDB搜索
     },
   },
 
   userInfo: userInfoWithInvitesInUserDetailsPage,
+
+   */
 
   levelRequirements: [...xiaomloveDefaultUserLevelRequirements],
 };

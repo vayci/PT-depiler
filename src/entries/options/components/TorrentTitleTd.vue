@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { reactive, ref, computed, useTemplateRef } from "vue";
+import { reactive, ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { useElementSize } from "@vueuse/core";
 
 import { socialBuildUrlMap } from "@ptd/social";
-import type { ITorrent } from "@ptd/site";
+import { isPromotionTagName, tagsToPromotion, type ITorrent, type ITorrentTag } from "@ptd/site";
 import type { ISocialInformation, TSupportSocialSite } from "@ptd/social/types.ts";
 
 import { useConfigStore } from "@/options/stores/config.ts";
@@ -20,10 +19,6 @@ const { t } = useI18n();
 const router = useRouter();
 const configStore = useConfigStore();
 
-const { width: containerWidth } = useElementSize(useTemplateRef<HTMLDivElement>("container"));
-const { width: tagsWidth } = useElementSize(useTemplateRef<HTMLDivElement>("tags"));
-const { width: socialWidth } = useElementSize(useTemplateRef<HTMLDivElement>("social"));
-
 interface ISocialInformationData extends ISocialInformation {
   loading?: boolean;
 }
@@ -37,7 +32,9 @@ const visibleTags = computed(() => {
   const tags = item.tags;
   if (!tags || !tags.length) return [];
   const hiddenNames = configStore.searchEntifyControl.hiddenTagNames || [];
-  return tags.filter((tag) => !hiddenNames.includes(tag.name));
+  // 「仅 factor」与「不显示」模式下都不再显示优惠标签；其他标签照常显示
+  const hidePromotionTags = ["factor", "none"].includes(configStore.searchEntifyControl.promotionDisplay);
+  return tags.filter((tag) => !hiddenNames.includes(tag.name) && !(hidePromotionTags && isPromotionTagName(tag.name)));
 });
 
 const maxTagCount = computed(() => configStore.searchEntifyControl.maxTagCountBeforeGroup || 0);
@@ -59,6 +56,30 @@ function tempHideTag(name: string) {
   if (!configStore.searchEntifyControl.hiddenTagNames.includes(name)) {
     configStore.searchEntifyControl.hiddenTagNames = [...configStore.searchEntifyControl.hiddenTagNames, name];
   }
+}
+
+/** 优惠标签的数值释义（由 tagsToPromotion 反推），非优惠标签返回 undefined */
+function tagTooltip(tag: ITorrentTag): string | undefined {
+  const { downloadVolumeFactor, uploadVolumeFactor } = tagsToPromotion([tag]);
+  const parts: string[] = [];
+
+  if (downloadVolumeFactor !== undefined) {
+    parts.push(
+      downloadVolumeFactor === 0
+        ? t("SearchEntity.index.tagTooltip.freeDownload")
+        : t("SearchEntity.index.tagTooltip.downloadPercent", [Math.round(downloadVolumeFactor * 100)]),
+    );
+  }
+
+  if (uploadVolumeFactor !== undefined && uploadVolumeFactor !== 1) {
+    parts.push(
+      uploadVolumeFactor === 0
+        ? t("SearchEntity.index.tagTooltip.noUpload")
+        : t("SearchEntity.index.tagTooltip.uploadTimes", [uploadVolumeFactor]),
+    );
+  }
+
+  return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
 function loadSocialInformation(site: TSupportSocialSite) {
@@ -83,18 +104,29 @@ function doAdvanceSearch(site: TSupportSocialSite, sid: string) {
 function canAdvanceSearch(site: TSupportSocialSite) {
   return site !== "tmdb";
 }
+
+const showCover = computed(() => !!item.cover && configStore.searchEntifyControl.showTorrentCover);
 </script>
 
 <template>
-  <v-container ref="container" class="t_main pa-0">
-    <v-row gap="0">
+  <v-container :class="{ t_with_cover: showCover }" class="t_main pa-0">
+    <!-- 种子自带的封面：缩略图跨标题与副标题两行，悬停显示大图 -->
+    <v-menu v-if="showCover" location="end" open-on-hover>
+      <template v-slot:activator="{ props }">
+        <v-img v-bind="props" :src="item.cover" class="t_cover rounded mr-2" height="43" width="64">
+          <template #error>
+            <v-icon class="t_cover_error" color="grey" icon="mdi-image-off-outline" />
+          </template>
+        </v-img>
+      </template>
+      <v-card>
+        <img :src="item.cover" alt="" class="t_cover_preview" />
+      </v-card>
+    </v-menu>
+
+    <v-row gap="0" class="flex-nowrap">
       <!-- 种子主标题信息 -->
-      <span
-        :style="{
-          width: `${containerWidth - socialWidth - 8}px`,
-        }"
-        class="text-truncate"
-      >
+      <span class="text-truncate flex-1-1-0">
         <a
           :href="item.url"
           :title="item.title"
@@ -107,10 +139,16 @@ function canAdvanceSearch(site: TSupportSocialSite) {
       </span>
 
       <!-- 种子的媒体信息 -->
-      <div ref="social" class="ml-2">
+      <div class="ml-2 flex-0-0">
         <template v-if="showSocial && configStore.searchEntifyControl.showSocialInformation">
           <template v-for="(meta, key) in socialBuildUrlMap" :key="key">
-            <v-menu v-if="item[`ext_${key}`]" open-on-hover>
+            <!--
+              不要移除 close-delay：卡片里是可点击的（搜索 / 访问），而激活它的头像只有 24px，
+              指针移向卡片的过程中必然先离开头像（VMenu 默认 closeDelay 仅 250ms，斜向稍慢移动就会超时），
+              一旦关闭，浮层内容会被置为 inert（Vuetify 4 起，见 #1454），再也无法重新进入（#1580 / #1582 同类问题）。
+              这里留出 800ms 关闭延迟，指针进入卡片后即可取消关闭。
+            -->
+            <v-menu v-if="item[`ext_${key}`]" :close-delay="800" open-on-hover>
               <template v-slot:activator="{ props }">
                 <v-avatar
                   v-bind="props"
@@ -139,7 +177,7 @@ function canAdvanceSearch(site: TSupportSocialSite) {
                       </v-img>
                       <h3
                         v-if="socialInformation[key]?.title"
-                        class="text-decoration-none text-ellipsis text-truncate font-weight-bold"
+                        class="text-decoration-none text-truncate font-weight-bold"
                         :title="socialInformation[key]?.title"
                       >
                         {{ socialInformation[key]?.title.split(" / ")[0] }}
@@ -191,16 +229,18 @@ function canAdvanceSearch(site: TSupportSocialSite) {
     </v-row>
     <v-row
       gap="0"
+      class="flex-nowrap"
       v-if="configStore.searchEntifyControl.showTorrentTag || configStore.searchEntifyControl.showTorrentSubtitle"
     >
       <!-- 种子标签信息 -->
-      <div ref="tags">
+      <div class="flex-0-0">
         <template v-if="configStore.searchEntifyControl.showTorrentTag && item.tags && item.tags.length > 0">
           <v-hover v-for="tag in displayedTags" :key="tag.name" v-slot:default="{ isHovering, props }">
             <v-chip
               v-bind="props"
               :color="tag.color"
               :closable="isHovering as unknown as boolean"
+              :title="tagTooltip(tag)"
               class="mr-1"
               label
               size="x-small"
@@ -227,11 +267,8 @@ function canAdvanceSearch(site: TSupportSocialSite) {
       <!-- 种子副标题信息 -->
       <span
         v-if="configStore.searchEntifyControl.showTorrentSubtitle && item.subTitle"
-        :style="{
-          'max-width': item.tags ? `${containerWidth - tagsWidth}px` : undefined,
-        }"
         :title="item.subTitle"
-        class="t_subTitle text-grey text-truncate"
+        class="t_subTitle text-grey text-truncate flex-1-1-0"
       >
         {{ item.subTitle }}
       </span>
@@ -239,4 +276,34 @@ function canAdvanceSearch(site: TSupportSocialSite) {
   </v-container>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+// flex item 默认 min-width: auto 会阻止 text-overflow: ellipsis 收缩截断,需显式归零
+.t_main .text-truncate.flex-1-1-0 {
+  min-width: 0;
+}
+
+// 有封面时：左列放封面（跨两行），右列依次放标题行与标签/副标题行
+.t_main.t_with_cover {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+
+  .t_cover {
+    grid-row: span 2;
+  }
+}
+
+// Size the preview by viewport height so covers of any source resolution look alike
+.t_cover_preview {
+  display: block;
+  height: clamp(240px, 55vh, 720px);
+  width: auto;
+  max-width: 60vw;
+  object-fit: contain;
+}
+
+.t_cover_error {
+  width: 100%;
+  height: 100%;
+}
+</style>

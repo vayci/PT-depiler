@@ -1,9 +1,13 @@
+/**
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/npupt.com/config.json
+ */
 import type { ISiteMetadata } from "../types";
 
 export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "npupt",
   name: "NPUBits",
+  tags: ["教育网", "综合"],
   aka: ["蒲公英"],
   description: "界面独具一格的教育网站点",
   collaborator: ["Rhilip", "xfl03"],

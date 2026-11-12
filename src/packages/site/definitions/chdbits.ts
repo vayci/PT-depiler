@@ -1,5 +1,6 @@
 /**
  * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/chdbits.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/chdbits.co/config.json
  */
 import { ETorrentStatus, type ISiteMetadata } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
@@ -150,12 +151,12 @@ export const siteMetadata: ISiteMetadata = {
     CategoryInclbookmarked,
   ],
 
-  officialGroupPattern: [/-(CHD|.*@CHDBits)|@CHDWEB/i],
+  officialGroupPattern: [/[@-]\s?(CHD(?:Bits|TV|PAD|WEB|HKTV)?|StBOX|OneHD)\b/i],
 
   search: {
     ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       progress: {
         selector: ["td.rowfollow:last"],
         elementProcess: (element: HTMLElement) => {
@@ -204,9 +205,9 @@ export const siteMetadata: ISiteMetadata = {
     },
   },
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       hnrPreWarning: {
         text: 0,
         selector: ["#info_block a[href*='hnr.php']"],

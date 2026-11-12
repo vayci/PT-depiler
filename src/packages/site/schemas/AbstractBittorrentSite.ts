@@ -1,12 +1,13 @@
 import Sizzle from "sizzle";
 import { get, isEmpty, set } from "es-toolkit/compat";
 import { chunk, pascalCase, pick, toMerged, union } from "es-toolkit";
-import { type AxiosError, type AxiosRequestConfig, type AxiosResponse } from "axios";
+import { isAxiosError, type AxiosError, type AxiosRequestConfig, type AxiosResponse } from "axios";
 import { supportSocialSite } from "@ptd/social";
 
 // noinspection ES6PreferShortImport
 import { axios, isCloudflareBlocked, retrieve, sleep, store } from "../utils/adapter";
 import {
+  type TSchemaMetadata,
   EResultParseStatus,
   IElementQuery,
   ISearchResult,
@@ -15,6 +16,7 @@ import {
   NeedLoginError,
   CFBlockedError,
   NoTorrentsError,
+  NoUserInputError,
   IAdvanceKeywordSearchConfig,
   ISearchInput,
   ITorrentTag,
@@ -34,9 +36,13 @@ import {
   parseTimeWithZone,
   tryToNumber,
   hasNonLatinCharacters,
+  normalizeTorrentPromotion,
 } from "../utils";
 
-export const SchemaMetadata: Partial<ISiteMetadata> = {
+/** 本引擎一定会提供的键；列出来之后消费方读它们不必再写非空断言 */
+type TMetadataKeys = "version" | "search";
+
+export const SchemaMetadata: TSchemaMetadata<TMetadataKeys> = {
   version: -1,
   search: {},
 };
@@ -56,6 +62,8 @@ const defaultTorrentSelectorKey = [
   "comments",
   "category",
   "tags",
+  "downloadVolumeFactor",
+  "uploadVolumeFactor",
   "progress",
   "status",
 ];
@@ -134,7 +142,7 @@ export default class BittorrentSite {
         const doc = req.data;
 
         // 进行简单的检查，防止无意义的替换
-        if (doc instanceof Document && doc.documentElement.outerHTML.search("__cf_email__")) {
+        if (doc instanceof Document && doc.documentElement.outerHTML.search("__cf_email__") !== -1) {
           const cfProtectSpan = Sizzle(".__cf_email__", doc);
 
           cfProtectSpan.forEach((element) => {
@@ -145,8 +153,16 @@ export default class BittorrentSite {
         req.data = doc;
       }
     } catch (e) {
-      // 从 AxiosError 中获取 response
-      req = (e as AxiosError).response!;
+      // ⚠️ 这里不能写成 `req = (e as AxiosError).response!`：超时 / DNS 失败 / 请求被拦截时，
+      // axios 抛出的错误里**根本没有 response**，取到 undefined 之后，下面的 `req.status`
+      // 会抛 TypeError —— 真实原因（`timeout of 30000ms exceeded` 之类）就此被顶掉，
+      // 调用方只能看到一句「解析失败」。
+      // 没有 response 就原样抛出，把真实原因交给调用方。
+      const response = (e as AxiosError).response;
+      if (!response) {
+        throw e;
+      }
+      req = response;
     }
 
     if (isCloudflareBlocked(req)) {
@@ -305,8 +321,14 @@ export default class BittorrentSite {
         result.status = EResultParseStatus.CFBlocked;
       } else if (e instanceof NeedLoginError) {
         result.status = EResultParseStatus.needLogin;
+      } else if (e instanceof NoUserInputError) {
+        result.status = EResultParseStatus.noUserInput;
       } else if (e instanceof NoTorrentsError) {
         result.status = EResultParseStatus.noResults;
+      } else if (isAxiosError(e) && !e.response) {
+        // 网络层失败（超时 / DNS / 请求被拦截）：给界面一句「哪一类失败」，
+        // 否则 statusMsg 永远空着，用户只能看到「解析错误」。
+        result.statusMsg = "i18n.networkError";
       }
     }
     return result;
@@ -591,6 +613,7 @@ export default class BittorrentSite {
     torrent.id ??= tryToNumber(torrent.url || torrent.link); // 补全种子的 id 属性，如果不存在，则由 url, link 属性替代
     typeof torrent.url != "undefined" && (torrent.url = this.fixLink(torrent.url as string, requestConfig!));
     typeof torrent.link != "undefined" && (torrent.link = this.fixLink(torrent.link as string, requestConfig!));
+    typeof torrent.cover != "undefined" && (torrent.cover = this.fixLink(torrent.cover as string, requestConfig!));
     if (typeof (torrent.size as unknown) === "string") {
       torrent.size = parseSizeString(torrent.size as unknown as string);
     }
@@ -599,8 +622,13 @@ export default class BittorrentSite {
     typeof torrent.leechers != "undefined" && (torrent.leechers = tryToNumber(torrent.leechers));
     typeof torrent.completed != "undefined" && (torrent.completed = tryToNumber(torrent.completed));
     typeof torrent.comments != "undefined" && (torrent.comments = tryToNumber(torrent.comments));
-    typeof torrent.category != "undefined" && (torrent.category = tryToNumber(torrent.category));
     typeof torrent.status == "undefined" && (torrent.status = ETorrentStatus.unknown);
+
+    // 选择器未命中时 time 会回落到空串，而空串并不是合法的墙上时间：把它当作「未知」丢掉，
+    // 否则下面的 parseTimeWithZone 会抛 RangeError: Invalid time value（如手机端 HDCity 的 Lo-Fi 列表，见 #1484）
+    if ((torrent.time as unknown as string) === "") {
+      delete torrent.time;
+    }
 
     // 仅当设置了时区偏移时，才进行转换
     if (this.metadata.timezoneOffset && typeof torrent.time !== "undefined") {
@@ -609,7 +637,11 @@ export default class BittorrentSite {
 
     // 在此基础上，不同 schema 可以复写处理过程
     torrent = this.fixParsedTorrent(torrent as ITorrent, row, searchConfig);
-    return torrent;
+
+    // 优惠信息统一收口：无论 factor 来自选择器、诊断方法，还是 fixParsedTorrent 里的站点级修正，
+    // 都在 hook 之后无条件补齐另一种表示（factor 优先），保证每颗种子同时带 factor 与 tag。
+    // 放在这里而不是 hook 内部，是为了让「双写」不依赖子类是否调用 super。
+    return normalizeTorrentPromotion(torrent);
   }
 
   protected parseTorrentRowForTags(
@@ -636,6 +668,11 @@ export default class BittorrentSite {
     return torrent;
   }
 
+  /**
+   * 站点级后处理钩子：在字段全部求值之后、优惠信息归一之前执行，供子类修正站点特有字段。
+   * 优惠的 factor / tag 双写由 `parseWholeTorrentFromRow` 在本钩子之后统一执行（见 utils/promotion.ts），
+   * 因此这里即使什么都做（或覆写时不调用 super）也不会丢归一。
+   */
   protected fixParsedTorrent(
     torrent: ITorrent,
     row: Element | Document | object,
@@ -677,7 +714,7 @@ export default class BittorrentSite {
       retData.keywords = this.getFieldData(doc, {
         selector: [
           keywordField === "params" ? `input[name="${keywordParams}"]` : false,
-          keywordField === "data" ? `form[method="post" i] input[name="${keywordField}"]` : false,
+          keywordField === "data" ? `form[method="post" i] input[name="${keywordParams}"]` : false,
         ].filter(Boolean) as string[],
         elementProcess: (el: HTMLInputElement) => el.value,
         text: "",
@@ -750,6 +787,9 @@ export default class BittorrentSite {
     if (torrent.link) {
       torrent.link = this.fixLink(torrent.link, { baseURL: parsedDetailsPage.URL }); // 如果 link 存在，则进行修正
     }
+
+    // 详情页解析出的种子同样保持 factor / tag 双写，口径与列表页一致
+    torrent = normalizeTorrentPromotion(torrent);
 
     return torrent as ITorrent;
   }

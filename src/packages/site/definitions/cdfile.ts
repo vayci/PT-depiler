@@ -1,5 +1,6 @@
 /**
  * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/cdfile.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/cdfile.json
  */
 import { type ISiteMetadata } from "../types";
 import {
@@ -15,12 +16,17 @@ export const siteMetadata: ISiteMetadata = {
   version: 2,
   id: "cdfile",
   name: "CD File",
+  tags: ["原盘", "影视", "音乐"],
   description: "专注于Blu-Ray、DVD、CD等高品质光盘镜像资源，致力于打造光盘档案室",
   collaborator: ["koal"],
   type: "private",
   schema: "NexusPHP",
 
   urls: ["https://pt.cdfile.org/"],
+
+  // dead at 2026-03-08 ( from savept.icu
+  // 站点首页公告「CD File PT站 我们已经关闭停止运营，后续不再开放」
+  isDead: true,
 
   category: [
     {

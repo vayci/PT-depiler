@@ -1,19 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import type { CAddTorrentOptions } from "@ptd/downloader";
+import { datePathTemplateVars, expandPathTemplate } from "@ptd/downloader/utils/pathTemplate.ts";
 
 import type { IKeepUploadTask, TKeepUploadTaskKey } from "@/shared/types.ts";
 import { sendMessage } from "@/messages.ts";
 import { formatSize, formatDate } from "@/options/utils.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
+import { useConfigStore } from "@/options/stores/config.ts";
+import { useTableActionColumn } from "@/options/directives/useTableActionColumn.ts";
 
+import NavButton from "@/options/components/NavButton.vue";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 
 const { t } = useI18n();
 const runtimeStore = useRuntimeStore();
 const metadataStore = useMetadataStore();
+const configStore = useConfigStore();
 
 const tasks = ref<IKeepUploadTask[]>([]);
 // v-data-table 设置了 item-value="id"，因此 v-model 中保存的是任务ID（TKeepUploadTaskKey）而非任务对象
@@ -22,14 +27,24 @@ const expanded = ref<string[]>([]);
 const loading = ref(false);
 const tableKey = ref(0); // 用于强制刷新表格
 
-const headers = [
-  { title: t("KeepUploadTask.table.site"), key: "site", align: "center" as const, sortable: false },
-  { title: t("KeepUploadTask.table.title"), key: "title", align: "start" as const },
-  { title: t("KeepUploadTask.table.size"), key: "size", align: "end" as const },
-  { title: t("KeepUploadTask.table.count"), key: "count", align: "center" as const },
-  { title: t("KeepUploadTask.table.time"), key: "time", align: "center" as const },
-  { title: t("common.action"), key: "action", align: "center" as const, sortable: false },
-];
+const headers = computed(() => {
+  const tableHeaders = useTableActionColumn([
+    { title: t("KeepUploadTask.table.site"), key: "site", align: "center" as const, sortable: false },
+    { title: t("KeepUploadTask.table.title"), key: "title", align: "start" as const },
+    { title: t("KeepUploadTask.table.size"), key: "size", align: "end" as const },
+    { title: t("KeepUploadTask.table.count"), key: "count", align: "center" as const },
+    { title: t("KeepUploadTask.table.time"), key: "time", align: "center" as const },
+    { title: t("common.action"), key: "action", align: "center" as const, sortable: false },
+  ]);
+
+  // 本表格使用 show-expand，展开列由 v-data-table 追加在表头末尾。
+  // 操作列固定在行尾时，需要让展开列一并固定在行尾（并给出固定宽度），否则展开列会被操作列遮挡。
+  if (configStore.tableActionColumnFixed && configStore.tableActionColumnPosition === "end") {
+    tableHeaders.push({ key: "data-table-expand", width: 48, fixed: "end" });
+  }
+
+  return tableHeaders;
+});
 
 async function loadTasks() {
   loading.value = true;
@@ -53,9 +68,9 @@ async function deleteTask(task: IKeepUploadTask) {
   try {
     await sendMessage("deleteKeepUploadTask", task.id);
     tasks.value = tasks.value.filter((t) => t.id !== task.id);
-    runtimeStore.showSnakebar(t("KeepUploadTask.deleteSuccess"), { color: "success" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.deleteSuccess"), { color: "success" });
   } catch (e) {
-    runtimeStore.showSnakebar(t("KeepUploadTask.deleteError"), { color: "error" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.deleteError"), { color: "error" });
   }
 }
 
@@ -69,9 +84,9 @@ async function deleteSelectedTasks() {
     }
     tasks.value = tasks.value.filter((t) => !selectedTasks.value.includes(t.id));
     selectedTasks.value = [];
-    runtimeStore.showSnakebar(t("KeepUploadTask.deleteSuccess"), { color: "success" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.deleteSuccess"), { color: "success" });
   } catch (e) {
-    runtimeStore.showSnakebar(t("KeepUploadTask.deleteError"), { color: "error" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.deleteError"), { color: "error" });
   }
 }
 
@@ -81,9 +96,9 @@ async function clearAllTasks() {
   try {
     await sendMessage("clearKeepUploadTasks", undefined);
     tasks.value = [];
-    runtimeStore.showSnakebar(t("KeepUploadTask.clearSuccess"), { color: "success" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.clearSuccess"), { color: "success" });
   } catch (e) {
-    runtimeStore.showSnakebar(t("KeepUploadTask.clearError"), { color: "error" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.clearError"), { color: "error" });
   }
 }
 
@@ -93,7 +108,7 @@ async function sendTorrentsToDownloader(task: IKeepUploadTask, items: IKeepUploa
 
   const downloader = metadataStore.downloaders[task.downloadOptions.downloaderId];
   if (!downloader) {
-    runtimeStore.showSnakebar("下载器不存在", { color: "error" });
+    runtimeStore.showSnackbar("下载器不存在", { color: "error" });
     return;
   }
 
@@ -106,9 +121,7 @@ async function sendTorrentsToDownloader(task: IKeepUploadTask, items: IKeepUploa
         "torrent.category": String(item.category ?? ""),
         "torrent.site": item.site,
         "torrent.siteName": await metadataStore.getSiteName(item.site),
-        "date:YYYY": formatDate(now, "yyyy"),
-        "date:MM": formatDate(now, "MM"),
-        "date:DD": formatDate(now, "dd"),
+        ...datePathTemplateVars(now),
       };
       const addTorrentOptions: CAddTorrentOptions = {
         localDownload: true,
@@ -119,10 +132,9 @@ async function sendTorrentsToDownloader(task: IKeepUploadTask, items: IKeepUploa
       };
 
       for (const key of ["savePath", "label"] as const) {
-        if (!addTorrentOptions[key]) continue;
-        for (const [templateKey, value] of Object.entries(replacements)) {
-          addTorrentOptions[key] = addTorrentOptions[key]!.replaceAll(`$${templateKey}$`, value);
-        }
+        const value = addTorrentOptions[key];
+        if (!value) continue;
+        addTorrentOptions[key] = expandPathTemplate(value, replacements) ?? value;
       }
 
       const result = await sendMessage("downloadTorrent", {
@@ -142,11 +154,11 @@ async function sendTorrentsToDownloader(task: IKeepUploadTask, items: IKeepUploa
         throw new Error(result.errorMessage || item.title);
       }
     }
-    runtimeStore.showSnakebar(t("KeepUploadTask.sendSingleSuccess"), { color: "success" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.sendSingleSuccess"), { color: "success" });
   } catch (e) {
     const rawReason = e instanceof Error ? e.message : String(e);
     const reason = rawReason.trim() === "Fails." ? t("KeepUploadTask.qBittorrentLegacyFails") : rawReason;
-    runtimeStore.showSnakebar(t("KeepUploadTask.sendSingleErrorWithReason", { reason }), { color: "error" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.sendSingleErrorWithReason", { reason }), { color: "error" });
   }
 }
 
@@ -165,9 +177,9 @@ async function setAsBaseTorrent(task: IKeepUploadTask, itemIndex: number) {
     await sendMessage("updateKeepUploadTask", task);
     // 强制刷新表格
     tableKey.value++;
-    runtimeStore.showSnakebar(t("KeepUploadTask.setBaseSuccess"), { color: "success" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.setBaseSuccess"), { color: "success" });
   } catch (e) {
-    runtimeStore.showSnakebar(t("KeepUploadTask.setBaseError"), { color: "error" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.setBaseError"), { color: "error" });
   }
 }
 
@@ -197,40 +209,46 @@ async function copyLinksToClipboard(task: IKeepUploadTask) {
   const urls = task.items.map((item) => item.url).join("\n");
   try {
     await navigator.clipboard.writeText(urls);
-    runtimeStore.showSnakebar(t("KeepUploadTask.copySuccess", { count: task.items.length }), { color: "success" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.copySuccess", { count: task.items.length }), { color: "success" });
   } catch (e) {
-    runtimeStore.showSnakebar(t("KeepUploadTask.copyError"), { color: "error" });
+    runtimeStore.showSnackbar(t("KeepUploadTask.copyError"), { color: "error" });
   }
 }
 </script>
 
 <template>
-  <v-alert type="info">
-    {{ t("KeepUploadTask.title") }}
-  </v-alert>
+  <v-alert :title="t('route.Overview.KeepUploadTask')" type="info" />
 
   <v-card>
     <v-card-title>
-      <v-btn color="error" :disabled="selectedTasks.length === 0" class="mr-2" @click="deleteSelectedTasks">
-        <v-icon class="mr-2">mdi-delete</v-icon>
-        {{ t("common.remove") }}
-      </v-btn>
+      <v-row gap="0" class="ma-0">
+        <NavButton
+          :disabled="selectedTasks.length === 0"
+          color="error"
+          icon="mdi-delete"
+          :text="t('common.remove')"
+          @click="deleteSelectedTasks"
+        />
 
-      <v-btn color="error" :disabled="tasks.length === 0" @click="clearAllTasks">
-        <v-icon class="mr-2">mdi-delete-sweep</v-icon>
-        {{ t("KeepUploadTask.clearAll") }}
-      </v-btn>
+        <NavButton
+          :disabled="tasks.length === 0"
+          color="error"
+          icon="mdi-delete-sweep"
+          :text="t('KeepUploadTask.clearAll')"
+          @click="clearAllTasks"
+        />
 
-      <v-btn
-        color="info"
-        href="https://github.com/pt-plugins/PT-Plugin-Plus/wiki/keep-upload-task"
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        class="ml-2"
-      >
-        <v-icon class="mr-2">mdi-help</v-icon>
-        {{ t("common.howToUse") }}
-      </v-btn>
+        <v-divider vertical class="mx-2" />
+
+        <NavButton
+          color="info"
+          href="https://github.com/pt-plugins/PT-Plugin-Plus/wiki/keep-upload-task"
+          icon="mdi-help-circle"
+          rel="noopener noreferrer nofollow"
+          target="_blank"
+          :text="t('common.howToUse')"
+        />
+      </v-row>
     </v-card-title>
 
     <v-data-table
@@ -239,11 +257,17 @@ async function copyLinksToClipboard(task: IKeepUploadTask) {
       v-model:expanded="expanded"
       :headers="headers"
       :items="tasks"
+      :items-per-page="configStore.tableBehavior.KeepUploadTask.itemsPerPage"
       :loading="loading"
+      :multi-sort="configStore.enableTableMultiSort"
+      :sort-by="configStore.tableBehavior.KeepUploadTask.sortBy"
+      class="table-stripe table-header-no-wrap"
+      hover
       item-value="id"
-      show-select
       show-expand
-      class="elevation-1"
+      show-select
+      @update:itemsPerPage="(v) => configStore.updateTableBehavior('KeepUploadTask', 'itemsPerPage', v)"
+      @update:sortBy="(v) => configStore.updateTableBehavior('KeepUploadTask', 'sortBy', v)"
     >
       <template #item.site="{ item }">
         <div class="d-flex flex-column align-center">
@@ -282,45 +306,37 @@ async function copyLinksToClipboard(task: IKeepUploadTask) {
       </template>
 
       <template #item.action="{ item }">
-        <v-btn
-          icon
-          variant="text"
-          color="primary"
-          :title="t('KeepUploadTask.sendBaseTorrent')"
-          @click="sendBaseTorrent(item)"
-        >
-          <v-icon>mdi-numeric-1-circle</v-icon>
-        </v-btn>
-        <v-btn
-          icon
-          variant="text"
-          color="info"
-          :title="t('KeepUploadTask.sendOtherTorrents')"
-          @click="sendOtherTorrents(item)"
-        >
-          <v-icon>mdi-numeric-2-circle</v-icon>
-        </v-btn>
-        <v-btn
-          icon
-          variant="text"
-          color="success"
-          :title="t('KeepUploadTask.sendAllTorrents')"
-          @click="sendAllTorrents(item)"
-        >
-          <v-icon>mdi-download</v-icon>
-        </v-btn>
-        <v-btn
-          icon
-          variant="text"
-          color="info"
-          :title="t('KeepUploadTask.copyLinks')"
-          @click="copyLinksToClipboard(item)"
-        >
-          <v-icon>mdi-content-copy</v-icon>
-        </v-btn>
-        <v-btn icon variant="text" color="error" :title="t('common.remove')" @click="deleteTask(item)">
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
+        <v-btn-group class="table-action" density="compact" variant="plain">
+          <v-btn
+            color="primary"
+            icon="mdi-numeric-1-circle"
+            size="small"
+            :title="t('KeepUploadTask.sendBaseTorrent')"
+            @click="sendBaseTorrent(item)"
+          />
+          <v-btn
+            color="info"
+            icon="mdi-numeric-2-circle"
+            size="small"
+            :title="t('KeepUploadTask.sendOtherTorrents')"
+            @click="sendOtherTorrents(item)"
+          />
+          <v-btn
+            color="success"
+            icon="mdi-download"
+            size="small"
+            :title="t('KeepUploadTask.sendAllTorrents')"
+            @click="sendAllTorrents(item)"
+          />
+          <v-btn
+            color="info"
+            icon="mdi-content-copy"
+            size="small"
+            :title="t('KeepUploadTask.copyLinks')"
+            @click="copyLinksToClipboard(item)"
+          />
+          <v-btn color="error" icon="mdi-delete" size="small" :title="t('common.remove')" @click="deleteTask(item)" />
+        </v-btn-group>
       </template>
 
       <template #expanded-row="{ item }">
@@ -342,15 +358,13 @@ async function copyLinksToClipboard(task: IKeepUploadTask) {
                 </v-list-item-subtitle>
                 <template #append>
                   <v-btn
-                    icon
-                    variant="text"
                     color="primary"
+                    icon="mdi-arrow-up-bold"
                     size="small"
                     :title="t('KeepUploadTask.setAsBaseTorrent')"
+                    variant="text"
                     @click="setAsBaseTorrent(item, index)"
-                  >
-                    <v-icon>mdi-arrow-up-bold</v-icon>
-                  </v-btn>
+                  />
                 </template>
               </v-list-item>
             </v-list>
@@ -366,15 +380,12 @@ async function copyLinksToClipboard(task: IKeepUploadTask) {
     </v-data-table>
   </v-card>
 
-  <v-alert type="warning" class="mt-4">
-    <div>
-      {{ t("KeepUploadTask.warning.title") }}
-      <ul>
-        <li>{{ t("KeepUploadTask.warning.item1") }}</li>
-        <li>{{ t("KeepUploadTask.warning.item2") }}</li>
-        <li>{{ t("KeepUploadTask.warning.item3") }}</li>
-      </ul>
-    </div>
+  <v-alert class="mt-4" :title="t('KeepUploadTask.warning.title')" type="warning">
+    <ul>
+      <li>{{ t("KeepUploadTask.warning.item1") }}</li>
+      <li>{{ t("KeepUploadTask.warning.item2") }}</li>
+      <li>{{ t("KeepUploadTask.warning.item3") }}</li>
+    </ul>
   </v-alert>
 </template>
 

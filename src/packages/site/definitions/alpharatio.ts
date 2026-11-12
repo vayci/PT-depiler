@@ -1,5 +1,6 @@
 /**
  * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Indexers/Definitions/AlphaRatio.cs
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/alpharatio.cc/config.json
  */
 import type { ISiteMetadata, ITorrent, IUserInfo, TSearchRequestConfigTransformer } from "../types";
 import GazelleJSONAPI, { SchemaMetadata, torrentBrowseResult } from "../schemas/GazelleJSONAPI";
@@ -8,7 +9,7 @@ import { toMerged } from "es-toolkit";
 
 const requestConfigTransformer: TSearchRequestConfigTransformer = ({ keywords, requestConfig }) => {
   if (keywords) {
-    unset(requestConfig!, SchemaMetadata.search!.keywordPath!);
+    unset(requestConfig!, SchemaMetadata.search.keywordPath!);
     set(requestConfig!, "params.taglist", keywords);
   }
   return requestConfig!;
@@ -29,7 +30,7 @@ export const siteMetadata: ISiteMetadata = {
   type: "private",
   schema: "GazelleJSONAPI",
 
-  urls: ["https://alpharatio.cc/"],
+  urls: ["uggcf://nycunengvb.pp/"],
 
   category: [
     {
@@ -72,7 +73,7 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     advanceKeywordParams: {
       imdb: {
         requestConfigTransformer,
@@ -84,9 +85,9 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       donation: { selector: "li:contains('Donated:')", filters: [{ name: "parseNumber" }] },
       seedingBonus: { selector: "li:contains('SeedBonus:')", filters: [{ name: "parseNumber" }] },
     },

@@ -1,0 +1,150 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/world-torrent.yml
+ */
+import { type ISiteMetadata } from "../types";
+
+export const siteMetadata: ISiteMetadata = {
+  version: 1,
+  id: "worldtorrent",
+  name: "World-torrent",
+  aka: ["Worldivx", "Darkfox", "Vidlox", "Wikibox", "Sharkibox", "Workino", "Oxtorrent", "Torrent911"],
+  description:
+    "World-torrent is a FRENCH Public site for MOVIES / TV / GENERAL（法语公开站，同一套代码的多个镜像域名）",
+  tags: ["影视", "综合"],
+
+  type: "public",
+  urls: [
+    "https://www.darkfox.ws/",
+    "https://www.wikibox.ws/",
+    // 2026-11-05/06 第五批（2eae5e0d / eb27dfb6）：其余六个镜像也起了独立短域，
+    // 实测 /derniers 直出列表、无 302 落地页问题；ww4-*.officiel.cc 降后保留
+    "https://www.vidlox.ws/",
+    "https://www.oxtorrent.ws/",
+    "https://www.sharkibox.ws/",
+    "https://www.worldivx.ws/",
+    "https://www.workino.ws/",
+    "https://www.torrent911.pw/",
+    "https://ww4-sharkibox.officiel.cc/",
+    "https://ww4-worldivx.officiel.cc/",
+    "https://ww4-workino.officiel.cc/",
+    "https://ww4-torrent911.officiel.cc/",
+    // vidlox / oxtorrent 的 .cc 镜像实测会把任意路径 302 到 www-vidlox.officiel.cc / www-oxtorrent.officiel.cc
+    // 的宣传落地页（无列表）；其 .ws 新域已可用，这两条排最后以免优先命中
+    "https://ww4-vidlox.officiel.cc/",
+    "https://ww4-oxtorrent.officiel.cc/",
+  ],
+
+  // 2026-10-17 / 10-20 两批 Jackett 更新：darkfox / vidlox / wikibox / sharkibox / worldivx /
+  // workino / torrent911 均迁到 ww2-*.officiel.cc；oxtorrent 曾为 ww1-oxtorrent.officiel.cc。
+  // 2026-10-24 第三批（d460fa9a）：全部 8 个镜像再升到 ww3-*.officiel.cc（含 oxtorrent）。
+  // 2026-11-01 第四批（e4e942ea）：8 个镜像全部升到 ww4-*.officiel.cc；darkfox / wikibox
+  // 另起独立短域 www.darkfox.ws、www.wikibox.ws（903db754 / 56f8bbcc），Jackett 将其排在对应 ww4 之前。
+  // 2026-11-05/06 第五批（2eae5e0d / eb27dfb6）：vidlox / oxtorrent / sharkibox / worldivx /
+  // workino 再起 www-*.ws 短域、torrent911 为 www.torrent911.pw，ww4-*.cc 仍在 Jackett links 中。
+  // 旧域名（ww1 / ww2 / ww3 各批与 .run）按域名迁移规则留在 legacyUrls。
+  legacyUrls: [
+    "https://ww1.darkfox.run/",
+    "https://ww1.vidlox.run/",
+    "https://ww1.wikibox.run/",
+    "https://ww1.sharkibox.run/",
+    "https://ww1.oxtorrent.run/",
+    "https://ww1-darkfox.officiel.cc/",
+    "https://ww1-vidlox.officiel.cc/",
+    "https://ww1.worldivx.run/",
+    "https://ww1-wikibox.officiel.cc/",
+    "https://ww1-sharkibox.officiel.cc/",
+    "https://ww1.workino.run/",
+    "https://ww1.torrent911.run/",
+    "https://ww2-darkfox.officiel.cc/",
+    "https://ww2-vidlox.officiel.cc/",
+    "https://ww2-worldivx.officiel.cc/",
+    "https://ww2-wikibox.officiel.cc/",
+    "https://ww2-sharkibox.officiel.cc/",
+    "https://ww2-workino.officiel.cc/",
+    "https://ww1-oxtorrent.officiel.cc/",
+    "https://ww2-torrent911.officiel.cc/",
+    "https://ww3-darkfox.officiel.cc/",
+    "https://ww3-vidlox.officiel.cc/",
+    "https://ww3-worldivx.officiel.cc/",
+    "https://ww3-wikibox.officiel.cc/",
+    "https://ww3-sharkibox.officiel.cc/",
+    "https://ww3-workino.officiel.cc/",
+    "https://ww3-oxtorrent.officiel.cc/",
+    "https://ww3-torrent911.officiel.cc/",
+  ],
+
+  search: {
+    // 关键词实际拼进 url，此处的 keywordPath 仅作占位，由 requestConfigTransformer 消费后删除
+    keywordPath: "params.keywords",
+    requestConfig: { url: "/derniers", responseType: "document", params: {} },
+    requestConfigTransformer: ({ keywords, requestConfig }) => {
+      delete requestConfig!.params.keywords;
+
+      if (!keywords) {
+        requestConfig!.url = "/derniers";
+        return requestConfig!;
+      }
+
+      // Jackett: 搜索季包时把 S01 换成 saison 1
+      const keyword = keywords.replace(/S0(\d{1,2})$/i, "saison $1").replace(/S(\d{1,3})$/i, "saison $1");
+      requestConfig!.url = `/recherche/${encodeURIComponent(keyword)}`;
+      return requestConfig!;
+    },
+    selectors: {
+      rows: { selector: 'table.table > tbody > tr:has(a[href^="/detail/"])' },
+      title: {
+        // 标题 a 内还嵌着剧照/简介的 span，需要剔除后再取文本（对应 Jackett 的 remove: span）
+        selector: 'a[href^="/detail/"]',
+        elementProcess: (element: Element) => {
+          const clone = element.cloneNode(true) as Element;
+          clone.querySelectorAll("span").forEach((span) => span.parentNode?.removeChild(span));
+          return (clone.textContent ?? "").trim();
+        },
+      },
+      url: { selector: 'a[href^="/detail/"]', attr: "href" },
+      category: { selector: "td:nth-child(1)", attr: "title" },
+      size: { selector: "td:nth-child(3)", filters: [{ name: "parseSize" }] },
+      seeders: { selector: "td:nth-child(4)" },
+      leechers: { selector: "td:nth-child(5)" },
+      completed: { selector: "td:nth-child(6)" },
+      time: {
+        selector: "td:nth-child(7)",
+        filters: [
+          // 法语相对时间 -> 英语
+          { name: "replace", args: ["heures", "hours"] },
+          { name: "replace", args: ["heure", "hour"] },
+          { name: "replace", args: ["jours", "days"] },
+          { name: "replace", args: ["jour", "day"] },
+          { name: "replace", args: ["semaines", "weeks"] },
+          { name: "replace", args: ["semaine", "week"] },
+          { name: "replace", args: ["mois", "months"] },
+          { name: "replace", args: ["ans", "years"] },
+          { name: "replace", args: ["an", "year"] },
+          { name: "parseFuzzyTime" },
+        ],
+      },
+      // 列表页不含下载链接，link 由 detail.selectors.link 在详情页获取（对应 Jackett 的 download 段）
+    },
+  },
+
+  detail: {
+    urlPattern: ["/detail/\\d+"],
+    selectors: {
+      link: { selector: 'a[href^="magnet:?"]', attr: "href" },
+      // 详情页的字段是 `Titre:` / `Catégories:` / `Poids du fichier:` / `Seeders:` … 这样的表格行，
+      // 取每行最后一个 td 即值。标题取标题块里的发布名，与列表页 a[href^="/detail/"] 的文本一致
+      title: { selector: "div.block-detail > div.title" },
+      // 注意 `Catégories:` 也会命中 `Sous-Catégories:`，这里取文档顺序在前的「一级分类」，与列表页 td[title] 一致
+      category: { selector: ["tr:contains('Catégories:') td:last-child"] },
+      size: { selector: ["tr:contains('Poids du fichier:') td:last-child"], filters: [{ name: "parseSize" }] },
+      seeders: { selector: ["tr:contains('Seeders:') td:last-child"] },
+      leechers: { selector: ["tr:contains('Leechers:') td:last-child"] },
+      completed: { selector: ["tr:contains('Complétés:') td:last-child"] },
+      // 页头给出的绝对日期（法语 dd/MM/yyyy）；列表页用的是相对时间，两者口径不同，这里以页面显示为准
+      time: {
+        selector: ["span.icon_date"],
+        filters: [(q: string) => q.replace(/^\D+/, "").trim(), { name: "parseTime", args: ["dd/MM/yyyy"] }],
+      },
+    },
+  },
+};

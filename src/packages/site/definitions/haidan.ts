@@ -1,4 +1,9 @@
-import { type ISiteMetadata } from "../types";
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/haidan.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/haidan.video/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/haidan.json
+ */
+import { type ISiteMetadata, ETorrentStatus } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP.ts";
 import { userInfoWithInvitesInUserDetailsPage } from "./kunlun.ts";
 
@@ -60,10 +65,10 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
-      rows: { selector: ".torrent_item" },
+      ...SchemaMetadata.search.selectors!,
+      rows: { selector: ".torrent_wrap" },
       link: linkQuery,
       url: {
         ...linkQuery,
@@ -89,7 +94,9 @@ export const siteMetadata: ISiteMetadata = {
       time: {
         selector: [".time_col span[title]"],
         attr: "title",
-        filters: [{ name: "parseValidTimeString" }],
+        // 这里原来写的是 { name: "parseValidTimeString" } —— 具名过滤器里叫 parseTime，且该名字实际不存在，
+        // 于是它一直被静默跳过、由基类的 parseTimeWithZone 按本站 timezoneOffset(+0800) 解析（这是正确行为）。
+        // parseTime 走的是 date-fns parse + 运行主机时区，反而不如基类准确，故直接省略该过滤器。
       },
       size: { selector: ".video_size", filters: [{ name: "parseSize" }] },
       author: { selector: [".time_col>i, .time_col>.username-center"] },
@@ -97,10 +104,40 @@ export const siteMetadata: ISiteMetadata = {
       leechers: { selector: ".leecher_col" },
       completed: { selector: ".snatched_col" },
 
-      // FIXME progress status 未实现
+      /**
+       * 进度信息位于 `.torrent_wrap > .poster > progress[data-label]`（原生 progress 元素，
+       * 百分比以 "100%" 的形式放在 data-label 属性上，元素本身无文本内容）。
+       *
+       * 取 `.torrent_wrap` 作为行（而非 `.torrent_item`），使 progress 成为行内普通后代，
+       * 无需再手动上溯父级。组头那一行是 `.torrent_wrap` 的兄弟节点、不在其内部，
+       * 因此 `.video_size` 等既有选择器不受影响。
+       *
+       * 100% 映射为 seeding 而非 completed：本项目里 completed 源自 NexusPHP 的
+       * `inactivity` + 100%，含义是「已完成但当前未在做种」。实测该站点仅在活跃做种时
+       * 渲染 progress[data-label]（下载完成但未做种的种子不显示），故 100% 对应 seeding，
+       * 才与其它站点对同一种子的显示一致。
+       */
+      progress: {
+        selector: "progress[data-label]",
+        attr: "data-label",
+        filters: [(query: string) => parseFloat(/([\d.]+)\s*%/.exec(query)?.[1] ?? "NaN")],
+      },
+      status: {
+        selector: "progress[data-label]",
+        attr: "data-label",
+        filters: [
+          (query: string) => {
+            const percent = parseFloat(/([\d.]+)\s*%/.exec(query)?.[1] ?? "NaN");
+            if (isNaN(percent)) {
+              return ETorrentStatus.unknown;
+            }
+            return percent >= 100 ? ETorrentStatus.seeding : ETorrentStatus.downloading;
+          },
+        ],
+      },
 
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         { name: "官方", selector: "label:contains('官方')", color: "#ff0000" },
         { name: "中字", selector: "label:contains('中字')", color: "#0000ff" },
         { name: "外语", selector: "label:contains('外语')", color: "#004040" },

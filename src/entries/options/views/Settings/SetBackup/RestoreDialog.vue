@@ -2,7 +2,7 @@
 import { useI18n } from "vue-i18n";
 import { ref, shallowRef } from "vue";
 import { isEmpty } from "es-toolkit/compat";
-import { jsZipBlobToBackupData } from "@ptd/backupServer/utils.ts";
+import { zipBlobToBackupData } from "@ptd/backupServer/utils.ts";
 import type { IBackupData } from "@ptd/backupServer";
 import { useRouter } from "vue-router";
 
@@ -51,7 +51,7 @@ function buildBackupOptions() {
 
 const backupFile = shallowRef<File>();
 function loadLocalBackupFile() {
-  jsZipBlobToBackupData(backupFile.value as Blob, decryptKey.value)
+  zipBlobToBackupData(backupFile.value as Blob, decryptKey.value)
     .then((data) => {
       restoreData.value = data;
       isDecryptKeyValid.value = true;
@@ -61,7 +61,7 @@ function loadLocalBackupFile() {
       console.error(err);
       restoreData.value = undefined;
       isDecryptKeyValid.value = false;
-      runtimeStore.showSnakebar(t("SetBackup.RestoreDialog.loadFailure", { error: err }), { color: "error" });
+      runtimeStore.showSnackbar(t("SetBackup.RestoreDialog.loadFailure", { error: err }), { color: "error" });
     });
 }
 
@@ -79,7 +79,7 @@ function loadRemoteBackupFile() {
         buildBackupOptions();
       })
       .catch((err) => {
-        runtimeStore.showSnakebar(t("SetBackup.RestoreDialog.loadFailure", { error: err }), { color: "error" });
+        runtimeStore.showSnackbar(t("SetBackup.RestoreDialog.loadFailure", { error: err }), { color: "error" });
         console.error(err);
         isDecryptKeyValid.value = false;
       })
@@ -131,7 +131,7 @@ function doRestore() {
 
   // 检查 version 字段
   if (!restoreData.value?.manifest?.version) {
-    runtimeStore.showSnakebar(t("SetBackup.RestoreDialog.missingVersion"), { color: "error" });
+    runtimeStore.showSnackbar(t("SetBackup.RestoreDialog.missingVersion"), { color: "error" });
     isDoingRestore.value = false;
     return;
   }
@@ -140,11 +140,11 @@ function doRestore() {
   if (!warnRestore || confirm(t("SetBackup.RestoreDialog.versionWarning"))) {
     sendMessage("restoreBackupData", { restoreData: restoreData.value!, restoreOptions: restoreOptions.value })
       .then(() => {
-        runtimeStore.showSnakebar(t("SetBackup.RestoreDialog.success"), { color: "success" });
+        runtimeStore.showSnackbar(t("SetBackup.RestoreDialog.success"), { color: "success" });
         showDialog.value = false;
       })
       .catch((err) => {
-        runtimeStore.showSnakebar(t("SetBackup.RestoreDialog.failure", { error: err }), { color: "error" });
+        runtimeStore.showSnackbar(t("SetBackup.RestoreDialog.failure", { error: err }), { color: "error" });
         console.error(err);
       })
       .finally(() => {

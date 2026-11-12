@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/tjupt.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/tjupt.org/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/tjupt.json
+ */
 import { set } from "es-toolkit/compat";
 import Sizzle from "sizzle";
 
@@ -117,7 +122,7 @@ export const siteMetadata: ISiteMetadata = {
   search: {
     ...SchemaMetadata.search,
     advanceKeywordParams: {
-      ...SchemaMetadata.search!.advanceKeywordParams,
+      ...SchemaMetadata.search.advanceKeywordParams,
       douban: {
         requestConfigTransformer: ({ requestConfig: config }) => {
           set(config!, "params.search_area", 5); // params "&search_area=5"
@@ -126,7 +131,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       rows: { selector: "table.torrents:last > tbody > tr:gt(0):not(:last)" },
       progress: selectorSearchProgress,
       status: selectorSearchStatus,
@@ -147,7 +152,7 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   list: [
-    ...SchemaMetadata.list!,
+    ...SchemaMetadata.list,
     {
       urlPattern: ["/speedup.php"], // additional page
     },
@@ -156,13 +161,13 @@ export const siteMetadata: ISiteMetadata = {
   userInfo: {
     ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors,
+      ...SchemaMetadata.userInfo.selectors,
       uploaded: {
         selector: ["td.rowhead:contains('上传量') + td"],
         filters: [{ name: "parseSize" }],
       },
       messageCount: {
-        ...SchemaMetadata.userInfo!.selectors!.messageCount,
+        ...SchemaMetadata.userInfo.selectors!.messageCount,
         selector: ["#msg-bar a[href*='messages.php'] strong"],
       },
       hnrPreWarning: {
@@ -172,7 +177,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     process: [
-      ...SchemaMetadata.userInfo!.process!.filter((item) => item.requestConfig.url !== "/mybonus.php"),
+      ...SchemaMetadata.userInfo.process!.filter((item) => item.requestConfig.url !== "/mybonus.php"),
       {
         requestConfig: { url: "/bonus.php", params: { show: "description" }, responseType: "document" },
         fields: ["bonusPerHour"],

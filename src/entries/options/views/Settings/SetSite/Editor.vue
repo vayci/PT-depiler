@@ -5,7 +5,8 @@ import { set } from "es-toolkit/compat";
 import type { timezoneOffset, ISiteUserConfig, TSiteID, ISiteMetadata, TSiteUrl } from "@ptd/site";
 
 import { useMetadataStore } from "@/options/stores/metadata.ts";
-import { formatDate, formValidateRules } from "@/options/utils.ts";
+import { urlPattern } from "@/options/plugins/vuetify.ts";
+import { formatDate } from "@/options/utils.ts";
 import { toMerged } from "es-toolkit";
 
 const { t } = useI18n();
@@ -109,7 +110,7 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
               v-model="siteName"
               :items="[siteMetaData.name, ...(siteMetaData.aka ?? [])]"
               :label="t('SetSite.common.name')"
-              :rules="[formValidateRules.require()]"
+              :rules="['required']"
               hide-details
             ></v-combobox>
           </v-col>
@@ -121,7 +122,7 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
               v-model="siteUserConfig.sortIndex"
               :label="t('common.sortIndex')"
               :placeholder="t('SetSite.editor.sortIndexTip')"
-              :rules="[formValidateRules.require()]"
+              :rules="['required']"
               hide-details
               type="number"
             />
@@ -152,7 +153,7 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
             :label="t('SetSite.common.url')"
             class="edit-select-url"
             hide-details
-            :rules="[formValidateRules.require()]"
+            :rules="['required']"
           >
             <v-radio v-for="url in siteMetaData.urls" :key="url" :value="url" @click="updateFormValid(true)">
               <template #label style="width: 100%">
@@ -173,7 +174,7 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
                 <v-text-field
                   v-model="customSiteUrl"
                   :placeholder="t('SetSite.editor.customUrlPlaceholder')"
-                  :rules="[(val) => (val ? formValidateRules.url()(val) : true)]"
+                  :rules="[['pattern', urlPattern]]"
                   @update:modelValue="(val) => (siteUserConfig.url = val as unknown as TSiteUrl)"
                 ></v-text-field>
               </template>
@@ -192,9 +193,7 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
             v-model="siteUserConfig.inputSetting![userInputMeta.name]"
             :hint="userInputMeta.hint"
             :label="userInputMeta.label"
-            :rules="[
-              (val) => (!siteMetaData.isDead && userInputMeta.required ? formValidateRules.require()(val) : true),
-            ]"
+            :rules="!siteMetaData.isDead && userInputMeta.required ? ['required'] : []"
             validate-on="input"
           >
           </v-text-field>

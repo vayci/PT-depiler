@@ -1,3 +1,9 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/hdfans.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/hdfans.org/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/hdfans.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/hdfans.json
+ */
 import { type ISiteMetadata } from "../types";
 import { parseSectionedHitAndRunElement, SchemaMetadata } from "../schemas/NexusPHP";
 
@@ -18,13 +24,14 @@ export const siteMetadata: ISiteMetadata = {
   collaborator: ["csi0n", "zhuweitung", "hui-shao"],
 
   urls: ["uggcf://uqsnaf.bet/"],
+  favicon: "./_default_nexusphp.png",
 
   officialGroupPattern: [/HDFans/i],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       hnrPreWarning: {
         text: 0,
         selector: ["#info_block a[href*='myhr.php']:last"],

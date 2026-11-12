@@ -1,13 +1,16 @@
 import urlJoin from "url-join";
 import { omit, toMerged } from "es-toolkit";
+import { get } from "es-toolkit/compat";
 
 import PrivateSite from "./AbstractPrivateSite";
 import {
+  type TSchemaMetadata,
   ETorrentStatus,
   EResultParseStatus,
   type ISiteMetadata,
   type IUserInfo,
   NeedLoginError,
+  NoUserInputError,
   type ITorrent,
   type ISearchInput,
   type ITorrentTag,
@@ -16,14 +19,7 @@ import {
 import { parseTimeToLiveToDate, parseValidTimeString } from "../utils";
 
 type TUserInfoTransKey =
-  | "id"
-  | "seedingSize"
-  | "joinTime"
-  | "averageSeedingTime"
-  | "invites"
-  | "ratio"
-  | "trueRatio"
-  | "lastAccessAt";
+  "id" | "seedingSize" | "joinTime" | "averageSeedingTime" | "invites" | "ratio" | "trueRatio" | "lastAccessAt";
 
 /**
  * Trans Map
@@ -38,6 +34,72 @@ export const userInfoTrans: Record<TUserInfoTransKey, string[]> = {
   ratio: ["Ratio", "分享率", "比率"],
   trueRatio: ["Real Ratio", "真实分享率", "真實比率"],
   lastAccessAt: ["Last login", "Last Login", "上次登录时间", "上次登入"],
+};
+
+/**
+ * 从 UNIT3D JSON API 的种子行中取字段。
+ * 行内字段既可能挂在 `attributes` 下，也可能被拍平到顶层，两种都取。
+ */
+export function pick<T>(row: object, key: string, fallback?: T): T {
+  const value = get(row, `attributes.${key}`);
+  if (value !== undefined && value !== null && value !== "") {
+    return value as T;
+  }
+
+  const flat = get(row, key);
+  if (flat !== undefined && flat !== null && flat !== "") {
+    return flat as T;
+  }
+
+  return fallback as T;
+}
+
+/**
+ * 仅从 `attributes` 取值。
+ * 顶层还挂着 JSON:API 的 `type`（恒为 "torrents"）、`id` 等元字段，
+ * 若像 pick 那样回落顶层，会把资源的 type 误当成种子的媒介类型。
+ */
+export function pickAttr<T>(row: object, key: string, fallback?: T): T {
+  const value = get(row, `attributes.${key}`);
+  if (value !== undefined && value !== null && value !== "") {
+    return value as T;
+  }
+
+  return fallback as T;
+}
+
+/**
+ * UNIT3D `/api/torrents/filter` 返回行里与促销/发布相关的公共字段。
+ * 行内字段既可能挂在 `attributes` 下，也可能被拍平到顶层（两种都声明，配合 pick 使用）。
+ * 各站点定义在此之上按需扩展即可，不必再各写一份。
+ */
+export interface IUnit3DRawTorrent {
+  attributes?: {
+    freeleech?: string;
+    double_upload?: boolean;
+    featured?: boolean;
+    internal?: boolean;
+  };
+  freeleech?: string;
+  double_upload?: boolean;
+  featured?: boolean;
+  internal?: boolean;
+  [key: string]: unknown;
+}
+
+/**
+ * UNIT3D 的 `freeleech` 字段是「免费比例」（0~100，100 = 全免），下载计费比例 = 1 - free%。
+ * 依据 UNIT3D 源码：
+ *  - `App\Jobs\ProcessAnnounce`：`creditedDownloadedDelta = $downloadedDelta * (100 - min(100, $torrent->percentFree)) / 100`
+ *  - `App\Services\Unit3dAnnounce::addTorrent`：`download_factor => max(0, 100 - $torrent->free)`
+ * 与 Jackett 的 Unit3D API 定义一致（如 `aither-api.yml`：25% → 0.75、75% → 0.25、100% → 0、featured → 0/2）。
+ */
+export const freeleechFactorMap: Record<string, number> = {
+  "0%": 1,
+  "100%": 0,
+  "75%": 0.25,
+  "50%": 0.5,
+  "25%": 0.75,
 };
 
 export const CategoryFree: ISearchCategories = {
@@ -67,7 +129,10 @@ export const CategoryFree: ISearchCategories = {
   },
 };
 
-export const SchemaMetadata: Partial<ISiteMetadata> = {
+/** 本引擎一定会提供的键；列出来之后消费方读它们不必再写非空断言 */
+type TMetadataKeys = "version" | "timezoneOffset" | "search" | "list" | "detail" | "userInfo";
+
+export const SchemaMetadata: TSchemaMetadata<TMetadataKeys> = {
   version: 0,
   timezoneOffset: "+0000",
   search: {
@@ -131,6 +196,12 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
       },
       subTitle: {
         text: "", // Unit3D 并不在种子列表页显示副标题，或者说他们就没有副标题的设计
+      },
+      // Only present when the user enables show_poster; missing posters fall back to a via.placeholder.com image
+      cover: {
+        selector: "img.torrent-search--list__poster-img",
+        attr: "src",
+        filters: [(src: string) => (src.includes("via.placeholder.com") ? "" : src)],
       },
       url: {
         selector: ["a.view-torrent", "a.torrent-search--list__name"],
@@ -240,10 +311,15 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
             "i.fa-gem.text-green, i.fa-chevron-double-up, i.torrent-icons__double-upload, i.torrent-icons__featured, i[title*='Double Upload'], i[title*='Featured'], span[title*='feature'], i[data-original-title*='Double Upload'], i[data-original-title*='Featured']",
           color: "lime",
         },
+        // UNIT3D 的 freeleech 是「免费比例」（DB 0~100，100 = 全免）：
+        // ProcessAnnounce 里 creditedDownloadedDelta = downloadedDelta * (100 - free) / 100，
+        // Unit3dAnnounce 里 download_factor = max(0, 100 - free)。
+        // 所以图标标题里的 "75% Free" 实际按 25% 计费；标签名沿用本仓库的「计费比例」口径：
+        // 75% Free → "25%"，50% Free → "50%"，25% Free → "75%"。
         {
-          name: "75%",
+          name: "25%",
           selector: "i[title*='75%'], span[title*='75%']",
-          color: "lime-darken-3",
+          color: "purple",
         },
         {
           name: "50%",
@@ -251,9 +327,9 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
           color: "deep-orange-darken-1",
         },
         {
-          name: "25%",
+          name: "75%",
           selector: "i[title*='25%'], span[title*='25%']",
-          color: "blue",
+          color: "lime-darken-3",
         },
         {
           name: "置顶",
@@ -531,11 +607,13 @@ export default class Unit3D extends PrivateSite {
   ): Partial<ITorrent> {
     const torrents = super.parseTorrentRowForTags(torrent, row, searchConfig);
 
+    // 同一行可能同时命中多个优惠图标，只保留最强的一个。
+    // 数值是「免费比例」（越大越优惠）：Free = 100% 免费，标签 "25%" = 按 25% 计费 = 75% 免费。
     const discountType: Record<string, number> = {
       Free: 100,
-      "75%": 75,
+      "25%": 75,
       "50%": 50,
-      "25%": 25,
+      "75%": 25,
     };
 
     if (Array.isArray(torrents.tags)) {
@@ -605,6 +683,8 @@ export default class Unit3D extends PrivateSite {
 
       if (e instanceof NeedLoginError) {
         flushUserInfo.status = EResultParseStatus.needLogin;
+      } else if (e instanceof NoUserInputError) {
+        flushUserInfo.status = EResultParseStatus.noUserInput;
       }
     }
 

@@ -1,3 +1,9 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/pttime.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/pttime.org/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/pttime.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/pttime.json
+ */
 import { ISiteMetadata, IUserInfo } from "../types";
 import NexusPHP, { CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
 import { createDocument, parseSizeString } from "../utils";
@@ -75,11 +81,12 @@ export const siteMetadata: ISiteMetadata = {
   search: {
     ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       rows: { selector: "table.torrents:last > tbody > tr:gt(0)" }, // 前 50 条
       category: { text: "DEFAULT", selector: ["span.category"], attr: "title" },
       id: { selector: [":self"], attr: "data" },
       link: baseLinkQuery,
+      cover: { selector: "td.torrentimg img", data: "src" },
       url: {
         ...baseLinkQuery,
         filters: [
@@ -124,7 +131,7 @@ export const siteMetadata: ISiteMetadata = {
   userInfo: {
     ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors,
+      ...SchemaMetadata.userInfo.selectors,
       levelName: {
         selector: [
           "td.rowhead:contains('等级') + td > b",

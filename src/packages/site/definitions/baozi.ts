@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/baozipt.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/baozi.json
+ */
 import type { ISiteMetadata, IUserInfo } from "../types";
 import NexusPHP, {
   CategoryInclbookmarked,
@@ -105,10 +109,9 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
-    pickLast: [], // clear id cache
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       // "page": "/index.php",
       id: {
         selector: "#welcome_text > span.nowrap > a[href*='userdetails.php']",
@@ -125,7 +128,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     donorConfig: {
-      ...SchemaMetadata.userInfo!.donorConfig,
+      ...SchemaMetadata.userInfo.donorConfig,
       bonusPerHourMultiplier: 1, // selector 已能正确选中加倍后的时魔
     },
   },

@@ -1,10 +1,13 @@
+/**
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/yhpp.json
+ */
 import type { ISiteMetadata } from "../types";
 import { SchemaMetadata } from "../schemas/NexusPHP";
 
 export const userInfoWithInvitesInUserDetailsPage = {
-  ...SchemaMetadata.userInfo!,
+  ...SchemaMetadata.userInfo,
   selectors: {
-    ...SchemaMetadata.userInfo!.selectors!,
+    ...SchemaMetadata.userInfo.selectors!,
     invites: {
       selector: [
         "td.rowhead:contains('邀请') + td",
@@ -34,7 +37,7 @@ export const userInfoWithInvitesInUserDetailsPage = {
     },
   },
   process: [
-    ...SchemaMetadata.userInfo!.process!.map((item) => {
+    ...SchemaMetadata.userInfo.process!.map((item) => {
       // 在用户详情页面添加 invites 字段
       if (item.requestConfig.url === "/userdetails.php") {
         return {

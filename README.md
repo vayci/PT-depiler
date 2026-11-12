@@ -41,6 +41,17 @@ PT-depiler 是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Pl
 |    Firefox Add-ons     | [![Mozilla Firefox](https://img.shields.io/amo/v/pt-depiler.svg?label=Mozilla%20Firefox)](https://addons.mozilla.org/zh-CN/firefox/addon/pt-depiler/)                                                                                                                                                                             | 
 | Microsoft Edge Add-ons | [![Microsoft Edge](https://img.shields.io/badge/dynamic/json?label=Edge%20Addons&prefix=v&query=%24.version&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2FAddons%2Fgetproductdetailsbycrxid%2Fkbijhmckhndmeckonoikakdfdlbnlkde)](https://microsoftedge.microsoft.com/addons/detail/pt-depiler/kbijhmckhndmeckonoikakdfdlbnlkde) |
 
+> [!NOTE]
+> **关于 Chrome Web Store 的状态徽标**
+>
+> PT-Depiler 在 Chrome Web Store 中被标记为**成人内容（Mature content）**，由此带来两点影响：
+>
+> 1. 商店详情页**必须登录 Google 账号后**才能访问，匿名访问只会被引导到登录页；
+> 2. shields.io 的 `chrome-web-store` 系列徽标（版本号、评分、安装量等）通过匿名抓取该页面取数，
+>    因此现在只能返回 `not found`，无法再显示真实状态。
+>
+> 但上表 Chrome 一栏点击 **状态徽标** 仍可跳转到对应商店页面，请 **登录 Google 账号** 后获取。
+
 #### 2. 从 Github Action 或者 Release 中获取并安装
 
 [![Build Action Release](../../actions/workflows/action_build.yml/badge.svg)](../../actions/workflows/action_build.yml)
@@ -50,7 +61,7 @@ PT-depiler 是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Pl
 
 #### 3. 从源码构建
 
-请预先准备好 [Git](https://git-scm.com/) 、 [Node.js](https://nodejs.org/en) 和 [pnpm](https://pnpm.io/) 环境。
+请预先准备好 [Git](https://git-scm.com/) 、 [Node.js](https://nodejs.org/en) 和 [pnpm](https://pnpm.io/) 环境（本项目要求 **pnpm v12 及以上**，版本以 `package.json` 的 `packageManager` 字段为准）。
 建议使用 [VSCode](https://code.visualstudio.com/) 或 [WebStorm](https://www.jetbrains.com/webstorm/) 作为开发工具。
 
 ```bash
@@ -79,6 +90,10 @@ PT-Depiler 并不是对 PT-Plugin-Plus 的简单移植，而是对其进行了�
 我们还有一个 [help wanted](../../labels/%22help%20wanted%22) 的问题列表，您可能会感兴趣。
 
 ![Alt](https://repobeats.axiom.co/api/embed/9d98187b3a4c57e8c3a7087ff45d61bc03741af0.svg "Repobeats analytics image")
+
+### 🔒 隐私权保护政策 Privacy Policy
+
+PT-Depiler 不含任何统计、埋点或遥测代码，您的数据默认仅保存在本机浏览器中。详细的数据处理说明（收集范围、使用方式、存储位置、共享对象、保留期限与联系渠道）请见 [隐私权保护政策](./privacy-statement.md)。
 
 ### 📝 许可证 License
 

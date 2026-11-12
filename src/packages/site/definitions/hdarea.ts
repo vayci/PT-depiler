@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/hdarea.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/hdarea.co/config.json
+ */
 import type { ISearchInput, ISiteMetadata, ITorrent, ITorrentTag, IUserInfo } from "../types";
 import NexusPHP, {
   CategoryInclbookmarked,
@@ -133,11 +137,11 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     requestConfig: {
-      ...SchemaMetadata.search!.requestConfig,
+      ...SchemaMetadata.search.requestConfig,
       params: {
-        ...SchemaMetadata.search!.requestConfig!.params,
+        ...SchemaMetadata.search.requestConfig!.params,
         search_area: 0,
         search_mode: 0,
       },
@@ -147,12 +151,12 @@ export const siteMetadata: ISiteMetadata = {
       douban: {},
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       rows: {
         selector: "table.torrents > tbody > tr:has(table.torrentname)",
       },
       title: {
-        ...SchemaMetadata.search!.selectors!.title!,
+        ...SchemaMetadata.search.selectors!.title!,
         // 站点设置「种子标题上悬浮提示类型」选为简单/中型 IMDb 信息时，标题锚点渲染为
         // onmouseover="get_ext_info_ajax(...)"（悬停浮窗），无 title 属性、href 不带 hit，
         // 模板默认选择器全部落空导致标题丢失（#1417），此处追加该形态的兜底
@@ -185,7 +189,7 @@ export const siteMetadata: ISiteMetadata = {
         },
       },
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         { name: "首发", selector: "img.first_publish", color: "#3887D7" },
         { name: "禁转", selector: "img.transfer_forbidden", color: "#5E14DA" },
       ],
@@ -195,7 +199,7 @@ export const siteMetadata: ISiteMetadata = {
   detail: {
     ...SchemaMetadata.detail,
     selectors: {
-      ...SchemaMetadata.detail!.selectors,
+      ...SchemaMetadata.detail.selectors,
       link: {
         selector: `td:contains("下载链接") + td`,
         elementProcess: (element: HTMLElement) => {
@@ -207,7 +211,7 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
       ...SchemaMetadata.userInfo!.selectors!,
       inviteStatus: {

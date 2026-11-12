@@ -4,7 +4,6 @@ import path from "node:path";
 
 // Vite And it's plugins
 import { defineConfig } from "vite";
-import { nodePolyfills } from "vite-plugin-node-polyfills";
 import vue from "@vitejs/plugin-vue";
 import vuetify from "vite-plugin-vuetify";
 import VueDevTools from "vite-plugin-vue-devtools";
@@ -12,8 +11,9 @@ import webExtension from "vite-plugin-web-extension";
 
 // @ts-ignore
 import { vitePluginGenerateWebextLocales } from "./vite/plugin/generateWebextLocales.ts";
+import { vitePluginGenerateSiteIndex } from "./vite/plugin/generateSiteIndex.ts";
+import { getGitInfo } from "./vite/utils/gitInfo.ts";
 
-import git from "git-rev-sync";
 import pkg from "./package.json";
 
 function base_path(_path = "") {
@@ -36,13 +36,40 @@ const permissions = [
 
 const optionalPermissions = ["nativeMessaging"];
 
-// @ts-ignore
-const git_count = git.count("HEAD");
-const base_version = `${pkg.version}.${git_count}`;
-const commit_version = `${base_version}+${git.short(__dirname)}`;
+const gitInfo = getGitInfo();
+const base_version = `${pkg.version}.${gitInfo.count}`;
+const commit_version = `${base_version}+${gitInfo.short}`;
+
+// dev 模式下 chokidar 默认递归 watch 整个仓库根目录，而本机的临时目录（构建 TEMP、
+// 浏览器 profile、调研克隆、pnpm store 等）动辄数万文件，既拖慢启动也频繁触发无意义的
+// 全量重载。这里显式排除非源码目录；Vite 的默认值（.git / node_modules / test-results）
+// 会被覆盖，故一并列出。
+const watchIgnored = [
+  "**/.git/**",
+  "**/node_modules/**",
+  // 本机的临时 / 调研目录（.gitignore 中已忽略，见 `.tmp-*/`、`.research-*`、`.pnpm-store`）
+  "**/.tmp-*/**",
+  "**/.research-*/**",
+  "**/.pnpm-store/**",
+  // 编辑器、CI 与 agent 元数据
+  "**/.idea/**",
+  "**/.vscode/**",
+  "**/.github/**",
+  "**/.husky/**",
+  "**/.agents/**",
+  // 构建产物与本地笔记
+  "**/dist-*/**",
+  "**/docs/**",
+  "**/*.tsbuildinfo",
+];
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    watch: {
+      ignored: watchIgnored,
+    },
+  },
   build: {
     target: "es2023",
     outDir: `dist-${target}`,
@@ -62,12 +89,7 @@ export default defineConfig({
   },
   plugins: [
     vitePluginGenerateWebextLocales(),
-    nodePolyfills({
-      include: ["buffer", "path"],
-      globals: {
-        Buffer: true,
-      },
-    }),
+    vitePluginGenerateSiteIndex(),
     VueDevTools({
       launchEditor: fs.existsSync(base_path("./.idea")) ? "webstorm" : "vscode",
     }),
@@ -111,9 +133,13 @@ export default defineConfig({
           service_worker: "src/entries/background/main.ts",
         },
 
-        // 在 Firefox 中，background 不能使用 service_worker
+        // 在 Firefox 中，background 不能使用 service_worker。
+        // 这里必须使用 page（HTML 入口）而不是 scripts：scripts 入口会被插件以 build.lib + iife
+        // 打成单文件，IIFE 不允许代码分割，会把 offscreen 的整条依赖图内联进后台脚本，
+        // 并与 options 页的 vendor chunk 重复（产物约 +1.8MB / +16%）。
+        // 使用 page 后后台进入多页 ESM 构建，与 options / cs-app 共享 chunk。
         "{{firefox}}.background": {
-          scripts: ["src/entries/background/ff_main.ts"],
+          page: "src/entries/background/firefox_main.html",
         },
 
         omnibox: {
@@ -147,6 +173,12 @@ export default defineConfig({
           },
         },
         "{{firefox}}.content_security_policy": {
+          // 覆盖默认 CSP 只为去掉 MV3 自带的 `upgrade-insecure-requests`
+          // ——它会把手里的 http 请求（下载器、媒体服务器）强行升到 https（#27）。
+          //
+          // ⚠️ 不要在这里声明 `img-src`：扩展页面的图片基本都是远端地址（媒体服务器海报、
+          // 豆瓣推荐图…），写死 `img-src 'self'` 就会全部拦掉（428a53cd 引入的回归）。
+          // http 图片能否显示取决于 Firefox 的混合内容升级规则（#1657），CSP 这一层管不了。
           extension_pages: "script-src 'self';",
         },
 
@@ -179,6 +211,24 @@ export default defineConfig({
         plugins: [
           {
             name: "cs-app-entry",
+            // offscreen 文档（offscreen.html）与 Firefox 的后台页（firefox_main.html）都是纯逻辑页面：
+            // 不渲染任何 DOM，依赖图里也没有任何样式导入（除 options 外没有 .vue 入口）。
+            // 但 cssCodeSplit=false 会让 Vite 把整份 pt-depiler.css 注入该构建的**每个** HTML 入口
+            // （见下方 config 中的 cssCodeSplit）：offscreen 文档每次创建、后台事件页每次唤醒，
+            // 都要白加载并解析这份约 458 KB 的 CSS。
+            // Vite 在 generateBundle 里先注入 CSS link、再执行 transformIndexHtml，
+            // 因此这里可以精确摘掉那条注入的 link，且只作用于下面列出的页面。
+            transformIndexHtml: {
+              order: "post",
+              handler(html, ctx) {
+                // 新增 HTML 入口时注意：只有确实需要样式的页面（如 options/index.html）才不应登记在此
+                const cssFreePages = ["firefox_main.html", "offscreen.html"];
+                if (!cssFreePages.some((page) => ctx.filename.endsWith(page))) return html;
+                return html.replace(/[ \t]*<link\b[^>]*>[ \t]*\r?\n?/g, (tag) =>
+                  /rel="stylesheet"/.test(tag) && /pt-depiler\.css/.test(tag) ? "" : tag,
+                );
+              },
+            },
             config(config) {
               // content script 的重逻辑（Vue/Vuetify/站点包）挂到多页 ESM 构建中作为额外入口，
               // 产物 assets/cs-app.js 由轻量引导在匹配站点时通过 chrome.runtime.getURL 动态加载，
@@ -196,6 +246,15 @@ export default defineConfig({
               // （vuetify 组件、页面组件等分散在各 chunk 的 css）无法逐份在页面上下文
               // 引入，故合并为单文件，由 app/init.ts 按固定地址 link
               config.build.cssCodeSplit = false;
+              // 关闭 module preload（见 issue #1524）：
+              // 该 ESM 入口被 content script 引导在**站点页面文档**里动态 import，而 Vite 生成的
+              // 预加载辅助函数把依赖还原为根相对地址（`function(e){return"/"+e}`），页面上下文会把
+              // 它们解析成 `https://<站点>/vendor/...`，每个 chunk 每页都发出一次必然 404 的请求，
+              // 并计入站点访问统计。此处产物的 `__vite__mapDeps` 全部为 js 依赖、无 css 依赖，
+              // 关掉预加载后辅助函数退化为纯 `import()` 包装（仅少一个无效提示，不影响模块解析），
+              // 站点侧不再出现任何发往自身 /vendor/... 的请求。
+              // 仅作用于 cs-app 入口所在的多页构建；offscreen 等扩展页面文档不受影响。
+              config.build.modulePreload = false;
             },
           },
           {
@@ -262,21 +321,25 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: {
-      "~": base_path("./src"),
-      "@": base_path("./src/entries"),
-      "@ptd": base_path("./src/packages"),
-    },
+    alias: [
+      // `parse-torrent` 会 `import path from "path"`，而它只用到 `join` + `sep`
+      // （见 src/extends/shims/path.ts 的开头注释）。用本仓的最小实现接管，
+      // 换掉 path-browserify 的 478 行实现。用正则做精确匹配，避免误伤 `path/xxx` 子路径。
+      { find: /^(node:)?path$/, replacement: base_path("./src/extends/shims/path.ts") },
+      { find: "~", replacement: base_path("./src") },
+      { find: "@", replacement: base_path("./src/entries") },
+      { find: "@ptd", replacement: base_path("./src/packages") },
+    ],
   },
   define: {
     __BROWSER__: JSON.stringify(target),
     __EXT_VERSION__: JSON.stringify(`v${commit_version}`),
     __GIT_VERSION__: {
-      short: git.short(__dirname),
-      long: git.long(__dirname),
-      date: +git.date(),
-      count: git_count,
-      branch: git.branch(__dirname),
+      short: gitInfo.short,
+      long: gitInfo.long,
+      date: gitInfo.date,
+      count: gitInfo.count,
+      branch: gitInfo.branch,
     },
     __BUILD_TIME__: +Date.now(),
     __RESOURCE_SITE_ICONS__: fs.readdirSync(base_path("./public/icons/site")),

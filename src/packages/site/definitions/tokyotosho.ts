@@ -1,3 +1,6 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/tokyotosho.yml
+ */
 import type { ISiteMetadata } from "../types";
 import { buildCategoryOptionsFromDict } from "../utils";
 
@@ -23,14 +26,15 @@ export const siteMetadata: ISiteMetadata = {
   id: "tokyotosho",
   version: 1,
   name: "Tokyo Toshokan",
+  tags: ["动漫", "漫画", "音乐", "成人"],
   aka: ["東京 図書館"],
   description: "Tokyo Toshokan is a Public BitTorrent Library for JAPANESE Media",
 
   type: "public",
 
-  urls: ["https://www.tokyotosho.info/", "https://tokyo-tosho.net/"],
+  urls: ["uggcf://jjj.gbxlbgbfub.vasb/", "uggcf://gbxlb-gbfub.arg/"],
   legacyUrls: [
-    "https://tokyotosho.se/", // redirect to www.tokyotosho.info
+    "uggcf://gbxlbgbfub.fr/", // redirect to www.tokyotosho.info
   ],
 
   category: [

@@ -1,6 +1,6 @@
 import { ref, computed } from "vue";
 import { type ISiteUserConfig, type IUserInfo, TSiteID } from "@ptd/site";
-import { sendMessage } from "@/messages.ts";
+import { isUserInfoQueueCancelledError, sendMessage } from "@/messages.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 
 import { differenceInDays } from "date-fns";
@@ -86,9 +86,14 @@ export function flushSiteLastUserInfo(sites: TSiteID[]) {
     sendMessage("getSiteUserInfoResult", site)
       .then((userInfo) => updatePerSiteData(site, userInfo))
       .catch((e) => {
+        // 队列被用户主动取消（p-queue 10 的 clear() 会以 AbortError 结束被移除的排队任务），此时不报错
+        if (isUserInfoQueueCancelledError(e)) {
+          return;
+        }
+
         // 首先检查是否还在刷新，如果没有，则说明队列已经取消了，此时不报错
         if (!runtimeStore.userInfo.flushPlan[site]) {
-          runtimeStore.showSnakebar(`获取站点 [${site}] 用户信息失败`, { color: "error" });
+          runtimeStore.showSnackbar(`获取站点 [${site}] 用户信息失败`, { color: "error" });
           console.error(e);
         }
       })
@@ -106,7 +111,7 @@ export async function cancelFlushSiteLastUserInfo() {
 
   await sendMessage("cancelUserInfoQueue", undefined);
 
-  runtimeStore.showSnakebar(`用户信息刷新队列已取消`, { color: "error" });
+  runtimeStore.showSnackbar(`用户信息刷新队列已取消`, { color: "error" });
 }
 
 export async function loadSiteHistoryData(siteId: TSiteID): Promise<Array<IUserInfo & { date: string }>> {

@@ -1,6 +1,9 @@
 /**
  * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/audiences.yml
  * @JackettIssue https://github.com/Jackett/Jackett/issues/13156
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/audiences.me/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/audiences.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/audiences.json
  */
 import Sizzle from "sizzle";
 import { mergeWith } from "es-toolkit";
@@ -99,10 +102,10 @@ export const siteMetadata: ISiteMetadata = {
     CategoryInclbookmarked,
   ],
 
-  officialGroupPattern: [/(-Audies|.*@Audies|-ADE|-ADWeb|.*@ADWeb)/i],
+  officialGroupPattern: [/[@-]\s?(Audies|ADE|ADWeb|ADAudio|ADeBook|ADMusic)\b/i],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     advanceKeywordParams: {
       ...SchemaMetadata.search?.advanceKeywordParams!,
       douban: {
@@ -113,7 +116,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       rows: {
         selector: ["table.torrents-table > tbody > tr[data-torrent-id]"],
       },
@@ -161,7 +164,7 @@ export const siteMetadata: ISiteMetadata = {
         filters: [{ name: "parseSize" }],
       },
       time: {
-        ...SchemaMetadata.search!.selectors!.time!, // 继承 elementProcess 方法
+        ...SchemaMetadata.search.selectors!.time!, // 继承 elementProcess 方法
         selector: ["> td:nth-of-type(4)"], // 限定范围
       },
       progress: {
@@ -179,7 +182,7 @@ export const siteMetadata: ISiteMetadata = {
         },
       },
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         { name: "官方", selector: "span.tags.tgf", color: "#06c" },
         { name: "原创", selector: "span.tags.tyc", color: "#085" },
         { name: "国语", selector: "span.tags.tgy", color: "#f96" },
@@ -207,9 +210,9 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       messageCount: {
         text: 0,
         selector: [
@@ -222,7 +225,7 @@ export const siteMetadata: ISiteMetadata = {
         text: 0,
         selector: [
           ".site-userbar__compact-metric--uploaded",
-          ...([] as string[]).concat(SchemaMetadata.userInfo!.selectors!.uploaded!.selector!),
+          ...([] as string[]).concat(SchemaMetadata.userInfo.selectors!.uploaded!.selector!),
         ],
         filters: [
           (query: string) => {
@@ -236,7 +239,7 @@ export const siteMetadata: ISiteMetadata = {
         text: 0,
         selector: [
           ".site-userbar__compact-metric--downloaded",
-          ...([] as string[]).concat(SchemaMetadata.userInfo!.selectors!.downloaded!.selector!),
+          ...([] as string[]).concat(SchemaMetadata.userInfo.selectors!.downloaded!.selector!),
         ],
         filters: [
           (query: string) => {
@@ -275,7 +278,7 @@ export const siteMetadata: ISiteMetadata = {
       bonusPerHour: {
         selector: [
           ".mybonus-side__rate",
-          ...([] as string[]).concat(SchemaMetadata.userInfo!.selectors!.bonusPerHour!.selector!),
+          ...([] as string[]).concat(SchemaMetadata.userInfo.selectors!.bonusPerHour!.selector!),
         ],
         filters: [
           (query: string) => {
@@ -289,13 +292,13 @@ export const siteMetadata: ISiteMetadata = {
       seedingBonus: {
         selector: [
           ".site-userbar__compact-metric--seeding-bonus",
-          ...([] as string[]).concat(SchemaMetadata.userInfo!.selectors!.seedingBonus!.selector!),
+          ...([] as string[]).concat(SchemaMetadata.userInfo.selectors!.seedingBonus!.selector!),
         ],
         filters: [{ name: "parseNumber" }],
       },
       joinTime: {
         selector: [
-          ...([] as string[]).concat(SchemaMetadata.userInfo!.selectors!.joinTime!.selector!),
+          ...([] as string[]).concat(SchemaMetadata.userInfo.selectors!.joinTime!.selector!),
           "td:contains('加入日期：')",
           "div:contains('加入日期：')",
         ],
@@ -309,7 +312,7 @@ export const siteMetadata: ISiteMetadata = {
       },
       lastAccessAt: {
         selector: [
-          ...([] as string[]).concat(SchemaMetadata.userInfo!.selectors!.lastAccessAt!.selector!),
+          ...([] as string[]).concat(SchemaMetadata.userInfo.selectors!.lastAccessAt!.selector!),
           "td:contains('最近动向：')",
           "td:contains('最近動向：')",
           "div:contains('最近动向：')",

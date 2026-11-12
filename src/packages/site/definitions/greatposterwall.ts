@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Indexers/Definitions/GreatPosterWall.cs
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/greatposterwall.com/config.json
+ */
 import { buildCategoryOptionsFromList, parseTimeWithZone, extractContent } from "../utils";
 import { ISiteMetadata, ITorrent, ITorrentTag, IUserInfo } from "../types";
 import GazelleJSONAPI, { groupBrowseResult, groupTorrent, SchemaMetadata } from "../schemas/GazelleJSONAPI.ts";
@@ -20,12 +24,16 @@ interface gpwTorrent extends groupTorrent {
   chineseDubbed: string;
 }
 
-const freeTypeMap: Record<string, ITorrentTag> = {
-  "11": { name: "75%" },
-  "12": { name: "50%" },
-  "13": { name: "25%" },
-  "1": { name: "Free" },
-  "2": { name: "Neutral", color: "cyan" },
+/**
+ * GPW 的 freeType → 量系数，与 Jackett 的 `GreatPosterWall.cs` 完全一致：
+ * 11 = 按 75% 计费、12 = 50%、13 = 25%、1 = 免费、2 = 中性（不计上传也不计下载）。
+ */
+const freeTypeFactorMap: Record<string, { downloadVolumeFactor?: number; uploadVolumeFactor?: number }> = {
+  "11": { downloadVolumeFactor: 0.75 },
+  "12": { downloadVolumeFactor: 0.5 },
+  "13": { downloadVolumeFactor: 0.25 },
+  "1": { downloadVolumeFactor: 0 },
+  "2": { downloadVolumeFactor: 0, uploadVolumeFactor: 0 },
 };
 
 // https://github.com/Mosasauroidea/GazellePW/raw/86c4bedf727691b5a97af42a4864869d18446449/src/locales/zh-Hans/zh-Hans.yaml
@@ -230,9 +238,9 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       trueDownloaded: {
         selector: ["#downloaded-value span[data-tooltip]"],
         attr: "data-tooltip",
@@ -325,10 +333,16 @@ export default class GreatPosterWall extends GazelleJSONAPI {
     const { authkey, passkey } = await this.getAuthKey();
 
     const tags: ITorrentTag[] = [];
+
+    let downloadVolumeFactor: number | undefined;
+    let uploadVolumeFactor: number | undefined;
+    if (freeTypeFactorMap[torrent.freeType]) {
+      ({ downloadVolumeFactor, uploadVolumeFactor } = freeTypeFactorMap[torrent.freeType]);
+    }
+
+    // 与 Jackett 的 GreatPosterWall.cs 一致：先按 freeType 赋值，再用个人免费把下载系数覆盖为 0
     if (torrent.isPersonalFreeleech) {
-      tags.push({ name: "Free", color: "blue" });
-    } else if (freeTypeMap[torrent.freeType]) {
-      tags.push(freeTypeMap[torrent.freeType]);
+      downloadVolumeFactor = 0;
     }
 
     const attrs = torrent.remasterTitle.split("/").map((s) => s.trim());
@@ -362,6 +376,8 @@ export default class GreatPosterWall extends GazelleJSONAPI {
       leechers: torrent.leechers,
       completed: torrent.snatches,
       category: group.releaseType || "",
+      downloadVolumeFactor,
+      uploadVolumeFactor,
       tags,
       ext_imdb: group.imdbId,
       ext_douban: group.doubanId !== "0" ? group.doubanId : null,

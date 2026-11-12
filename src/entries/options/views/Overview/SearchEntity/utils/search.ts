@@ -28,7 +28,7 @@ const globalExistingIds = new Set<string>();
 
 export const searchQueue = new PQueue({ concurrency: 1 }); // 默认设置为 1，避免并发搜索
 
-searchQueue.on("active", () => {
+searchQueue.addEventListener("active", () => {
   runtimeStore.search.isSearching = true;
   // 启动后，根据 configStore 的值，自动更新 searchQueue 的并发数
   if (searchQueue.concurrency != configStore.searchEntity.queueConcurrency) {
@@ -40,7 +40,7 @@ searchQueue.on("active", () => {
   runtimeStore.search.searchResult.forEach((r) => globalExistingIds.add(r.uniqueId));
 });
 
-searchQueue.on("idle", () => {
+searchQueue.addEventListener("idle", () => {
   runtimeStore.search.isSearching = false;
   runtimeStore.search.endAt = Date.now();
 
@@ -59,6 +59,7 @@ export const defaultErrorSearchPlanStatus = [
   EResultParseStatus.unknownError,
   EResultParseStatus.CFBlocked,
   EResultParseStatus.needLogin,
+  EResultParseStatus.noUserInput,
 ];
 
 export const searchPlanStatus = computed<ISearchPlanStatusMap>(() => {
@@ -73,6 +74,7 @@ export const searchPlanStatus = computed<ISearchPlanStatusMap>(() => {
       case EResultParseStatus.parseError:
       case EResultParseStatus.CFBlocked:
       case EResultParseStatus.needLogin:
+      case EResultParseStatus.noUserInput:
         statusMap.error++;
         break;
       case EResultParseStatus.waiting:
@@ -169,7 +171,8 @@ export async function doSearchEntity(
           searchResultItem.status ??= ETorrentStatus.unknown; // 确保 status 字段有默认值，避免过滤器无法处理 undefined
 
           if (imdbSearchKeywords && configStore.searchEntity.forceImdbIdMatchFilter && searchResultItem.ext_imdb) {
-            if (definedFilters.extImdbId(searchResultItem.ext_imdb) !== imdbSearchKeywords) {
+            // extImdbId 内部按字符串做正则匹配，而 ext_imdb 的类型允许 number，这里统一转成字符串
+            if (definedFilters.extImdbId(String(searchResultItem.ext_imdb)) !== imdbSearchKeywords) {
               continue;
             }
           }
@@ -226,7 +229,7 @@ export async function doSearch(search: string, plan?: string, flush: boolean = t
   const searchSolution = await metadataStore.getSearchSolution(runtimeStore.search.searchPlanKey);
 
   if (!searchSolution) {
-    runtimeStore.showSnakebar(`搜索方案 [${searchPlanKey}] 不存在`, { color: "error" });
+    runtimeStore.showSnackbar(`搜索方案 [${searchPlanKey}] 不存在`, { color: "error" });
     return;
   }
 
@@ -234,7 +237,7 @@ export async function doSearch(search: string, plan?: string, flush: boolean = t
   console.log(`Expanded Search Plan for ${searchPlanKey}: `, searchSolution);
 
   if (searchSolution.solutions.length === 0) {
-    runtimeStore.showSnakebar("请至少添加一个站点进行搜索", { color: "error" });
+    runtimeStore.showSnackbar("请至少添加一个站点进行搜索", { color: "error" });
     return;
   }
 
@@ -253,7 +256,7 @@ export async function retrySearch(retryStatus: EResultParseStatus[] = defaultErr
     retryStatus.includes(plan.status),
   );
   if (shouldRetrySearchPlan.length === 0) {
-    runtimeStore.showSnakebar("没有需要重试的搜索计划", { color: "info" });
+    runtimeStore.showSnackbar("没有需要重试的搜索计划", { color: "info" });
     return;
   }
   console.log("Retrying search plans: ", shouldRetrySearchPlan);

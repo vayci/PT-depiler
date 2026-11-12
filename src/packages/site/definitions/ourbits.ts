@@ -1,3 +1,9 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/ourbits.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/ourbits.club/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/ourbits.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/ourbits.json
+ */
 import { set } from "es-toolkit/compat";
 import { ETorrentStatus, type ISiteMetadata } from "../types";
 import { GB, TB } from "../utils";
@@ -157,7 +163,7 @@ export const siteMetadata: ISiteMetadata = {
     CategoryInclbookmarked,
   ],
 
-  officialGroupPattern: [/(-Ao|-.*OurBits|-FLTTH|-IloveTV|OurTV|-IloveHD|OurPad|-MGs)$/i],
+  officialGroupPattern: [/[@-]\s?(OurBits|OurTV|OurPad|FLTTH|iLoveTV|iLoveHD|Ao|PbK|MGs)\b/i],
 
   search: {
     ...SchemaMetadata.search,
@@ -171,7 +177,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       subTitle: {
         text: "",
         selector: ["a[href*='hit'][title]", "a[href*='hit']:has(b)"],
@@ -211,7 +217,7 @@ export const siteMetadata: ISiteMetadata = {
         ],
       },
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         { selector: ".tag.tag-gf", name: "官方", color: "blue" },
         { selector: ".tag.tag-diy", name: "DIY", color: "orange" },
         { selector: ".tag.tag-sf", name: "首发", color: "pink" },
@@ -230,9 +236,9 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       hnrPreWarning: {
         text: 0,
         selector: ["font.color_connectable:contains('H&R'):first"],

@@ -1,3 +1,8 @@
+/**
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/piggo.me/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/piggo.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/piggo.json
+ */
 import type { ISiteMetadata } from "../types";
 import { parseSectionedHitAndRunElement, SchemaMetadata } from "../schemas/NexusPHP";
 
@@ -7,6 +12,7 @@ export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "piggo",
   name: "Piggo",
+  aka: ["猪猪"],
   description: "猪猪网",
   tags: ["影视", "综合", "少儿"],
   collaborator: ["zxb0303"],
@@ -23,9 +29,9 @@ export const siteMetadata: ISiteMetadata = {
    * 但仅支持关键字与 search_area 参数，不支持分类等过滤参数，故不再声明 category。
    */
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     requestConfig: {
-      ...SchemaMetadata.search!.requestConfig!,
+      ...SchemaMetadata.search.requestConfig!,
       url: "/search.php",
     },
   },
@@ -33,9 +39,9 @@ export const siteMetadata: ISiteMetadata = {
   officialGroupPattern: [/PigoHD|PigoWeb|PiGoNF/i],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       messageCount: {
         text: 0,
         selector: "div.message-alerts-container",

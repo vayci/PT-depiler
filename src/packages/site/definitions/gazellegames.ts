@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Indexers/Definitions/GazelleGamesAPI.cs
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/gazellegames.net/config.json
+ */
 import type {
   ISiteMetadata,
   ISearchInput,
@@ -149,9 +153,9 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       bonus: { selector: "response.stats.gold" },
       bonusPerHour: { selector: "response.community.hourlyGold" },
       seedingSize: { selector: "response.community.seedSize" },

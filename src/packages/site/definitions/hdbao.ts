@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/hdbao.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/hdbao.json
+ */
 import { type ISiteMetadata } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
 
@@ -6,6 +10,7 @@ export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "hdbao",
   name: "HDBao",
+  tags: ["影视", "音乐", "体育"],
   collaborator: ["koal"],
   type: "private",
   schema: "NexusPHP",

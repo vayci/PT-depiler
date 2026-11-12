@@ -6,6 +6,7 @@ import { axios, isCloudflareBlocked } from "../utils/adapter";
 import PrivateSite from "./AbstractPrivateSite";
 
 import {
+  type TSchemaMetadata,
   EResultParseStatus,
   ETorrentStatus,
   TSchemaMetadataListSelectors,
@@ -267,7 +268,7 @@ export const listTorrentPageMetadata = {
     seeders: { selector: "td:nth-child(7)" },
     leechers: { selector: "td:nth-child(8)" },
     completed: { selector: "td:nth-child(9)" },
-  },
+  } satisfies TSchemaMetadataListSelectors,
 };
 
 // 下载历史页和HR页
@@ -298,13 +299,14 @@ export const listHistoryPageMetadata = {
     seeders: { selector: "span.badge-extra.fa-arrow-up" },
     leechers: { selector: "span.badge-extra.fa-arrow-down" },
     completed: { selector: "span.badge-extra.fa-check" },
-  },
+  } satisfies TSchemaMetadataListSelectors,
 };
 
-export const SchemaMetadata: Pick<
-  ISiteMetadata,
-  "version" | "schema" | "type" | "timezoneOffset" | "search" | "userInfo" | "userInputSettingMeta" | "list" | "detail"
-> = {
+/** 本引擎一定会提供的键；列出来之后消费方读它们不必再写非空断言 */
+type TMetadataKeys =
+  "version" | "schema" | "type" | "timezoneOffset" | "search" | "list" | "detail" | "userInfo" | "userInputSettingMeta";
+
+export const SchemaMetadata: TSchemaMetadata<TMetadataKeys> = {
   version: 0,
   schema: "AvistazNetwork",
   type: "private",
@@ -352,6 +354,7 @@ export const SchemaMetadata: Pick<
       id: { selector: "id" },
       title: { selector: "file_name" },
       subTitle: { text: "" }, // AvzNet不提供subTitle
+      cover: { selector: "images.0" },
       url: { selector: "url" },
       link: { selector: "download" },
       category: {

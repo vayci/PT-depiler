@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/ptskit.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/ptskit.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/ptskit.json
+ */
 import { type ISiteMetadata } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP.ts";
 
@@ -17,7 +22,10 @@ export const siteMetadata: ISiteMetadata = {
   type: "private",
   schema: "NexusPHP",
 
-  urls: ["uggcf://jjj.cgfxvg.bet/"],
+  // 2026-10-29 pre-dessert-sites 跟进：新增主域置顶、原域保留；已停用的历史域进 legacyUrls。
+  // 成人站，全部写 rot13。
+  urls: ["uggcf://jjj.cgfxvg.pbz/", "uggcf://jjj.cgfxvg.bet/"],
+  legacyUrls: ["uggcf://jjj.cgfxvg.arg/"],
 
   category: [
     {
@@ -41,13 +49,13 @@ export const siteMetadata: ISiteMetadata = {
     },
     {
       name: "分类（十八禁）",
-      key: "cat",
+      key: "cat_special",
       options: [
         { name: "欧美", value: 412 },
         { name: "日本", value: 411 },
         { name: "国产", value: 410 },
       ],
-      cross: { mode: "append" },
+      cross: { mode: "append", key: "cat" },
     },
     {
       name: "媒介",

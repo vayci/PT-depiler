@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/opencd.yml
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/opencd.json
+ */
 import { ETorrentStatus, type IElementQuery, type ITorrent, type ISiteMetadata } from "../types";
 import NexusPHP, {
   CategoryInclbookmarked,
@@ -240,11 +244,11 @@ export const siteMetadata: ISiteMetadata = {
       imdb: false,
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       progress: selectorSearchProgress,
       status: selectorSearchStatus,
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         { name: "H&R", selector: "*", color: "red" },
         { selector: "img[src*='pic/share_rule_1.gif']", name: "Excl.", color: "deep-orange-darken-1" }, // 禁转
       ],
@@ -281,9 +285,9 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       hnrUnsatisfied: {
         text: 0,
         selector: ["td.rowfollow > a[href*='torrents.php?option-torrents=8']"],

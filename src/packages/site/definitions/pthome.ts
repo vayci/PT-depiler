@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/pthome.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/pthome.net/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/pthome.json
+ */
 import type { ISiteMetadata } from "../types";
 import { SchemaMetadata, subTitleRemoveExtraElement } from "../schemas/NexusPHP";
 
@@ -116,12 +121,12 @@ export const siteMetadata: ISiteMetadata = {
     },
   ],
 
-  officialGroupPattern: [/(-pthome|-pth|.*@pth)/i],
+  officialGroupPattern: [/[@-]\s?(PTH(?:ome|web|tv|eBook|Audio|music)?)\b/i],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       subTitle: {
         // PTHome wraps its subtitle in a <span> element. The default NexusPHP handler removes
         // all span elements, which strips the subtitle text. We only remove <a> and <img>

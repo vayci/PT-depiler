@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/cspt.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/cspt.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/cspt.json
+ */
 import { ETorrentStatus, type ISiteMetadata } from "../types";
 import NexusPHP, {
   CategoryInclbookmarked,
@@ -180,12 +185,12 @@ export const siteMetadata: ISiteMetadata = {
     },
   ],
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       rows: { selector: "div.torrent-table-sub-info" },
       subTitle: { selector: ".torrent-info-text-small_name" },
-      time: { selector: ".torrent-info-text-added", ...SchemaMetadata.search!.selectors!.time! },
+      time: { selector: ".torrent-info-text-added", ...SchemaMetadata.search.selectors!.time! },
       size: { selector: ".torrent-info-text-size", filters: [{ name: "parseSize" }] },
       author: { selector: ".torrent-info-text-author" },
       seeders: { selector: ".torrent-info-text-seeders" },
@@ -218,9 +223,9 @@ export const siteMetadata: ISiteMetadata = {
     },
   },
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors,
+      ...SchemaMetadata.userInfo.selectors,
       bonus: {
         selector: ["td.rowhead:contains('金元宝') + td"],
         filters: [{ name: "parseNumber" }],

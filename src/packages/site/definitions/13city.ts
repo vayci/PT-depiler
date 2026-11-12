@@ -1,6 +1,7 @@
 /**
  * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/13city.yml
  * @JackettIssue https://github.com/Jackett/Jackett/issues/16052
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/13city.json
  */
 import { type ISiteMetadata } from "../types";
 import { CategoryIncldead, CategorySpstate, CategoryInclbookmarked, SchemaMetadata } from "../schemas/NexusPHP";
@@ -146,9 +147,9 @@ export const siteMetadata: ISiteMetadata = {
   officialGroupPattern: [/-(13City|.*13City)/i],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       bonus: {
         selector: ["td.rowhead:contains('啤酒瓶') + td, td.rowhead:contains('Karma Points') + td"],
         filters: [{ name: "parseNumber" }],

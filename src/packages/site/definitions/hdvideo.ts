@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/hdvideo.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/hdvideo.one/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/hdvideo.json
+ */
 import type { ISiteMetadata } from "../types";
 import { SchemaMetadata } from "../schemas/NexusPHP";
 
@@ -6,6 +11,7 @@ export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "hdvideo",
   name: "HDVideo",
+  tags: ["影视", "综合"],
 
   collaborator: ["koal"],
 
@@ -18,9 +24,9 @@ export const siteMetadata: ISiteMetadata = {
   officialGroupPattern: [/(-HDVWEB|-HDVMV)/i],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       bonus: {
         selector: [
           "#top-stats-bar a.top-stat[href*='mybonus.php'] b",

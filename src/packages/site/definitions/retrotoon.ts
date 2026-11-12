@@ -1,3 +1,6 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/retrotoon.yml
+ */
 import type { ISiteMetadata } from "../types";
 import { buildCategoryOptionsFromDict, parseSizeString, parseValidTimeString } from "../utils";
 
@@ -63,7 +66,6 @@ export const siteMetadata: ISiteMetadata = {
   schema: "AbstractPrivateSite",
 
   urls: ["uggcf://ergebgbba.jbeyq/"],
-  favicon: "https://retrotoon.world/favicon.ico",
 
   noLoginAssert: {
     urlPatterns: [/login\.php|takelogin\.php/i],

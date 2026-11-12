@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/ptcafe.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/ptcafe.json
+ */
 import { type ISiteMetadata } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP.ts";
 
@@ -7,6 +11,7 @@ export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "ptcafe",
   name: "咖啡",
+  tags: ["影视", "音乐", "体育"],
   aka: ["PTCafe", "咖啡PT"],
   description: "热爱生活·享受咖啡",
   timezoneOffset: "+0800",

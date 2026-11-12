@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/lst.yml
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/lst.json
+ */
 import { type ISiteMetadata } from "../types";
 import { CategoryFree, SchemaMetadata, userInfoTrans } from "../schemas/Unit3D.ts";
 
@@ -92,7 +96,7 @@ export const siteMetadata: ISiteMetadata = {
     ...SchemaMetadata.search,
     skipNonLatinCharacters: true,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       rows: { selector: ".torrent-results__list > .torrent-search-row" },
       id: {
         selector: ".torrent-search-row__name > a",
@@ -102,7 +106,7 @@ export const siteMetadata: ISiteMetadata = {
       title: { selector: ".torrent-search-row__name > a" },
       url: { selector: ".torrent-search-row__name > a", attr: "href" },
       size: { selector: ".torrent-search-row__stat--size", attr: "title", filters: [{ name: "parseNumber" }] },
-      author: { ...SchemaMetadata.search!.selectors!.author!, selector: ".torrent-search-row__uploader" },
+      author: { ...SchemaMetadata.search.selectors!.author!, selector: ".torrent-search-row__uploader" },
       category: { selector: ".torrent-search-row__category", attr: "title" },
       seeders: { selector: ".torrent-search-row__stat--seeders" },
       leechers: { selector: ".torrent-search-row__stat--leechers" },
@@ -161,11 +165,11 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       id: {
-        ...SchemaMetadata.userInfo!.selectors!.id!,
+        ...SchemaMetadata.userInfo.selectors!.id!,
         selector: "span.profile-hero__account-item > i.fa-hashtag ~ span.profile-hero__account-value",
       },
       uploads: {
@@ -173,7 +177,7 @@ export const siteMetadata: ISiteMetadata = {
         filters: [{ name: "parseNumber" }],
       },
       joinTime: {
-        ...SchemaMetadata.userInfo!.selectors!.joinTime!,
+        ...SchemaMetadata.userInfo.selectors!.joinTime!,
         selector: [...userInfoTrans.joinTime.map((x) => `span.profile-hero__meta-item:contains('${x}')`)],
       },
       lastAccessAt: {

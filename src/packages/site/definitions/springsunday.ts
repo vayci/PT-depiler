@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/springsunday.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/springsunday.net/config.json
+ */
 import { set } from "es-toolkit/compat";
 
 import {
@@ -223,7 +227,7 @@ export const siteMetadata: ISiteMetadata = {
     },
   ],
 
-  officialGroupPattern: [/-(CMCT|cmctv)/i],
+  officialGroupPattern: [/[@-]\s?(CMCT(?:V|A)?|Oldboys|GTR)\b/i],
 
   search: {
     ...SchemaMetadata.search,
@@ -237,7 +241,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       id: {
         selector: ["a[href*='download.php?id=']:has(span.bi-download)"],
         attr: "href",
@@ -313,7 +317,7 @@ export const siteMetadata: ISiteMetadata = {
   userInfo: {
     ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors,
+      ...SchemaMetadata.userInfo.selectors,
       bonus: {
         selector: ["td.rowhead:contains('积分') + td"],
         filters: [
@@ -339,7 +343,7 @@ export const siteMetadata: ISiteMetadata = {
         filters: [{ name: "parseNumber" }],
       },
       messageCount: {
-        ...SchemaMetadata.userInfo!.selectors!.messageCount,
+        ...SchemaMetadata.userInfo.selectors!.messageCount,
         selector: ["a[href*='messages.php'] > b[style*='background: darkorange']"],
       },
       inviteStatus: {
@@ -355,6 +359,18 @@ export const siteMetadata: ISiteMetadata = {
 
   levelRequirements: [
     {
+      id: 0,
+      name: "吸血鬼(Peasant)",
+      nameAka: ["Peasant"],
+      privilege:
+        "当以下情况时将被自动降至本级：" +
+        "如果你已经下载了超过 10GB，你应该有大于 0.6 的分享率；" +
+        "如果你已经下载了超过 50GB，你应该有大于 0.7 的分享率；" +
+        "如果你已经下载了超过 100GB，你应该有大于 0.8 的分享率；" +
+        "如果你已经下载了超过 200GB，你应该有大于 0.9 的分享率；" +
+        "如果你已经下载了超过 500GB，你应该有大于 1.0 的分享率。",
+    },
+    {
       id: 1,
       name: "新人(User)",
       privilege: `新用户的默认级别。可以发种，可以请求续种；可以在做种/下载/发布的时候选择匿名模式；可以上传字幕或删除自己上传的字幕；可以更新过期的外部信息。`,
@@ -362,26 +378,42 @@ export const siteMetadata: ISiteMetadata = {
     {
       id: 2,
       name: "精英(Elite)",
-      downloaded: "500GB",
       ratio: 1.2,
-      alternative: [{ seedingBonus: 100000, uploads: 1 }, { seedingBonus: 150000 }],
+      // 分享率 > 1.2 且 ((下载量 > 500GB 或 真实下载量 > 2048GB) 且 (做种积分>=10万&发布>1 或 做种积分>=15万))
+      // 用笛卡尔积表达：
+      alternative: [
+        { downloaded: "500GB", seedingBonus: 100000, uploads: 1 },
+        { downloaded: "500GB", seedingBonus: 150000 },
+        { trueDownloaded: "2048GB", seedingBonus: 100000, uploads: 1 },
+        { trueDownloaded: "2048GB", seedingBonus: 150000 },
+      ],
       privilege:
         "可以在做种/下载/发布的时候选择匿名模式；可以查看用户列表；可以查看排行榜；可以浏览论坛邀请区；自助申请保种员；等级加成 0.05。",
     },
     {
       id: 3,
       name: "大师(Master)",
-      downloaded: "1TB",
       ratio: 1.2,
-      alternative: [{ seedingBonus: 500000, uploads: 100 }, { seedingBonus: 1000000 }],
+      // 分享率 > 1.2 且 ((下载量 > 1TB 或 真实下载量 > 4TB) 且 (做种积分>=50万&发布>100 或 做种积分>=100万))
+      alternative: [
+        { downloaded: "1TB", seedingBonus: 500000, uploads: 100 },
+        { downloaded: "1TB", seedingBonus: 1000000 },
+        { trueDownloaded: "4TB", seedingBonus: 500000, uploads: 100 },
+        { trueDownloaded: "4TB", seedingBonus: 1000000 },
+      ],
       privilege: "可以访问高级用户论坛，等级加成 0.15。",
     },
     {
       id: 4,
       name: "神仙(God)",
-      downloaded: "3TB",
       ratio: 2,
-      alternative: [{ seedingBonus: 1200000, uploads: 300 }, { seedingBonus: 2400000 }],
+      // 分享率 > 2 且 ((下载量 > 3TB 或 真实下载量 > 12TB) 且 (做种积分>=120万&发布>300 或 做种积分>=240万))
+      alternative: [
+        { downloaded: "3TB", seedingBonus: 1200000, uploads: 300 },
+        { downloaded: "3TB", seedingBonus: 2400000 },
+        { trueDownloaded: "12TB", seedingBonus: 1200000, uploads: 300 },
+        { trueDownloaded: "12TB", seedingBonus: 2400000 },
+      ],
       privilege: "彩色 ID 特权；可以查看普通日志；等级加成 0.25。",
     },
     {

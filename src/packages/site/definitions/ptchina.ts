@@ -1,3 +1,7 @@
+/**
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/ptchina.org/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/ptchina.json
+ */
 import { type ISiteMetadata } from "../types";
 // import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP.ts";
 
@@ -7,6 +11,7 @@ export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "ptchina",
   name: "PTChina",
+  tags: ["影视", "原盘"],
   aka: ["铂金学院"],
   description: "PT新手的梦想之家，PT老鸟的黄埔军校",
   timezoneOffset: "+0800",

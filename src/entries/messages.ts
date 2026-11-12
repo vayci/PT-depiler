@@ -14,9 +14,25 @@ import type {
   ISocialRecommendationsResult,
   TSupportSocialSite$1,
 } from "@ptd/social";
-import type { IMediaServerId, IMediaServerSearchOptions, IMediaServerSearchResult } from "@ptd/mediaServer";
+import type {
+  IMediaServerId,
+  IMediaServerItem,
+  IMediaServerOverview,
+  IMediaServerSearchOptions,
+  IMediaServerSearchResult,
+} from "@ptd/mediaServer";
 import type { IBackupData, IBackupFileInfo } from "@ptd/backupServer";
-import type { CTorrent, TorrentClientStatus, TorrentQueueDirection, TorrentSpeedLimit } from "@ptd/downloader";
+import type {
+  CTorrent,
+  CTorrentFile,
+  CTorrentFileSelection,
+  CTorrentPeer,
+  CTorrentTracker,
+  TorrentClientMetaData,
+  TorrentClientStatus,
+  TorrentQueueDirection,
+  TorrentSpeedLimit,
+} from "@ptd/downloader";
 
 // 可序列化的种子信息，用于辅种检测
 export interface ITorrentInfoForVerification {
@@ -45,6 +61,8 @@ import {
   AugmentedRequired,
   IKeepUploadTask,
   TKeepUploadTaskKey,
+  ITorrentFavoriteItem,
+  TTorrentFavoriteKey,
   BridgeStatus,
 } from "@/shared/types.ts";
 
@@ -78,8 +96,9 @@ interface ProtocolMap extends TMessageMap {
   removeCookie(data: chrome.cookies.CookieDetails | chrome.cookies.SetDetails): chrome.cookies.CookieDetails;
   checkAndExtendCookies(url: string): void;
 
-  // 1.6 chrome.notifications
-  showNotification(data: { options: chrome.notifications.NotificationOptions; timeout?: number }): void;
+  // （原 1.6 `showNotification` 已删除：声明之后从来没有 handler，且已无任何调用方 ——
+  //   真正要弹通知的地方直接调 chrome.notifications.create，见 background/utils/contextMenus.ts。
+  //   留着一个「声明了但没实现」的协议项，正是 §3.7(1) 那类静默 bug 的温床。）
 
   // 1.7 chrome.contextMenus
   addContextMenu(data: chrome.contextMenus.CreateProperties): string;
@@ -107,6 +126,10 @@ interface ProtocolMap extends TMessageMap {
     keywords?: string;
     options?: IMediaServerSearchOptions;
   }): IMediaServerSearchResult;
+  /** 调研 B12：详情弹窗按需拉取单条目的完整信息（含 People 等重字段） */
+  getMediaServerItemDetail(data: { mediaServerId: IMediaServerId; itemId: string }): IMediaServerItem | null;
+  /** 调研 C14 / C20：按需生成媒体库概览（整库遍历与聚合都在 offscreen 里完成，只回传统计结果） */
+  getMediaServerOverview(data: { mediaServerId: IMediaServerId; maxItems?: number }): IMediaServerOverview | null;
   getSearchResultSnapshotData(snapshotId: TSearchSnapshotKey): ISearchData;
   saveSearchResultSnapshotData(data: { snapshotId: TSearchSnapshotKey; data: ISearchData }): void;
   removeSearchResultSnapshotData(snapshotId: TSearchSnapshotKey): void;
@@ -128,6 +151,21 @@ interface ProtocolMap extends TMessageMap {
   setClientTorrentSpeedLimit(data: { downloaderId: string; id: any; limits: TorrentSpeedLimit }): boolean;
   setClientTorrentLabel(data: { downloaderId: string; id: any; label: string }): boolean;
 
+  // 下载器能力元数据（feature 声明，UI 据此渲染文件/peers/tracker 面板）
+  getDownloaderMetaData(downloaderId: string): TorrentClientMetaData | undefined;
+
+  // 文件级 / peers / tracker 管理
+  getClientTorrentFiles(data: { downloaderId: string; torrent: CTorrent }): CTorrentFile[];
+  setClientTorrentFilePriority(data: {
+    downloaderId: string;
+    torrent: CTorrent;
+    selections: CTorrentFileSelection[];
+  }): boolean;
+  getClientTorrentPeers(data: { downloaderId: string; torrent: CTorrent }): CTorrentPeer[];
+  getClientTorrentTrackersDetail(data: { downloaderId: string; torrent: CTorrent }): CTorrentTracker[];
+  addClientTorrentTracker(data: { downloaderId: string; torrent: CTorrent; url: string }): boolean;
+  removeClientTorrentTracker(data: { downloaderId: string; torrent: CTorrent; url: string }): boolean;
+
   downloadTorrent(data: IDownloadTorrentOption): IDownloadTorrentResult;
 
   getDownloadHistory(): ITorrentDownloadMetadata[];
@@ -147,6 +185,12 @@ interface ProtocolMap extends TMessageMap {
   getSocialInformation(data: { site: TSupportSocialSite$1; sid: string }): ISocialInformation;
   // 判断 URL 命中的社交站点（供 content-script 引导做轻量预筛，避免把 social 包打进引导，见 issue #1467）
   matchSocialPage(url: string): TSupportSocialSite$1 | null;
+
+  /**
+   * content-script 引导用：判断该 URL 命中哪个站点，以及该站点是否允许注入。
+   * 只需 host → siteId 一项判断，因此不再把整份 metadata store 搬到页面上下文。
+   */
+  matchSitePage(url: string): { siteId: TSiteID; allowContentScript: boolean } | null;
   getSocialRecommendations(data?: {
     flush?: boolean;
     enrichment?: "all" | "none" | "visible";
@@ -160,6 +204,7 @@ interface ProtocolMap extends TMessageMap {
   exportBackupData(data: { backupServerId: string | "local"; backupFields: TBackupFields[] }): boolean;
   getBackupHistory(data: string): IBackupFileInfo[];
   deleteBackupHistory(data: { backupServerId: string; path: string }): boolean;
+  applyBackupRetention(data: { backupServerId: string; keepFilename?: string }): IBackupFileInfo[];
   restoreBackupData(data: { restoreData: IBackupData; restoreOptions?: IRestoreOptions }): boolean;
   getRemoteBackupData(data: { backupServerId: string; path: string; decryptKey?: string }): IBackupData;
 
@@ -171,11 +216,16 @@ interface ProtocolMap extends TMessageMap {
   deleteKeepUploadTask(taskId: TKeepUploadTaskKey): void;
   clearKeepUploadTasks(): void;
 
-  // 2.8 Lightweight list queries (for CLI discovery)
+  // 2.8 种子收藏 ( utils/torrentFavorite )
+  getTorrentFavorites(): ITorrentFavoriteItem[];
+  createTorrentFavorites(data: { torrents: ITorrent[]; favCategories?: string[]; comment?: string }): number;
+  deleteTorrentFavorites(keys: TTorrentFavoriteKey[]): void;
+
+  // 2.9 Lightweight list queries (for CLI discovery)
   getSiteList(): Array<{ id: string; name: string; url: string; offline: boolean }>;
   getDownloaderList(): Array<{ id: string; name: string; type: string; enabled: boolean; address: string }>;
 
-  // 2.9 Native messaging bridge control
+  // 2.10 Native messaging bridge control
   nativeBridgeGetStatus(): BridgeStatus;
   nativeBridgeSetEnabled(data: boolean): BridgeStatus;
   nativeBridgeReconnect(): BridgeStatus;
@@ -240,3 +290,15 @@ export const { sendMessage, onMessage } = createMessageWrapper(
     logger: __BROWSER__ == "firefox" || isDebug ? console : undefined,
   }),
 );
+
+/**
+ * 用户信息刷新队列被主动取消（`cancelUserInfoQueue` → p-queue 的 `clear()`）时抛出的稳定错误信息。
+ *
+ * p-queue 10 起 `clear()` 会以 AbortError 结束被移除的排队任务，但 AbortError 是 DOMException，
+ * 经 `sendMessage` 跨上下文序列化后无法可靠识别，因此 offscreen 侧统一归一化成这个信息再抛给调用方。
+ */
+export const USER_INFO_QUEUE_CANCELLED = "USER_INFO_QUEUE_CANCELLED";
+
+export function isUserInfoQueueCancelledError(error: unknown): boolean {
+  return (error as Error | undefined)?.message === USER_INFO_QUEUE_CANCELLED;
+}

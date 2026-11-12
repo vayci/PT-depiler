@@ -1,3 +1,9 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/jpopsuki.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/jpopsuki.eu/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/jpop.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/jpopsuki.json
+ */
 import { ISiteMetadata, ITorrent, IUserInfo, ISearchInput } from "../types";
 import Gazelle, {
   SchemaMetadata,
@@ -75,7 +81,7 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     keywordPath: "params.torrentname",
     requestConfig: {
       url: "/ajax.php",
@@ -89,9 +95,9 @@ export const siteMetadata: ISiteMetadata = {
       imdb: false,
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       title: {
-        ...SchemaMetadata.search!.selectors!.title!,
+        ...SchemaMetadata.search.selectors!.title!,
         // 有时候不显示 tags...
         elementProcess: GazelleUtils.genTitleElementProcess({
           tdSelector: "td:has(a[href*='torrents.php?id='][title])",
@@ -173,9 +179,9 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       uploaded: {
         selector: genUserInfoSelector("stats", "uploaded"),
         filters: [{ name: "parseSize" }],

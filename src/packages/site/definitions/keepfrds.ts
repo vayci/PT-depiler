@@ -1,3 +1,11 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/keepfriends.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/pt.keepfrds.com/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/keepfrds.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/frds.json
+ */
+import { get } from "es-toolkit/compat";
+
 import { type ISiteMetadata, type IUserInfo } from "../types";
 import NexusPHP, {
   CategoryInclbookmarked,
@@ -5,6 +13,34 @@ import NexusPHP, {
   SchemaMetadata,
   subTitleRemoveExtraElement,
 } from "../schemas/NexusPHP.ts";
+
+/**
+ * /api/userdetails.php 返回的 `user.class` 为 NexusPHP 的 UC_* 数字常量，
+ * 这里将其映射为站点 levelRequirements 中对应的等级 id 与等级名称。
+ */
+const userClassMap: Record<number, { id: number; name: string }> = {
+  0: { id: 0, name: "Peasant" }, // UC_PEASANT 待定/降级用户
+  1: { id: 1, name: "User" }, // UC_USER
+  2: { id: 2, name: "Power User" }, // UC_POWER_USER
+  3: { id: 3, name: "Elite User" }, // UC_ELITE_USER
+  4: { id: 4, name: "Crazy User" }, // UC_CRAZY_USER
+  5: { id: 5, name: "Insane User" }, // UC_INSANE_USER
+  6: { id: 6, name: "Veteran User" }, // UC_VETERAN_USER
+  7: { id: 7, name: "Extreme User" }, // UC_EXTREME_USER
+  8: { id: 8, name: "Ultimate User" }, // UC_ULTIMATE_USER
+  9: { id: 9, name: "Nexus Master" }, // UC_NEXUS_MASTER
+  10: { id: 100, name: "贵宾" }, // UC_VIP
+  11: { id: 200, name: "养老族" }, // UC_RETIREE
+  12: { id: 201, name: "发布员" }, // UC_UPLOADER
+  13: { id: 202, name: "总版主" }, // UC_MODERATOR
+  14: { id: 203, name: "管理员" }, // UC_ADMINISTRATOR
+  15: { id: 204, name: "维护开发员" }, // UC_SYSOP
+  16: { id: 205, name: "主管" }, // UC_STAFFLEADER
+};
+
+const getLevelIdFromClass = (userClass: number): number => userClassMap[userClass]?.id ?? userClass;
+
+const getLevelNameFromClass = (userClass: number): string => userClassMap[userClass]?.name ?? String(userClass);
 
 export const siteMetadata: ISiteMetadata = {
   ...SchemaMetadata,
@@ -20,7 +56,6 @@ export const siteMetadata: ISiteMetadata = {
   schema: "NexusPHP",
 
   urls: ["https://pt.keepfrds.com/"],
-  favicon: "https://pt.keepfrds.com/static/favicon-64x64.png",
 
   category: [
     {
@@ -165,7 +200,7 @@ export const siteMetadata: ISiteMetadata = {
   search: {
     ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       subTitle: {
         selector: ["a[href*='hit'][title]", "a[href*='hit']:has(b)"],
         // 处理类似以下 尾部中括号的情况
@@ -173,7 +208,7 @@ export const siteMetadata: ISiteMetadata = {
         elementProcess: subTitleRemoveExtraElement(["b"], true),
       },
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         { selector: "td.embedded b > font.recommended:contains('禁转')", name: "Excl.", color: "red" },
       ],
     },
@@ -182,7 +217,7 @@ export const siteMetadata: ISiteMetadata = {
   detail: {
     ...SchemaMetadata.detail,
     selectors: {
-      ...SchemaMetadata.detail!.selectors,
+      ...SchemaMetadata.detail.selectors,
       link: {
         selector: "input#download_link",
         attr: "value",
@@ -193,31 +228,11 @@ export const siteMetadata: ISiteMetadata = {
   userInfo: {
     ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors,
+      ...SchemaMetadata.userInfo.selectors,
       messageCount: {
         text: 0,
         selector: ["a[href*='messages.php'] b span[style*='color: red']"],
       },
-      bonus: {
-        selector: ["td.rowhead:contains('魔力') + td", "td.rowhead:contains('Karma'):contains('Points') + td"],
-        filters: [
-          (query: string) => {
-            query = query.replace(/,/g, "");
-            if (/(魔力值):.+?([\d.]+)/.test(query)) {
-              query = query.match(/(魔力值):.+?([\d.]+)/)![2];
-              return parseFloat(query);
-            } else if (/[\d.]+/.test(query)) {
-              return parseFloat(query.match(/[\d.]+/)![0]);
-            }
-            return query;
-          },
-        ],
-      },
-      seeding: {
-        selector: ["a[href='/torrents.php?option-torrents=3']"],
-        filters: [{ name: "parseNumber" }],
-      },
-
       bonusPerHour: {
         selector: ["#info_block #perBonus", "#perBonus"],
         filters: [{ name: "parseNumber" }],
@@ -225,25 +240,39 @@ export const siteMetadata: ISiteMetadata = {
     },
     process: [
       {
-        requestConfig: { url: "/index.php", responseType: "document" },
-        fields: ["id", "name"],
+        /**
+         * 新版站点提供 /api/userdetails.php 接口（JSON），返回核心用户数据：
+         * {
+         *   version: number,
+         *   user: { id, username, class, joinedAt, uploadedBytes, downloadedBytes, bonus },
+         *   torrentStats: { seeding, seedingBytes, leeching, uploaded, updatedAt }
+         * }
+         */
+        requestConfig: { url: "/api/userdetails.php", responseType: "json" },
+        // uploads 会命中基类 `parseUserInfoFor${PascalCase(key)}` 的动态分发，故用 fields 触发该字段
+        fields: ["uploads"],
+        selectors: {
+          id: { selector: "user.id" },
+          name: { selector: "user.username" },
+          levelId: { selector: "user.class", filters: [getLevelIdFromClass] },
+          levelName: { selector: "user.class", filters: [getLevelNameFromClass] },
+          joinTime: { selector: "user.joinedAt", filters: [{ name: "parseTime" }] },
+          uploaded: { selector: "user.uploadedBytes" },
+          downloaded: { selector: "user.downloadedBytes" },
+          bonus: { selector: "user.bonus" },
+          seeding: { selector: "torrentStats.seeding" },
+          seedingSize: { selector: "torrentStats.seedingBytes" },
+          leeching: { selector: "torrentStats.leeching" },
+        },
       },
       {
+        // API 未提供的字段，仍从网页获取
         requestConfig: { url: "/userdetails.php", responseType: "document" },
         assertion: { id: "params.id" },
         fields: [
           "messageCount",
-          "uploaded",
           "trueUploaded",
-          "downloaded",
           "trueDownloaded",
-          "levelName",
-          "bonus",
-          "seedingBonus",
-          "joinTime",
-          "seeding",
-          "hnrUnsatisfied",
-          "hnrPreWarning",
           "bonusPerHour", // 使用我们自定义的 selector 和 filter
           "lastAccessAt",
         ],
@@ -396,16 +425,28 @@ export default class Keepfrds extends NexusPHP {
   }
 
   /**
-   * 新版站点已移除 getusertorrentlistajax.php 接口，且 userdetails 页面不再提供做种体积/发布数。
+   * 新版站点已移除 getusertorrentlistajax.php 接口，做种数据改由 /api/userdetails.php 提供。
    * 覆写基类的回退逻辑，避免请求已失效的接口导致用户信息更新失败。
    */
   protected override async parseUserInfoForSeedingStatus(
     flushUserInfo: Partial<IUserInfo>,
   ): Promise<Partial<IUserInfo>> {
-    return flushUserInfo; // seeding 由 selector 提供，seedingSize 新版页面不提供
+    return flushUserInfo; // seeding / seedingSize 由 API 提供
   }
 
-  protected override async parseUserInfoForUploads(flushUserInfo: Partial<IUserInfo>): Promise<Partial<IUserInfo>> {
-    return flushUserInfo; // uploads 新版页面不提供，跳过失效接口
+  /**
+   * 字段 uploads 会命中 AbstractPrivateSite 中 `parseUserInfoFor${PascalCase(key)}` 的动态分发
+   * （第二个参数即为该步骤的响应体），因此这里直接从 /api/userdetails.php 的 JSON 中读取发布数，
+   * 而不是走选择器；同时对于基类的回退调用（无响应体）保持空操作，避免请求已失效的接口。
+   */
+  protected override async parseUserInfoForUploads(
+    flushUserInfo: Partial<IUserInfo>,
+    dataDocument?: object,
+  ): Promise<Partial<IUserInfo>> {
+    const uploads = get(dataDocument, "torrentStats.uploaded");
+    if (typeof uploads !== "undefined") {
+      flushUserInfo.uploads = Number(uploads);
+    }
+    return flushUserInfo;
   }
 }

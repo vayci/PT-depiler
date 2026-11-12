@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Indexers/Definitions/MTeamTp.cs
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/mteam.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/mteam.json
+ */
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
 import { set } from "es-toolkit/compat";
 import { build as buildDouban } from "@ptd/social/entity/douban.ts";
@@ -163,15 +168,14 @@ export const siteMetadata: ISiteMetadata = {
   type: "private",
   schema: "mTorrent",
 
-  urls: ["uggcf://xc.z-grnz.pp/", "uggcf://mc.z-grnz.vb/", "uggcf://bo.z-grnz.pp/"],
+  urls: ["uggcf://xc.z-grnz.pp/", "uggcf://mc.z-grnz.vb/", "uggcf://bo.z-grnz.pp/", "uggcf://u5.z-grnz.pp/"],
   legacyUrls: [
-    "https://h5.m-team.cc/",
-    "https://xp.m-team.io/",
-    "https://pt.m-team.cc/",
-    "https://tp.m-team.cc/",
-    "https://xp.m-team.cc/",
-    "https://ap.m-team.cc/",
-    "https://next.m-team.cc/",
+    "uggcf://kc.z-grnz.vb/",
+    "uggcf://cg.z-grnz.pp/",
+    "uggcf://gc.z-grnz.pp/",
+    "uggcf://kc.z-grnz.pp/",
+    "uggcf://nc.z-grnz.pp/",
+    "uggcf://arkg.z-grnz.pp/",
   ],
 
   category: [
@@ -331,6 +335,7 @@ export const siteMetadata: ISiteMetadata = {
       id: { selector: "id" },
       title: { selector: "name" },
       subTitle: { selector: "smallDescr" },
+      cover: { selector: "imageList.0" },
       url: { selector: "id", filters: [{ name: "prepend", args: ["/detail/"] }] },
       // link: 不返回，在 class 中单独构造
       time: { selector: "createdDate", filters: [{ name: "parseTime" }] },
@@ -694,17 +699,19 @@ export default class MTeam extends PrivateSite {
     return torrent;
   }
 
-  private mapDiscountToTag(discount?: string | null): ITorrentTag | undefined {
-    switch (discount) {
-      case "FREE":
-        return { name: "Free", color: "blue" };
-      case "PERCENT_70":
-        return { name: "30%", color: "indigo" };
-      case "PERCENT_50":
-        return { name: "50%", color: "orange" };
-      default:
-        return undefined;
-    }
+  /**
+   * 站点折扣枚举 → 量系数，与 Jackett 的 `MTeamTp.cs` 对齐：
+   * `FREE → 下载 0`、`PERCENT_50 → 0.5`、`PERCENT_70 → 0.3`（减免 70% 即按 30% 计费），
+   * `_2X_*` 前缀表示双倍上传（上传 = 2），其余（含 NORMAL）按正常 1 计。
+   * Jackett 未列出的 `_2X_PERCENT_70` / `_2X` 按同一命名规则推得。
+   */
+  private mapDiscountToFactors(discount?: string | null): { download: number; upload: number } {
+    const normalized = (discount ?? "NORMAL").toUpperCase();
+    const upload = /^_?2X/.test(normalized) ? 2 : 1;
+    const base = normalized.replace(/^_?2X_?/, "");
+
+    const download = base === "FREE" ? 0 : base === "PERCENT_50" ? 0.5 : base === "PERCENT_70" ? 0.3 : 1;
+    return { download, upload };
   }
 
   protected override parseTorrentRowForTags(
@@ -712,25 +719,22 @@ export default class MTeam extends PrivateSite {
     row: IMTeamRawTorrent,
     searchConfig: ISearchInput,
   ): Partial<ITorrent> {
-    const tags: ITorrentTag[] = [];
-
-    // 优先处理全站促销规则
+    // 优先处理全站促销规则（Jackett 只读 status.discount，这里保留本站既有的 promotionRule 优先级）
+    let factors: { download: number; upload: number };
     if (row.status?.promotionRule) {
-      const globalDiscount = row.status.promotionRule.discount ?? "NORMAL";
-      const tag = this.mapDiscountToTag(globalDiscount);
-      if (tag) tags.push(tag);
-    } else {
+      factors = this.mapDiscountToFactors(row.status.promotionRule.discount ?? "NORMAL");
+    } else if (row.status?.mallSingleFree) {
       // 处理 成人区限时free
-      if (row.status?.mallSingleFree) {
-        tags.push({ name: "Free", color: "blue" });
-      } else {
-        // 其他促销状态 从 status.discount 中获取
-        const discount = row.status?.discount ?? "NORMAL";
-        const tag = this.mapDiscountToTag(discount);
-        if (tag) tags.push(tag);
-      }
+      factors = { download: 0, upload: 1 };
+    } else {
+      // 其他促销状态 从 status.discount 中获取
+      factors = this.mapDiscountToFactors(row.status?.discount ?? "NORMAL");
     }
 
+    torrent.downloadVolumeFactor = factors.download;
+    torrent.uploadVolumeFactor = factors.upload;
+
+    const tags: ITorrentTag[] = [];
     if (row.labelsNew && row.labelsNew.length > 0) {
       const uniqueLabels = Array.from(new Set(row.labelsNew)); // 去重
       tags.push(...uniqueLabels.map((x) => ({ name: x })));

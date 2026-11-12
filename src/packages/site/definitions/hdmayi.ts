@@ -1,9 +1,13 @@
+/**
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/hdmayi.com/config.json
+ */
 import type { ISiteMetadata } from "../types";
 
 export const siteMetadata: ISiteMetadata = {
   version: 1,
   id: "hdmayi",
   name: "HDmayi",
+  tags: ["电影"],
   aka: ["小蚂蚁PT", "XiaoMayi"],
   description: "非商业,有电影情怀,真电影爱好者",
   collaborator: ["koal", "zhuweitung"],

@@ -1,3 +1,8 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/pterclub.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/pterclub.com/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/pterclub.json
+ */
 import { set } from "es-toolkit/compat";
 import Sizzle from "sizzle";
 import {
@@ -133,10 +138,10 @@ export const siteMetadata: ISiteMetadata = {
     },
   ],
 
-  officialGroupPattern: [/-(Pter|.*Pter)/i],
+  officialGroupPattern: [/[@-]\s?(Pter(?:WEB|MV|TV)?)\b/i],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     advanceKeywordParams: {
       ...SchemaMetadata.search?.advanceKeywordParams!,
       douban: {
@@ -147,7 +152,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
 
       title: {
         selector: [
@@ -205,7 +210,7 @@ export const siteMetadata: ISiteMetadata = {
       },
 
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         { name: "Excl.", selector: "a[href*='torrents.php?tag_exclusive=yes']", color: "red" },
         { name: "官方", selector: "a[href*='torrents.php?tag_internal=yes']", color: "blue" },
         { name: "国语", selector: "a[href*='torrents.php?tag_mandarin=yes']", color: "green" },
@@ -285,9 +290,9 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       bonus: {
         selector: [
           "td.rowhead:contains('猫粮') + td, td.rowhead:contains('Karma Points') + td, td.rowhead:contains('貓糧') + td",
@@ -295,7 +300,7 @@ export const siteMetadata: ISiteMetadata = {
         filters: [{ name: "parseNumber" }],
       },
       trueUploaded: {
-        ...SchemaMetadata.userInfo!.selectors!.trueUploaded,
+        ...SchemaMetadata.userInfo.selectors!.trueUploaded,
         filters: [
           (query: string) => {
             const queryMatch = query
@@ -306,7 +311,7 @@ export const siteMetadata: ISiteMetadata = {
         ],
       },
       trueDownloaded: {
-        ...SchemaMetadata.userInfo!.selectors!.trueDownloaded,
+        ...SchemaMetadata.userInfo.selectors!.trueDownloaded,
         filters: [
           (query: string) => {
             const queryMatch = query
@@ -328,12 +333,12 @@ export const siteMetadata: ISiteMetadata = {
         filters: [{ name: "parseSize" }],
       },
       messageCount: {
-        ...SchemaMetadata.userInfo!.selectors!.messageCount,
+        ...SchemaMetadata.userInfo.selectors!.messageCount,
         selector: ["div[style*='background: red'] a[href*='messages.php']"],
       },
     },
     process: [
-      ...SchemaMetadata.userInfo!.process!.map((item) => ({
+      ...SchemaMetadata.userInfo.process!.map((item) => ({
         ...item,
         requestConfig: {
           ...item.requestConfig,

@@ -1,3 +1,6 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Indexers/Definitions/RetroFlix.cs
+ */
 import { set } from "es-toolkit/compat";
 
 import { type ISiteMetadata } from "../types.ts";
@@ -84,7 +87,7 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     requestConfig: {
       url: "/browse",
       params: {
@@ -100,10 +103,10 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       rows: { selector: "div.row > div.col-12 > div.row:gt(0)" },
       url: {
-        ...SchemaMetadata.search!.selectors!.url!,
+        ...SchemaMetadata.search.selectors!.url!,
         filters: [
           { name: "querystring", args: ["id"] },
           { name: "prepend", args: ["/browse/t/"] },
@@ -164,7 +167,7 @@ export const siteMetadata: ISiteMetadata = {
   detail: {
     urlPattern: ["/browse/t/"],
     selectors: {
-      ...SchemaMetadata.detail!.selectors!,
+      ...SchemaMetadata.detail.selectors!,
       title: {
         selector: "table h3",
       },
@@ -172,7 +175,7 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     process: [
       {
         requestConfig: { url: "/", responseType: "document" },
@@ -205,10 +208,10 @@ export const siteMetadata: ISiteMetadata = {
       },
     ],
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       seedingBonus: undefined,
       joinTime: {
-        ...SchemaMetadata.userInfo!.selectors!.joinTime!,
+        ...SchemaMetadata.userInfo.selectors!.joinTime!,
         filters: [
           { name: "split", args: ["(", 0] },
           { name: "parseTime", args: ["dd-MM-yyyy HH:mm:ss"] },

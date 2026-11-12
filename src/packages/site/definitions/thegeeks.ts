@@ -1,6 +1,7 @@
 /**
  * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/thegeeks.yml
  * @JackettIssue https://github.com/Jackett/Jackett/issues/1302
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/thegeeks.click/config.json
  */
 import type { ISiteMetadata } from "../types.ts";
 import { SchemaMetadata } from "../schemas/TCG.ts";
@@ -135,9 +136,9 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       category: {
         selector: "a[href^='browse.php?cat=']",
         attr: "href",

@@ -1,3 +1,9 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/zmpt.yml
+ * @PTPPDefinitions https://github.com/pt-plugins/PT-Plugin-Plus/blob/dev/resource/sites/zmpt.cc/config.json
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/zmpt.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/zmpt.json
+ */
 import { type ISiteMetadata } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP.ts";
 
@@ -7,6 +13,7 @@ export const siteMetadata: ISiteMetadata = {
   version: 4,
   id: "zmpt",
   name: "织梦",
+  tags: ["综合", "影视", "音乐", "游戏"],
   aka: ["织梦PT", "ZMPT"],
   description: "为爱启航，造就梦想！",
   timezoneOffset: "+0800",
@@ -107,9 +114,9 @@ export const siteMetadata: ISiteMetadata = {
   officialGroupPattern: ["ZmWeb", "ZmPT", "ZmMusic", "ZmAudio"],
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       bonus: {
         selector: ["td.rowhead:contains('电力值') + td"],
         filters: [{ name: "parseNumber" }],

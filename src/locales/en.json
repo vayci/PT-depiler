@@ -101,7 +101,6 @@
       "time": "Created At",
       "title": "Title"
     },
-    "title": "Reseed Tasks",
     "torrentCount": "Torrents: ",
     "updateError": "Update failed",
     "updateSuccess": "Updated successfully",
@@ -119,16 +118,83 @@
   },
   "MediaServerEntity": {
     "ItemInformationDialog": {
+      "premiereDate": "Premiered: ",
+      "watched": "Watched: ",
+      "playbackProgress": "Playback progress",
+      "notWatched": "Not watched",
+      "favorite": "In favorites",
+      "notFavorite": "Not in favorites",
+      "audio": "Audio: ",
+      "criticRating": "Critics",
+      "dateCreated": "Added: ",
       "duration": "Duration: ",
-      "mediaInfo": "Media Info: ",
+      "episodeCount": "{count} episode(s)",
+      "externalUrls": "Links: ",
+      "labels": "Labels: ",
+      "loadingDetail": "Loading details…",
+      "mediaSourceCount": "Versions: ",
+      "officialRating": "Rated: ",
+      "path": "Path: ",
+      "people": "Cast & Crew: ",
+      "playCountText": "{count} play(s)",
+      "rating": "Rating: ",
+      "searchOnSite": "Search on sites: ",
+      "series": "Series: ",
       "size": "Size: ",
+      "studios": "Studios: ",
+      "subtitle": "Subtitle: ",
+      "taglines": "Taglines: ",
       "title": "Media Details",
-      "type": "Type: "
+      "type": "Type: ",
+      "video": "Video: ",
+      "year": "Year: "
     },
     "detail": "Details",
+    "embedded": "Embedded",
+    "external": "External",
     "loadMore": "Load More",
     "noItems": "No Items, use Search Input or Load More Button to Load",
-    "searchPlaceholder": "Search term"
+    "searchPlaceholder": "Search term",
+    "serverFilter": {
+      "all": "All Servers"
+    },
+    "versions": "{count} version(s)"
+  },
+  "MyCollection": {
+    "alert": "Favorites are stored locally; push them to your downloader in bulk when a site-wide freeleech starts.",
+    "clearAll": "Clear all",
+    "clearConfirm": "Clear all torrent favorites?",
+    "deleteSuccess": "Deleted",
+    "dialog": {
+      "alreadyFavorited": "In favorites",
+      "alreadyFavoritedNotice": "{0} of them are already in favorites — this will update their category and comment.",
+      "comment": "Comment",
+      "editTitle": "Edit favorite",
+      "editSuccess": "Updated {0} favorite(s)",
+      "favCategories": "Categories",
+      "favCategoriesHint": "Pick existing categories or type a new one and press Enter; a torrent can belong to several categories, leave empty for uncategorized",
+      "saveAndEditSuccess": "Added {0} torrent(s) and updated {1} favorite(s)",
+      "saveError": "Failed to add to favorites",
+      "saveSuccess": "Added {0} torrent(s) to favorites",
+      "title": "Add {0} torrent(s) to favorites",
+      "totalSize": "Total {0}"
+    },
+    "emptyNotice": "No favorites yet. Use the favorite button on the search results page, a torrent list page, or a torrent detail page.",
+    "filterAll": "All categories",
+    "filterLabel": "Filter favorites",
+    "loadError": "Failed to load torrent favorites",
+    "table": {
+      "action": {
+        "edit": "Edit categories and comment"
+      },
+      "category": "Category",
+      "createdAt": "Favorited at",
+      "favCategories": "Fav. categories",
+      "size": "Size",
+      "time": "Published at",
+      "title": "Title",
+      "unclassified": "Uncategorized"
+    }
   },
   "MyClient": {
     "action": {
@@ -173,11 +239,49 @@
     "columnSelector": "Columns",
     "deleteSelected": "Delete",
     "detail": {
+      "addTrackerFailure": "Failed to add tracker",
+      "addTrackerSuccess": "Tracker added",
+      "addTrackerTitle": "Add Tracker",
       "copyHash": "Copy Hash",
       "copyMagnet": "Copy Magnet Link",
+      "fileColumnName": "File",
+      "fileColumnPriority": "Priority",
+      "fileColumnProgress": "Progress",
+      "fileColumnSize": "Size",
+      "fileTitle": "Files",
+      "fileUnsupported": "This downloader does not support file management",
+      "noFiles": "No files",
+      "noPeers": "No peer connections",
       "noTrackers": "This downloader does not support fetching trackers or has no trackers",
+      "operatorFailed": "Operation failed",
+      "peersColumnClient": "Client",
+      "peersColumnCountry": "Country",
+      "peersColumnDownloadSpeed": "DL",
+      "peersColumnEncrypted": "Enc",
+      "peersColumnIp": "IP",
+      "peersColumnProgress": "Progress",
+      "peersColumnUploadSpeed": "UL",
+      "peersTitle": "Peers",
+      "peersUnsupported": "This downloader does not support viewing peers",
+      "priorityHighest": "Highest",
+      "priorityHigh": "High",
+      "priorityLow": "Low",
+      "priorityNormal": "Normal",
+      "prioritySkip": "Skip",
+      "removeTracker": "Remove",
+      "removeTrackerFailure": "Failed to remove tracker",
+      "removeTrackerSuccess": "Tracker removed",
       "title": "Torrent Details",
-      "trackers": "Trackers"
+      "trackerColumnLastAnnounce": "Last Announce",
+      "trackerColumnLeeches": "Leeches",
+      "trackerColumnSeeds": "Seeds",
+      "trackerColumnStatus": "Status",
+      "trackerColumnTier": "Tier",
+      "trackerColumnUrl": "URL",
+      "trackers": "Trackers",
+      "trackerUnsupported": "This downloader does not support tracker management",
+      "updateFilePriorityFailure": "Failed to update file priority",
+      "updateFilePrioritySuccess": "File priority updated"
     },
     "dialog": {
       "removeData": "Also remove data"
@@ -208,6 +312,10 @@
     "refresh": "Refresh",
     "resumeSelected": "Resume",
     "searchPlaceholder": "Search by name, hash, label, or path",
+    "sitePublic": "Public",
+    "sitePublicTip": "Public torrent: marked as public by the client, or its tracker only matches a public site",
+    "siteUnmatched": "Unmatched",
+    "siteUnmatchedTip": "No added site matched this torrent; if the site uses a dedicated tracker domain, declare trackerUrls in its definition",
     "speedLimit": {
       "batchBtn": "Speed Limit",
       "download": "Download Limit (KiB/s, 0 = unlimited)",
@@ -285,8 +393,12 @@
         "alive": "Relative Time",
         "aliveWeek": "Relative Weeks"
       },
+      "limitLevelNameTdWidth": "Limit level column width",
       "multiOpen": "Open in batch",
+      "noSiteSelectedCancelOpen": "No site to open",
       "noSiteSelectedCancelRefresh": "No site selected, refresh cancelled",
+      "noSiteSelectedOpenAll": "No site selected, opening all sites by default",
+      "noSiteSelectedOpenFilteredPage": "No site selected, opening the {count} sites on this page of the filtered result",
       "noSiteSelectedRefreshAll": "No site selected, refreshing all sites by default",
       "normalizeLevelName": "Use Site-defined Level Name",
       "onlyShowUserLevelRequirement": "Only show the upgrade queue in level requirements",
@@ -329,6 +441,7 @@
       "copyLink": "Copy Download Link",
       "copyLinkFailed": "Failed to copy download link",
       "copyLinkSuccess": "Download link copied to clipboard",
+      "favorite": "Add to favorites",
       "localDownload": "Download Torrent File Locally",
       "sendToDefault": "Send to Default Downloader",
       "sendToDownloader": "Send to Downloader"
@@ -377,6 +490,7 @@
       "moveUp": "Move Up in the Queue",
       "searchAgain": "Search Again",
       "statusMsg": {
+        "networkError": "Network request failed (timeout / DNS / blocked)",
         "noAdvanceParams": "Advance parameter not supported",
         "noEmptyKeywords": "Empty keywords not supported",
         "noNonLatin": "Non-Latin characters not supported",
@@ -384,7 +498,7 @@
         "siteNotEnabled": "The site not enabled",
         "userCancel": "You Cancel this search"
       },
-      "successMsg": "Find {0} results in {0}s",
+      "successMsg": "Find {0} results in {1}s",
       "title": "Search Status of [{0}]"
     },
     "index": {
@@ -409,11 +523,15 @@
         "searching": "Searching...",
         "snapshot": "Search Snapshot"
       },
+      "billableSize": "Billable size",
+      "billableSizeHint": "Actual billable size of the selected torrents (weighted by download volume factor; unknown factors count as 1)",
       "filterLabel": "Filter search results",
+      "highlightSameSizeTorrent": "Mark same-size torrents when sorted by size",
       "limitTorrentTitleTdWidth": "Limit torrent title column width",
       "selectedTorrents": "Selected {0} torrents",
       "showSiteName": "Show Site Name",
       "showSocialInformation": "Show Media Rating Information",
+      "showTorrentCover": "Show Torrent Cover",
       "showTorrentSubtitle": "Show Torrent Subtitle",
       "showTorrentTag": "Show Torrent Tags",
       "socialInformationSearchOnNewTab": "Open Media Rating Search in a New Tab",
@@ -421,11 +539,18 @@
         "category": "Category",
         "comments": "Comments",
         "completed": "Completed",
+        "downloadVolumeFactor": "Promo",
         "leechers": "Leechers",
         "seeders": "Seeders",
         "size": "Size",
         "time": "Published(≈)",
         "title": "Title"
+      },
+      "tagTooltip": {
+        "downloadPercent": "Download counts {0}%",
+        "freeDownload": "Free download",
+        "noUpload": "No upload credit",
+        "uploadTimes": "Upload counts ×{0}"
       },
       "uploadAtFormatAsAlive": "Display Upload Time as Relative Time"
     },
@@ -472,9 +597,46 @@
     },
     "Editor": {
       "backupConfig": "Backup Configuration",
+      "backupFields": "Backup Content",
       "backupInterval": "Auto Backup Interval",
-      "backupIntervalHint": "Set auto-backup interval (hours). Leave empty or 0 to disable auto backup. Max 48 hours.",
+      "backupIntervalField": "Interval (hours)",
+      "backupIntervalHint": "Set auto-backup interval (hours). Leave empty or 0 to disable auto backup. Any length is allowed (e.g. 168 hours = 7 days).",
+      "clearRetention": "Clear retention policy (never clean up historical backups)",
+      "retention": "Backup Retention Policy",
       "serverConfig": "Server Configuration"
+    },
+    "RetentionDialog": {
+      "count": {
+        "maxCount": "Number of backups to keep",
+        "title": "Keep by Count"
+      },
+      "countSuffix": "backups",
+      "daySuffix": "days",
+      "none": "No retention policy enabled, historical backups will not be cleaned up automatically",
+      "sample": {
+        "hint": "Within a time range of \"number of windows × window width\", keep the newest backup of each window (similar to Borg's prune)",
+        "horizon": "Windows to keep",
+        "interval": "Window width",
+        "title": "Keep by Time-Window Sampling",
+        "type": {
+          "day": "Daily",
+          "month": "Monthly",
+          "week": "Weekly",
+          "year": "Yearly"
+        }
+      },
+      "summary": {
+        "count": "keep last {n}",
+        "sample": "{type} keep {n} (window {interval} days)",
+        "separator": ", ",
+        "time": "keep {n} days"
+      },
+      "time": {
+        "maxAge": "Days to keep",
+        "title": "Keep by Age"
+      },
+      "tip": "The retention policy cleans up remote historical backup files after each successful backup. Multiple rules are combined as a union: a backup kept by any rule will never be removed.",
+      "title": "Backup Retention Policy"
     },
     "HistoryDialog": {
       "deleteFailure": "Failed to delete backup history [{name}]",
@@ -513,13 +675,15 @@
       "keepUploadTask": "Reseed tasks (keepUploadTask)",
       "metadata": "Site and service configuration (metadata)",
       "searchResultSnapshot": "Search result snapshots (searchResultSnapshot)",
+      "torrentFavorite": "Torrent favorites (torrentFavorite)",
       "userInfo": "User information (userInfo)"
     },
     "localExport": "Local Export",
     "localImport": "Local Import",
     "snackbar": {
       "failure": "Backup failed",
-      "success": "Backup successful"
+      "success": "Backup successful",
+      "successWithRetention": "Backup successful, expired backups cleaned up"
     },
     "table": {
       "action": {
@@ -530,7 +694,10 @@
       "backupInterval": "Auto Backup Interval",
       "everyNHour": "Every {n} h",
       "lastBackupAt": "Last Backup Time",
-      "notBackup": "Not Backed Up"
+      "notBackup": "Not Backed Up",
+      "retention": "Retention",
+      "retentionDisabled": "Retention policy disabled",
+      "retentionEnabled": "Retention policy enabled"
     }
   },
   "SetBase": {
@@ -571,6 +738,14 @@
       "mediaSearchLimit": "Number of search results per request",
       "mediaSearchLimitMessage": "Please do not load too many search results at once. It's not optimized with virtual-scroll, which may cause the browser to freeze and affect the performance of the media server.",
       "mediaServerSearchConfig": "Media Server Search Configuration",
+      "promotionDisplay": "Promotion display",
+      "promotionDisplayMessage": "Do not show hides all promotion info; Tags only keeps the original behavior; Factor only hides promotion tags and uses the Promo column plus the promotion sliders; Tags + factor shows both",
+      "promotionDisplayOptions": {
+        "both": "Tags + factor",
+        "factor": "Factor only",
+        "none": "Do not show",
+        "tags": "Tags only"
+      },
       "quickSiteFilter": "Quick Site Filter In Search Page",
       "saveLastSearchFilter": "Save last used search filter",
       "searchPlanLabel": "Search Plan",
@@ -603,6 +778,7 @@
       "contextMenuLinkPush": "Enable (download) link push",
       "contextMenuSocialSearch": "Enable social link (douban, imdb) search",
       "contextMenuTextSearch": "Enable selected text search",
+      "dataTable": "Data Table",
       "displayMode": {
         "auto": "Auto (Follow Browser or System)",
         "dark": "Dark Mode",
@@ -626,6 +802,11 @@
         "title": "Search by Main Title"
       },
       "socialSiteSearchLabel": "Social site search method",
+      "tableActionColumnFixed": "Fix action column when the table is too wide",
+      "tableActionColumnFixedNote": "Takes effect only when the table content is wider than the page and scrolls horizontally: the action column stays pinned to its side (row start or row end) while scrolling.",
+      "tableActionColumnPosition": "Action column position",
+      "tableActionColumnPositionEnd": "Row end (default)",
+      "tableActionColumnPositionStart": "Row start",
       "tableMultiSortNote": "Multi-column sorting: Click any table header field to start sorting, which will display the number \\\"1\\\" on the field. Click other fields sequentially to display \\\"2\\\", \\\"3\\\", indicating sorting priority. Click the same field again to toggle between ascending, descending, or cancel sorting. The sorting order is determined by these numbers, with smaller numbers having higher priority.",
       "useLargeIcon": "Use large icon buttons"
     },
@@ -654,6 +835,7 @@
           "dateYear": "current year",
           "searchKeyword": "Search Keywords",
           "searchPlan": "Search Plan Name",
+          "torrentCategory": "The category of torrent",
           "torrentSite": "The Site ID of torrent",
           "torrentSiteName": "The Site name of torrent",
           "torrentSubTitle": "The subtitle of torrent",
@@ -712,11 +894,13 @@
       "editDefaultDownloaderBtn": "Edit Default Downloader",
       "emptyNotice": "Before using the download service, you need to add at least one download server.",
       "remove": {
+        "defaultNotDeleted": "Skipped the Default Downloader [{0}]: it cannot be deleted. Please switch to another download server in 'Edit Default Downloader' first.",
         "multi": "Are you sure to delete these {count} download servers?",
         "single": "Are you sure to delete this download server?"
       },
       "table": {
         "action": {
+          "deleteDefaultDownloader": "This download server is the current Default Downloader and cannot be deleted. Please switch to another download server in 'Edit Default Downloader' first.",
           "deleteDownloader": "Delete this downloader server",
           "setDefault": "Set this downloader server as Default Downloader.",
           "setPathAndTag": "Set Suggest Download Path and Tags",
@@ -738,6 +922,43 @@
   "SetMediaServer": {
     "Editor": {
       "authInfo": "Authentication Info"
+    },
+    "Index": {
+      "refreshStatus": "Refresh Status",
+      "status": "Server Status",
+      "statusOffline": "Unreachable",
+      "statusUntested": "Untested"
+    },
+    "Overview": {
+      "averageBitrate": "Avg. Bitrate",
+      "byCodec": "Video Codec",
+      "byContainer": "Container",
+      "byResolution": "Resolution",
+      "byRootPath": "By directory / disk (size)",
+      "countUnit": "{count} item(s)",
+      "generatedAt": "Generated at {time}",
+      "generating": "Scanning the library and aggregating…",
+      "hint": "Generated on demand — the whole library is traversed in the background, large libraries may take a while",
+      "neverWatched": "Never watched but takes space (top 10)",
+      "partial": "Partially watched",
+      "playsPerGb": "Plays per GB",
+      "playsPerGbValue": "{value} /GB",
+      "recentlyAdded": "Added in the last 7 days (top 10)",
+      "regenerate": "Regenerate",
+      "title": "Library Overview",
+      "totalItems": "Items",
+      "totalPlays": "Total plays",
+      "totalSize": "Total size",
+      "truncated": "Reached the item limit ({count} items scanned), only part of the library is covered",
+      "unknownKey": "Unknown",
+      "unsupported": "This media server does not support overview statistics (or has no credentials configured)",
+      "warningCancel": "Cancel",
+      "warningConfirm": "I understand the risk, start scanning",
+      "warningLine1": "Generating the overview fetches **every item** of your library page by page (movies / series), which is a heavy operation.",
+      "warningLine2": "Most public media servers do **not** allow this kind of full-library traversal — it may be treated as abuse and get your account rate-limited or even banned. Only use it on servers you host yourself or are explicitly allowed to scan.",
+      "warningLine3": "The traversal only starts after you confirm. Closing the dialog stops further requests, but requests already sent cannot be recalled.",
+      "warningTitle": "Please confirm first: a full-library scan may violate server rules",
+      "watch": "Watch status"
     },
     "add": {
       "title": "Add Media Server"
@@ -791,6 +1012,9 @@
       "addCount": "Added {0} @:SetSearchSolution.solution",
       "cantAddByDuplicateNote": "A duplicate @:SetSearchSolution.solution already exists and cannot be added again.",
       "filterPlaceholder": "Filter by site name or url",
+      "noMatchInFilteredSolutions": "No added solutions match the current filter",
+      "siteAddedCount": "This site has {0} solution(s) added in current plan",
+      "sortByAddedCount": "Sort by added count (click to cycle: asc → desc → default)",
       "title": "Customize @:SetSearchSolution.solution"
     },
     "newSolutionNamePrompt": "Please enter the new search plan name",
@@ -850,6 +1074,8 @@
       "name": "Site Name",
       "open": "Open",
       "showMessageCount": "Show Notice",
+      "siteTypePrivate": "Private site",
+      "siteTypePublic": "Public site",
       "tags": "Tags",
       "url": "URL"
     },
@@ -877,8 +1103,12 @@
         "Only the configured site will display the plugin icon and the corresponding function;",
         "the offline site will no longer participate in the search and information acquisition;"
       ],
+      "sortIndexRedistributed": "Site priorities have been redistributed (the order of the sites is unchanged)",
       "table": {
         "flushFavicon": "Refresh Site Favicon",
+        "moveDown": "Move Down (long press to move to bottom)",
+        "moveNeedSortIndex": "Sort by the № column to reorder sites",
+        "moveUp": "Move Up (long press to move to top)",
         "searchEntries": "Search Entries"
       }
     },
@@ -886,6 +1116,10 @@
       "alert1": "This operation will attempt to import the sites you select with default configurations. Please ensure you have logged into these sites in your browser. The import process cannot be interrupted, please wait patiently.",
       "alert2": "List of unadded sites",
       "importComplete": "One-click import complete, successfully added {count} sites",
+      "includePublicSite": "Include public sites ({count})",
+      "includePublicSiteHint": "Public sites cannot be verified by a search and are written directly when added. They are hidden from the list by default; when enabled they appear in the list and join \"ALL\", and disabling it deselects any selected public sites",
+      "siteTypePrivateTip": "Private site: must pass a search check before it can be added automatically",
+      "siteTypePublicTip": "Public site: cannot be verified by a search, so it is written directly when added",
       "stats": "Selected {count} sites, added {success} sites, failed to add {failed} sites.",
       "status": {
         "failed": "Failed to add",
@@ -969,12 +1203,14 @@
       "siteDisplay": "Site Display Component",
       "statsSection": "Statistics Section",
       "styleSettings": "Timeline Style Settings",
+      "textColor": "Other Text Color",
       "timeAdded": "Event Time",
       "timeAlive": "Time Elapsed",
       "timeDisplay": "Time Display Method",
       "timelineSection": "Timeline Section",
       "timelineTitle": "Timeline Title",
-      "usernameAndTitle": "Username & Title"
+      "usernameAndTitle": "Username & Title",
+      "userNameColor": "Username Color"
     },
     "exportFilename": "{name}'s Timeline ({date})",
     "field": {
@@ -997,6 +1233,7 @@
   },
   "common": {
     "AdvanceFilterGenerateDialog": {
+      "collapse": "Show less",
       "date": "Date",
       "dateUnit": {
         "custom": "Custom",
@@ -1009,8 +1246,11 @@
       "exclude": "Exclude",
       "generate": "Generate",
       "keywords": "Keywords",
+      "promo": "Promo (download volume factor)",
+      "promoUpload": "Upload volume factor",
       "required": "Required",
       "reset": "Reset Filter",
+      "showAll": "Show all ({0})",
       "site": "@:common.site",
       "title": "Generate Advanced Filter"
     },
@@ -1050,6 +1290,7 @@
     "import": "Import",
     "language": "Language",
     "name": "Name",
+    "noData": "No Data",
     "project": "PT Depiler",
     "remove": "Delete",
     "save": "Save",
@@ -1101,6 +1342,8 @@
     "copyLink": "Copy Link",
     "copyLinkFailed": "Failed to copy download link",
     "copyLinkSuccess": "Download link copied to clipboard",
+    "favoriteTorrent": "Add this torrent to favorites",
+    "favoriteTorrents": "Add torrents to favorites",
     "noTorrentParsed": "No torrents found on this page",
     "openPTD": "Open PTD",
     "parsePageFailed": "Page parsing failed",
@@ -1230,6 +1473,7 @@
     "CFBlocked": "Cloudflare Error!",
     "CFBlockedNotes": "It may be because the site has enabled CloudFlare's security protection, which makes it impossible to retrieve data. You can first try to manually access the site once to pass the verification. If that doesn't work, just wait for the site to recover on its own.",
     "needLogin": "Login Required!",
+    "noUserInput": "Please fill in the Token/Key!",
     "noResults": "No Results!",
     "parseError": "Parse Error!",
     "passParse": "Passed!",

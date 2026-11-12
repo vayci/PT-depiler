@@ -1,14 +1,16 @@
 import type { ISiteMetadata } from "../types";
-import { CategoryFree, SchemaMetadata } from "../schemas/Unit3D.ts";
-import { buildCategoryOptionsFromDict } from "../utils.ts";
+// import { CategoryFree, SchemaMetadata } from "../schemas/Unit3D.ts";
+// import { buildCategoryOptionsFromDict } from "../utils.ts";
 
+/**
 const categoryMap: Record<number, string> = {
   1: "Movies",
   2: "TV",
 };
+*/
 
 export const siteMetadata: ISiteMetadata = {
-  ...SchemaMetadata,
+  // ...SchemaMetadata,
   id: "aura4k",
   version: 1,
   name: "Aura4k",
@@ -20,8 +22,11 @@ export const siteMetadata: ISiteMetadata = {
   schema: "Unit3D",
 
   urls: ["https://aura4k.net/"],
-  favicon: "https://aura4k.net/favicon.ico",
 
+  // refs: https://github.com/Jackett/Jackett/issues/16457#issuecomment-5343952272
+  isDead: true,
+
+  /**
   category: [
     {
       name: "类别",
@@ -35,7 +40,7 @@ export const siteMetadata: ISiteMetadata = {
   search: {
     ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       category: {
         selector: ":self",
         data: "categoryId",
@@ -45,25 +50,26 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       levelName: {
         selector: [
           ".wow-badges .wow-badge:first-child",
-          ...(SchemaMetadata.userInfo!.selectors!.levelName?.selector ?? []),
+          ...(SchemaMetadata.userInfo.selectors!.levelName?.selector ?? []),
         ],
         elementProcess: (el: Element) => el.getAttribute("title") || el.textContent?.replace(/\s+/g, " ").trim(),
       },
       bonusPerHour: {
         selector: [
           "main aside section > div:nth-child(2) > div:nth-child(4) > div",
-          ...(SchemaMetadata.userInfo!.selectors!.bonusPerHour?.selector ?? []),
+          ...(SchemaMetadata.userInfo.selectors!.bonusPerHour?.selector ?? []),
         ],
         filters: [{ name: "parseNumber" }],
       },
     },
   },
+   */
 
   levelRequirements: [
     {

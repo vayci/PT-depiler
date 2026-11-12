@@ -12,8 +12,10 @@ import { useConfigStore } from "@/options/stores/config.ts";
 import UserLevelsComponent from "./UserLevelsComponent.vue";
 import UserNextLevelUnMet from "@/options/views/Overview/MyData/UserNextLevelUnMet.vue";
 
-const { userInfo } = defineProps<{
+const { userInfo, limitLevelNameTdWidth } = defineProps<{
   userInfo: IUserInfo;
+  // 由父表格统一计算后传入；行组件（每个站点一行）不再各自创建相同的 computed
+  limitLevelNameTdWidth: boolean;
 }>();
 
 const display = useDisplay();
@@ -85,6 +87,12 @@ const userLevelGroupIcon = computed(() => {
 
 <template>
   <span v-if="userInfo.levelName" class="text-no-wrap">
+    <!--
+      不要移除 close-delay：浮层与激活元素之间隔着 offset（默认 10px）的间隙，
+      指针由等级名移向浮层时必然先触发一次 mouseleave。Vuetify 的 closeDelay 默认为 0，会立刻关闭浮层，
+      且已关闭的浮层内容会被置为 inert（不再响应指针事件），使得浮层几乎无法悬停查看（#1580）。
+      这里留出 300ms 关闭延迟，指针进入浮层后即可取消关闭。
+    -->
     <v-tooltip
       v-if="
         configStore.myDataTableControl.showLevelRequirement && userLevelRequirements && userLevelRequirements.length > 0
@@ -92,10 +100,15 @@ const userLevelGroupIcon = computed(() => {
       content-class="bg-white pa-0"
       interactive
       location="end bottom"
+      :close-delay="300"
       :open-on-click="display.mobile.value"
     >
       <template v-slot:activator="{ props }">
-        <span v-bind="props">
+        <!--
+          截断类必须加在激活元素本身：若只裁剪外层容器，激活元素的 getBoundingClientRect()
+          仍按完整文字宽度计算，浮层会被定位到隐藏文字的末端（远离单元格）。
+        -->
+        <span v-bind="props" :class="{ 'd-block text-truncate': limitLevelNameTdWidth }">
           <v-icon :icon="userLevelGroupIcon" size="small" :color="currentUserLevelColor" class="mr-1" />
           <span :class="`text-${currentUserLevelColor}`">{{ levelName }}</span>
           <v-icon
@@ -177,7 +190,7 @@ const userLevelGroupIcon = computed(() => {
                       />
                     </div>
 
-                    <div class="text-ellipsis text-truncate" :title="userLevel.privilege">
+                    <div class="text-truncate" :title="userLevel.privilege">
                       {{ userLevel.privilege }}
                     </div>
                   </v-list-item>
@@ -189,7 +202,12 @@ const userLevelGroupIcon = computed(() => {
         </v-card>
       </template>
     </v-tooltip>
-    <span v-else>
+    <!-- 未渲染等级浮层（如关闭了等级要求展示）时，被截断的等级名通过原生 title 提供完整内容 -->
+    <span
+      v-else
+      :class="{ 'd-block text-truncate': limitLevelNameTdWidth }"
+      :title="limitLevelNameTdWidth ? levelName : undefined"
+    >
       <v-icon :icon="userLevelGroupIcon" size="small"></v-icon>
       {{ levelName }}
     </span>

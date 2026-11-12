@@ -1,3 +1,6 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Indexers/Definitions/AnimeZ.cs
+ */
 import { ISearchInput, ISiteMetadata, ITorrent, ITorrentTag, IUserInfo } from "../types";
 import AvistazNetwork, { SchemaMetadata, IAvzNetRawTorrent } from "../schemas/AvistazNetwork.ts";
 import { definedFilters } from "../utils/filter.ts";
@@ -88,9 +91,9 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     requestConfig: {
-      ...SchemaMetadata.search!.requestConfig!,
+      ...SchemaMetadata.search.requestConfig!,
       params: { limit: 50 },
     },
     advanceKeywordParams: {
@@ -99,7 +102,7 @@ export const siteMetadata: ISiteMetadata = {
       tmdb: { enabled: false },
     },
     selectors: {
-      ...SchemaMetadata.search!.selectors!,
+      ...SchemaMetadata.search.selectors!,
       title: { selector: "release_title" },
       category: { selector: "format" },
     },
@@ -110,7 +113,7 @@ export const siteMetadata: ISiteMetadata = {
   userInfo: {
     pickLast: ["name"],
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       name: {
         selector: ":self",
         elementProcess: (document: Document) =>

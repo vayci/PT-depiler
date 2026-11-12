@@ -1,3 +1,7 @@
+/**
+ * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Indexers/Definitions/ExoticaZ.cs
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/exoticaz.json
+ */
 import { ISiteMetadata, ISearchInput, IAdvancedSearchRequestConfig, ITorrent, ITorrentTag } from "../types";
 import AvistazNetwork, { SchemaMetadata, avzNetDiscountMap, IAvzNetRawTorrent } from "../schemas/AvistazNetwork.ts";
 
@@ -39,7 +43,7 @@ export const siteMetadata: ISiteMetadata = {
   schema: "AvistazNetwork",
 
   urls: ["uggcf://rkbgvpnm.gb/"],
-  legacyUrls: ["https://torrents.yourexotic.com/"],
+  legacyUrls: ["uggcf://gbeeragf.lbherkbgvp.pbz/"],
 
   collaborator: [""],
 
@@ -93,7 +97,7 @@ export const siteMetadata: ISiteMetadata = {
   ],
 
   search: {
-    ...SchemaMetadata.search!,
+    ...SchemaMetadata.search,
     advanceKeywordParams: {
       imdb: { enabled: false },
       tvdb: { enabled: false },
@@ -179,7 +183,7 @@ export const siteMetadata: ISiteMetadata = {
   detail: {
     urlPattern: ["/torrent/"],
     selectors: {
-      ...SchemaMetadata.detail!.selectors!,
+      ...SchemaMetadata.detail.selectors!,
       title: {
         selector: "table.table tr:contains('Title') td:nth-child(2)",
         elementProcess: (element) => {

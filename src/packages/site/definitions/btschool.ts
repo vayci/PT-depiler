@@ -1,6 +1,8 @@
 /**
  * @JackettDefinitions https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Definitions/btschool.yml
  * @JackettIssue https://github.com/Jackett/Jackett/issues/5761
+ * @PDSDefinitions https://github.com/mantou568/pre-dessert-sites/blob/main/site_config/sites/btschool.json
+ * @PTMDefinitions https://github.com/JustLookAtNow/pt_mate/blob/master/assets/sites/btschool.json
  */
 import { ETorrentStatus, type ISiteMetadata } from "../types";
 import { parseSizeString, rot13 } from "../utils";
@@ -50,10 +52,12 @@ export const siteMetadata: ISiteMetadata = {
     CategoryInclbookmarked,
   ],
 
+  officialGroupPattern: [/[@-]\s?(Bts(?:HD|TV|PAD)?|Zone)\b/i],
+
   search: {
     ...SchemaMetadata.search,
     selectors: {
-      ...SchemaMetadata.search!.selectors,
+      ...SchemaMetadata.search.selectors,
       progress: {
         selector: [".progress:eq(0) > div"],
         elementProcess: (element: HTMLElement) => {
@@ -73,7 +77,7 @@ export const siteMetadata: ISiteMetadata = {
         },
       },
       tags: [
-        ...SchemaMetadata.search!.selectors!.tags!,
+        ...SchemaMetadata.search.selectors!.tags!,
         { name: "官方", selector: "span.label.label-primary", color: "#337ab7" },
         { name: "自制", selector: "span.label.label-default", color: "#777" },
         { name: "国语", selector: "span.label.label-warning", color: "#f0ad4e" },
@@ -84,9 +88,9 @@ export const siteMetadata: ISiteMetadata = {
   },
 
   userInfo: {
-    ...SchemaMetadata.userInfo!,
+    ...SchemaMetadata.userInfo,
     selectors: {
-      ...SchemaMetadata.userInfo!.selectors!,
+      ...SchemaMetadata.userInfo.selectors!,
       seeding: {
         selector: [
           "td.rowhead:contains('当前做种') + td, td.rowhead:contains('Current Seeding') + td, td.rowhead:contains('目前做種') + td",
@@ -109,7 +113,7 @@ export const siteMetadata: ISiteMetadata = {
       },
     },
     process: [
-      ...SchemaMetadata.userInfo!.process!.map((item) => ({
+      ...SchemaMetadata.userInfo.process!.map((item) => ({
         ...item,
         requestConfig: {
           ...item.requestConfig,
